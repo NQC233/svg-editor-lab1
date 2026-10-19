@@ -1,0 +1,6 @@
+node_modules/
+dist/
+coverage/
+package-lock.json
+# Preserve the instructor's original requirements verbatim.
+phase_cli_1.md
