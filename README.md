@@ -8,6 +8,7 @@
 
 - [课程原始要求](phase_cli_1.md)：保留原文，作为需求依据。
 - [课程报告与过程记录](doc/README.md)：按作业要求维护。
+- [智能体协作规则](AGENTS.md)：统一维护项目约束；[AGENT.md](AGENT.md) 与 [CLAUDE.md](CLAUDE.md) 为对应入口。
 
 ## 环境与启动
 
