@@ -32,3 +32,17 @@
 - 课程报告需包含模块职责与 PlantUML 图、设计模式、依赖方向、变化点假设、过程记录、一致性自查及质量保证。
 - 使用 Git 分步记录可解释的开发进展，提交中排除依赖目录、构建产物和凭据。
 - 远程推送使用用户指定的仓库；`final` 标签仅在最终验收完成后、课程截止时间前创建并推送。
+
+## Agent skills
+
+### Issue tracker
+
+Issues 记录在 GitHub Issues，使用 `gh` CLI 操作。见 `docs/agents/issue-tracker.md`。
+
+### Triage labels
+
+五个规范 triage 角色使用默认标签字符串。见 `docs/agents/triage-labels.md`。
+
+### Domain docs
+
+Single-context：根目录 `CONTEXT.md` 加 `docs/adr/`。见 `docs/agents/domain.md`。
