@@ -1,0 +1,82 @@
+@startuml
+skinparam componentStyle rectangle
+title SVG 编辑器 Phase 1 模块依赖（规划）
+
+package "cli" {
+  [CliApplication]
+  [CommandDispatcher]
+  [CommandCatalog]
+  [LineTokenizer]
+}
+
+package "commands" {
+  [CommandInvoker]
+  [CommandHistory]
+  [CommandContext]
+  [编辑命令]
+  [文档命令]
+  [显示命令]
+  [历史命令]
+}
+
+package "domain" {
+  [SvgDocument]
+  [Shape 层次]
+  [ShapeFactory]
+}
+
+package "io" {
+  [SvgReader]
+  [SvgWriter]
+  [XmlParser]
+}
+
+package "display" {
+  [TreeFormatter]
+  [ShowFormatter]
+}
+
+package "shared" {
+  [DomainError]
+  [数值工具]
+}
+
+[CliApplication] --> [LineTokenizer]
+[CliApplication] --> [CommandDispatcher]
+[CliApplication] --> [CommandInvoker]
+[CommandDispatcher] --> [CommandCatalog]
+[CommandCatalog] --> [编辑命令]
+[CommandCatalog] --> [文档命令]
+[CommandCatalog] --> [显示命令]
+[CommandCatalog] --> [历史命令]
+[CommandInvoker] --> [CommandHistory]
+[CommandInvoker] --> [CommandContext]
+[编辑命令] --> [CommandContext]
+[文档命令] --> [CommandContext]
+[显示命令] --> [CommandContext]
+[历史命令] --> [CommandHistory]
+[CommandContext] --> [SvgDocument]
+[CommandContext] --> [SvgReader]
+[CommandContext] --> [SvgWriter]
+[CommandContext] --> [TreeFormatter]
+[CommandContext] --> [ShowFormatter]
+[CommandContext] --> [ShapeFactory]
+[编辑命令] --> [SvgDocument]
+[编辑命令] --> [ShapeFactory]
+[文档命令] --> [SvgReader]
+[文档命令] --> [SvgWriter]
+[显示命令] --> [TreeFormatter]
+[显示命令] --> [ShowFormatter]
+[SvgReader] --> [XmlParser]
+[SvgReader] --> [SvgDocument]
+[SvgReader] --> [ShapeFactory]
+[SvgWriter] --> [SvgDocument]
+[TreeFormatter] --> [Shape 层次]
+[ShowFormatter] --> [Shape 层次]
+[ShapeFactory] --> [Shape 层次]
+[SvgDocument] --> [Shape 层次]
+[Shape 层次] --> [DomainError]
+[SvgReader] --> [DomainError]
+[SvgWriter] --> [DomainError]
+[CommandHistory] --> [DomainError]
+@enduml
