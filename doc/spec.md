@@ -401,6 +401,14 @@ XML 声明以外的处理指令拒绝，报 `invalid SVG: processing instruction
 2. 再按文档顺序为缺失 id 的元素分配 `<tag><n>`：n 从 1 开始，选第一个未被显式或已分配 id 使用的值，大小写敏感。
 3. 每个分配输出一行 `warning: assigned id <id> to unnamed <tag>`。
 
+Ticket 17 先交付显式 id 的读取子集：缺 id 或空 id 报 `invalid SVG: missing id on <tag>`，不输出警告也不自动分配；本节规则由 Ticket 18 接入。
+
+### 7.4.1 Ticket 17 中间版本边界
+
+- `title`、`desc`、`metadata` 及其子树和未建模属性暂不接收；分别报 `unsupported element: <tag>` 或 `unsupported attribute: <attr>`，由 Ticket 18 实现忽略/保留。
+- `text` 的直接文本和 CDATA 都计入正文；非文本元素的 CDATA 忽略，不作为非空白直接文本。
+- XML 预定义实体（`amp`、`lt`、`gt`、`quot`、`apos`）与十进制/十六进制数字实体在文本和属性值中解码。
+
 ### 7.5 原子性
 
 `read` 先构建完整的新文档；解析、校验、id 分配全部成功后才替换当前文档。任何错误都不改变当前文档、路径和历史。

@@ -3,6 +3,7 @@ import type { ShapeFactory } from '../domain/ShapeFactory.js';
 import type { ShowFormatter } from '../display/ShowFormatter.js';
 import type { TreeFormatter } from '../display/TreeFormatter.js';
 import type { SvgWriter } from '../io/SvgWriter.js';
+import type { SvgReader } from '../io/SvgReader.js';
 import { DomainError } from '../shared/DomainError.js';
 import type { CommandHistory } from './CommandHistory.js';
 
@@ -10,6 +11,7 @@ interface CommandContextDependencies {
   readonly history: CommandHistory;
   readonly shapeFactory: ShapeFactory;
   readonly showFormatter: ShowFormatter;
+  readonly svgReader: SvgReader;
   readonly svgWriter: SvgWriter;
   readonly treeFormatter: TreeFormatter;
 }
@@ -34,6 +36,10 @@ export class CommandContext {
 
   public get showFormatter(): ShowFormatter {
     return this.dependencies.showFormatter;
+  }
+
+  public get svgReader(): SvgReader {
+    return this.dependencies.svgReader;
   }
 
   public get svgWriter(): SvgWriter {

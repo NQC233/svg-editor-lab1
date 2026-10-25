@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { spawn } from 'node:child_process';
-import { mkdtemp, readFile, rm } from 'node:fs/promises';
+import { mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { PassThrough } from 'node:stream';
@@ -1140,6 +1140,68 @@ test('[spec 3.3, 5.2, 6.6, 6.10, 9] replays group ordering, restore, redo, and f
       'g#right',
       '└── g#solo',
       '    └── rect#e  x=80 y=80 w=10 h=10',
+      '',
+    ].join('\n'),
+  );
+});
+
+test('[spec 6.12, 7, 9] replays read success, relative paths, failures, and preserved redo through the CLI', async (t) => {
+  const directory = await mkdtemp(join(tmpdir(), 'svg-editor-cli-read-'));
+  t.after(() => rm(directory, { force: true, recursive: true }));
+  const validPath = 'valid input.svg';
+  const invalidPath = 'invalid.svg';
+  await writeFile(
+    join(directory, validPath),
+    '<svg width="100" height="80"><rect id="box" x="1" y="2" width="3" height="4" fill="#fff"/></svg>',
+  );
+  await writeFile(
+    join(directory, invalidPath),
+    '<svg width="100" height="80"><rect id="bad" x="0" y="0" width="0" height="1"/></svg>',
+  );
+
+  const result = await runCli(
+    [
+      `read "${validPath}"`,
+      'tree',
+      'show box',
+      'create rect after 5 6 7 8',
+      'undo',
+      'undo',
+      `read "${invalidPath}"`,
+      'tree',
+      'redo',
+      'undo',
+      'read "missing.svg"',
+      'redo',
+      'tree',
+    ].join('\n'),
+    directory,
+  );
+
+  assert.equal(result.code, 0);
+  assert.equal(result.stderr, '');
+  assert.equal(
+    result.stdout,
+    [
+      `read ${validPath} (1 elements)`,
+      'svg (100x80)',
+      '└── rect#box  x=1 y=2 w=3 h=4 fill=#fff',
+      'rect#box  parent=svg',
+      '  x=1 y=2 width=3 height=4',
+      '  fill=#fff',
+      'rect#after created',
+      'rect#after removed',
+      'error: nothing to undo',
+      'error: rect width must be positive',
+      'svg (100x80)',
+      '└── rect#box  x=1 y=2 w=3 h=4 fill=#fff',
+      'rect#after created',
+      'rect#after removed',
+      'error: cannot read file: missing.svg',
+      'rect#after created',
+      'svg (100x80)',
+      '├── rect#box    x=1 y=2 w=3 h=4 fill=#fff',
+      '└── rect#after  x=5 y=6 w=7 h=8',
       '',
     ].join('\n'),
   );

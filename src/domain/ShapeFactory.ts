@@ -16,6 +16,15 @@ export class ShapeFactory {
   private static readonly LINE_SYNTAX = 'line <id> <x1> <y1> <x2> <y2> [stroke]';
   private static readonly RECT_SYNTAX = 'rect <id> <x> <y> <w> <h> [fill]';
   private static readonly TEXT_SYNTAX = 'text <id> <x> <y> <content>';
+  private static readonly SVG_COMMON_ATTRIBUTES = ['fill', 'stroke', 'stroke-width', 'id'] as const;
+  private static readonly SVG_ELEMENTS = new Set([
+    'circle',
+    'ellipse',
+    'g',
+    'line',
+    'rect',
+    'text',
+  ]);
 
   public create(type: string, id: string, args: readonly string[]): Shape {
     switch (type) {
@@ -38,6 +47,35 @@ export class ShapeFactory {
 
   public createGroup(id: string): Group {
     return new Group(id);
+  }
+
+  public isSvgElement(type: string): boolean {
+    return ShapeFactory.SVG_ELEMENTS.has(type);
+  }
+
+  public createFromSvg(
+    type: string,
+    id: string,
+    attributes: ReadonlyMap<string, string>,
+    text: string = '',
+  ): Shape {
+    switch (type) {
+      case 'circle':
+        return this.createCircleFromSvg(id, attributes);
+      case 'ellipse':
+        return this.createEllipseFromSvg(id, attributes);
+      case 'g':
+        this.assertSvgAttributes(type, attributes, []);
+        return this.applySvgStyle(new Group(id), attributes);
+      case 'line':
+        return this.createLineFromSvg(id, attributes);
+      case 'rect':
+        return this.createRectFromSvg(id, attributes);
+      case 'text':
+        return this.createTextFromSvg(id, attributes, text);
+      default:
+        throw new DomainError(`unsupported element: ${type}`);
+    }
   }
 
   private createCircle(id: string, args: readonly string[]): Circle {
@@ -166,5 +204,108 @@ export class ShapeFactory {
     }
 
     return new Text(id, NumberParser.parse(xToken), NumberParser.parse(yToken), content);
+  }
+
+  private createCircleFromSvg(id: string, attributes: ReadonlyMap<string, string>): Circle {
+    this.assertSvgAttributes('circle', attributes, ['cx', 'cy', 'r']);
+    return this.applySvgStyle(
+      new Circle(
+        id,
+        this.svgNumber(attributes, 'cx'),
+        this.svgNumber(attributes, 'cy'),
+        this.svgNumber(attributes, 'r'),
+      ),
+      attributes,
+    );
+  }
+
+  private createEllipseFromSvg(id: string, attributes: ReadonlyMap<string, string>): Ellipse {
+    this.assertSvgAttributes('ellipse', attributes, ['cx', 'cy', 'rx', 'ry']);
+    return this.applySvgStyle(
+      new Ellipse(
+        id,
+        this.svgNumber(attributes, 'cx'),
+        this.svgNumber(attributes, 'cy'),
+        this.svgNumber(attributes, 'rx'),
+        this.svgNumber(attributes, 'ry'),
+      ),
+      attributes,
+    );
+  }
+
+  private createLineFromSvg(id: string, attributes: ReadonlyMap<string, string>): Line {
+    this.assertSvgAttributes('line', attributes, ['x1', 'y1', 'x2', 'y2']);
+    return this.applySvgStyle(
+      new Line(
+        id,
+        this.svgNumber(attributes, 'x1'),
+        this.svgNumber(attributes, 'y1'),
+        this.svgNumber(attributes, 'x2'),
+        this.svgNumber(attributes, 'y2'),
+      ),
+      attributes,
+    );
+  }
+
+  private createRectFromSvg(id: string, attributes: ReadonlyMap<string, string>): Rect {
+    this.assertSvgAttributes('rect', attributes, ['x', 'y', 'width', 'height']);
+    return this.applySvgStyle(
+      new Rect(
+        id,
+        this.svgNumber(attributes, 'x'),
+        this.svgNumber(attributes, 'y'),
+        this.svgNumber(attributes, 'width'),
+        this.svgNumber(attributes, 'height'),
+      ),
+      attributes,
+    );
+  }
+
+  private createTextFromSvg(
+    id: string,
+    attributes: ReadonlyMap<string, string>,
+    content: string,
+  ): Text {
+    this.assertSvgAttributes('text', attributes, ['x', 'y']);
+    return this.applySvgStyle(
+      new Text(id, this.svgNumber(attributes, 'x'), this.svgNumber(attributes, 'y'), content),
+      attributes,
+    );
+  }
+
+  private svgNumber(attributes: ReadonlyMap<string, string>, name: string): number {
+    return NumberParser.parse(attributes.get(name) ?? '0');
+  }
+
+  private applySvgStyle<T extends Shape>(shape: T, attributes: ReadonlyMap<string, string>): T {
+    for (const name of ['fill', 'stroke', 'stroke-width'] as const) {
+      const value = attributes.get(name);
+      if (value !== undefined) {
+        shape.setAttribute(name, value);
+      }
+    }
+
+    return shape;
+  }
+
+  private assertSvgAttributes(
+    type: string,
+    attributes: ReadonlyMap<string, string>,
+    geometry: readonly string[],
+  ): void {
+    const supported = new Set([...ShapeFactory.SVG_COMMON_ATTRIBUTES, ...geometry]);
+    for (const name of attributes.keys()) {
+      if (name === 'transform') {
+        throw new DomainError(`unsupported transform on ${type}`);
+      }
+
+      if (name === 'style' || name.startsWith('on')) {
+        throw new DomainError(`unsupported attribute: ${name}`);
+      }
+
+      if (!supported.has(name)) {
+        throw new DomainError(`unsupported attribute: ${name}`);
+      }
+    }
   }
 }
