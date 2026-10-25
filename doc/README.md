@@ -1,6 +1,6 @@
 # Lab1 Phase 1：课程报告与过程记录
 
-状态：Ticket 01–19 已实现并通过本地验收，其中 Ticket 06 通过 [PR #29](https://github.com/NQC233/svg-editor-lab1/pull/29)、Ticket 07 通过 [PR #30](https://github.com/NQC233/svg-editor-lab1/pull/30)、Ticket 08 通过 [PR #31](https://github.com/NQC233/svg-editor-lab1/pull/31)、Ticket 14 通过 [PR #37](https://github.com/NQC233/svg-editor-lab1/pull/37)、Ticket 16 通过 [PR #38](https://github.com/NQC233/svg-editor-lab1/pull/38)、Ticket 17 通过 [PR #40](https://github.com/NQC233/svg-editor-lab1/pull/40)、Ticket 18 通过 [PR #41](https://github.com/NQC233/svg-editor-lab1/pull/41) 合入 `main`。Ticket 01–19 已于 2026-10-25 完成实现与验收；测试累计 134 个。`final` 标签待课程截止时间与最终提交时点确认。本报告继续把“计划”和“已实现”分开记录。
+状态：Ticket 01–19 已实现并通过本地验收，其中 Ticket 06 通过 [PR #29](https://github.com/NQC233/svg-editor-lab1/pull/29)、Ticket 07 通过 [PR #30](https://github.com/NQC233/svg-editor-lab1/pull/30)、Ticket 08 通过 [PR #31](https://github.com/NQC233/svg-editor-lab1/pull/31)、Ticket 14 通过 [PR #37](https://github.com/NQC233/svg-editor-lab1/pull/37)、Ticket 16 通过 [PR #38](https://github.com/NQC233/svg-editor-lab1/pull/38)、Ticket 17 通过 [PR #40](https://github.com/NQC233/svg-editor-lab1/pull/40)、Ticket 18 通过 [PR #41](https://github.com/NQC233/svg-editor-lab1/pull/41)、Ticket 19 通过 [PR #42](https://github.com/NQC233/svg-editor-lab1/pull/42) 提交。Ticket 01–19 已于 2026-10-25 完成实现与验收；测试累计 134 个。`final` 标签待课程截止时间与最终提交时点确认。本报告继续把“计划”和“已实现”分开记录。
 
 需求依据：[课程原始要求](../phase_cli_1.md)。
 
@@ -548,7 +548,7 @@ package "shared" {
 - 帮助文案改为 `Phase 1 implementation`，避免在 19 张票完成后仍声称只是部分实现；`CommandCatalog` 与 `ShapeFactory` 之外仍无新增按名字分派。
 - 验证：`npm run check` 通过（类型检查、格式检查、134 个测试、构建）。`npm run cli` 与构建后的 `npm start` 对同一 9 元素流程图脚本 stdout 逐字节一致，stderr 均为空；切换 `front start` 后的 tree 与 SVG 顺序一致。
 - 人工预览：用 macOS Quick Look 将实际 CLI 在临时目录写出的 640×360 SVG 渲染为 PNG 并检查。蓝色矩形、橙色圆、绿色椭圆、两条连线与中文“检查/完成”均正常显示；蓝色矩形覆盖其“开始”标签，和 `front start` 后最后绘制的语义一致。临时文件未提交。
-- 小步提交保留为 `07bda1b`（最终验收测试与帮助文案）；报告和数据修正单独提交。
+- 小步提交保留为 `07bda1b`（最终验收测试与帮助文案）、`82122d4`（报告与证据）、`d57616c`（架构状态审查修正）；Ticket 19 通过 [PR #42](https://github.com/NQC233/svg-editor-lab1/pull/42) 提交。
 - 未验证/未执行边界：尚未创建或推送 `final` 标签，因为本会话没有课程截止时间，且“最终提交时点”仍需用户确认；这不影响已完成的本地实现与验收。
 
 ## 一致性自查
