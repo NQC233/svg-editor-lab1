@@ -137,3 +137,28 @@ test('[spec 6.10, 6.13] a failed overwrite preserves the current path and histor
   assert.deepEqual(dispatcher.dispatch(['save']), [`saved to ${file} (2 elements)`]);
   assert.match(await readFile(file, 'utf8'), /<rect id="b"/);
 });
+
+test('[spec 6.10, 6.13] a successful save clears and locks history', async (t) => {
+  const directory = await mkdtemp(join(tmpdir(), 'svg-editor-save-barrier-'));
+  t.after(() => rm(directory, { force: true, recursive: true }));
+  const file = join(directory, 'barrier.svg');
+  const dispatcher = createDispatcher();
+
+  dispatcher.dispatch(['init', '100', '80']);
+  dispatcher.dispatch(['create', 'rect', 'a', '1', '2', '3', '4']);
+  dispatcher.dispatch(['save', file]);
+
+  assert.throws(
+    () => dispatcher.dispatch(['undo']),
+    new DomainError('undo not allowed after io command'),
+  );
+  assert.throws(
+    () => dispatcher.dispatch(['redo']),
+    new DomainError('undo not allowed after io command'),
+  );
+
+  dispatcher.dispatch(['create', 'rect', 'b', '5', '6', '7', '8']);
+  assert.deepEqual(dispatcher.dispatch(['undo']), ['rect#b removed']);
+  assert.throws(() => dispatcher.dispatch(['undo']), new DomainError('nothing to undo'));
+  assert.deepEqual(dispatcher.dispatch(['redo']), ['rect#b created']);
+});
