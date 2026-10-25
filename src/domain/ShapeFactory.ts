@@ -1,18 +1,22 @@
 import { DomainError } from '../shared/DomainError.js';
 import { NumberParser } from '../shared/NumberParser.js';
 import { Circle } from './Circle.js';
+import { Ellipse } from './Ellipse.js';
 import { Rect } from './Rect.js';
 import type { Shape } from './Shape.js';
 import { ShapeUsageError } from './ShapeUsageError.js';
 
 export class ShapeFactory {
   private static readonly CIRCLE_SYNTAX = 'circle <id> <cx> <cy> <r> [fill]';
+  private static readonly ELLIPSE_SYNTAX = 'ellipse <id> <cx> <cy> <rx> <ry> [fill]';
   private static readonly RECT_SYNTAX = 'rect <id> <x> <y> <w> <h> [fill]';
 
   public create(type: string, id: string, args: readonly string[]): Shape {
     switch (type) {
       case 'circle':
         return this.createCircle(id, args);
+      case 'ellipse':
+        return this.createEllipse(id, args);
       case 'rect':
         return this.createRect(id, args);
       default:
@@ -38,6 +42,34 @@ export class ShapeFactory {
       NumberParser.parse(centerYToken),
       NumberParser.parse(radiusToken),
       args[3],
+    );
+  }
+
+  private createEllipse(id: string, args: readonly string[]): Ellipse {
+    if (args.length < 4 || args.length > 5) {
+      throw new ShapeUsageError(ShapeFactory.ELLIPSE_SYNTAX);
+    }
+
+    const centerXToken = args[0];
+    const centerYToken = args[1];
+    const radiusXToken = args[2];
+    const radiusYToken = args[3];
+    if (
+      centerXToken === undefined ||
+      centerYToken === undefined ||
+      radiusXToken === undefined ||
+      radiusYToken === undefined
+    ) {
+      throw new ShapeUsageError(ShapeFactory.ELLIPSE_SYNTAX);
+    }
+
+    return new Ellipse(
+      id,
+      NumberParser.parse(centerXToken),
+      NumberParser.parse(centerYToken),
+      NumberParser.parse(radiusXToken),
+      NumberParser.parse(radiusYToken),
+      args[4],
     );
   }
 
