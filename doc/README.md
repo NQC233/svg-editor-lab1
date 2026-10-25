@@ -1,6 +1,6 @@
 # Lab1 Phase 1：课程报告与过程记录
 
-状态：Ticket 01–07 已实现并通过本地验收，其中 Ticket 06 通过 [PR #29](https://github.com/NQC233/svg-editor-lab1/pull/29) 交付 `main`；Ticket 15 已于 2026-10-25 完成实现与验收；测试累计 54 个。其余 11 张票仍是计划。本报告继续把“计划”和“已实现”分开记录。
+状态：Ticket 01–07 已实现并通过本地验收，其中 Ticket 06 通过 [PR #29](https://github.com/NQC233/svg-editor-lab1/pull/29)、Ticket 07 通过 [PR #30](https://github.com/NQC233/svg-editor-lab1/pull/30) 交付 `main`；Ticket 15 已于 2026-10-25 完成实现与验收；测试累计 54 个。其余 11 张票仍是计划。本报告继续把“计划”和“已实现”分开记录。
 
 需求依据：[课程原始要求](../phase_cli_1.md)。
 
@@ -399,6 +399,7 @@ package "shared" {
 - 真实 CLI 回放 `init → 多层 g/rect/text → move node → tree → undo/redo → 零增量 → 三类失败 → tree`，断言成功输出、错误前缀及最终树；`npm run cli` 与构建后的 `npm start` 输出完全一致，stderr 为空。
 - 双轴审查发现初版把移动摘要放进领域图形，以及浮点加法可能产生“计算成功但几何未变”的伪编辑。修正后摘要移到 `MoveCommand`，`GeometrySnapshot.matchesCurrent()` 在实际移动后判断几何是否真的改变；新增 `1e20 + 1` 精度回归，并在真实 CLI 失败链后追加 undo/redo 以证明历史未被破坏。
 - 验证：`npm run check` 通过（类型、格式、54 个测试、构建）。
+- Ticket 07 通过 [PR #30](https://github.com/NQC233/svg-editor-lab1/pull/30) 向 `main` 交付；Issue #7 随 PR 关联关闭。
 - 本票未实现 scale/set/delete/group/ungroup/addto/front/back、SVG IO 或完整 Phase 1 验收。
 
 ## 一致性自查
