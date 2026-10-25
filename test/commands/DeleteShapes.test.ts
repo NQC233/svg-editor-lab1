@@ -84,3 +84,28 @@ test('[spec 5.2, 6.2, 9] releases and restores every id in a nested container su
     new DomainError('no such shape: nested'),
   );
 });
+
+test('[spec 3.3, 6.2, 9] rejects invalid deletes without changing the tree or redo', () => {
+  const dispatcher = createDispatcher();
+
+  dispatcher.dispatch(['init', '800', '600']);
+  dispatcher.dispatch(['create', 'rect', 'a', '0', '0', '10', '10']);
+  dispatcher.dispatch(['create', 'rect', 'b', '20', '20', '10', '10']);
+  assert.deepEqual(dispatcher.dispatch(['undo']), ['rect#b removed']);
+
+  assert.throws(() => dispatcher.dispatch(['delete']), new DomainError('usage: delete <id>'));
+  assert.throws(
+    () => dispatcher.dispatch(['delete', 'a', 'extra']),
+    new DomainError('usage: delete <id>'),
+  );
+  assert.throws(
+    () => dispatcher.dispatch(['delete', 'missing']),
+    new DomainError('no such shape: missing'),
+  );
+
+  assert.deepEqual(dispatcher.dispatch(['tree']), [
+    'svg (800x600)',
+    '└── rect#a  x=0 y=0 w=10 h=10',
+  ]);
+  assert.deepEqual(dispatcher.dispatch(['redo']), ['rect#b created']);
+});
