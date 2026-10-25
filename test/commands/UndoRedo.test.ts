@@ -1,44 +1,8 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 
-import { CommandContext } from '../../src/commands/CommandContext.js';
-import { CommandHistory } from '../../src/commands/CommandHistory.js';
-import { CommandInvoker } from '../../src/commands/CommandInvoker.js';
-import { CanvasCommand } from '../../src/commands/CanvasCommand.js';
-import { CreateCommand } from '../../src/commands/CreateCommand.js';
-import { HelpCommand } from '../../src/commands/HelpCommand.js';
-import { InitCommand } from '../../src/commands/InitCommand.js';
-import { RedoCommand } from '../../src/commands/RedoCommand.js';
-import { ShowCommand } from '../../src/commands/ShowCommand.js';
-import { TreeCommand } from '../../src/commands/TreeCommand.js';
-import { UndoCommand } from '../../src/commands/UndoCommand.js';
-import { CommandCatalog } from '../../src/cli/CommandCatalog.js';
-import { CommandDispatcher } from '../../src/cli/CommandDispatcher.js';
-import { ShowFormatter } from '../../src/display/ShowFormatter.js';
-import { TreeFormatter } from '../../src/display/TreeFormatter.js';
-import { ShapeFactory } from '../../src/domain/ShapeFactory.js';
 import { DomainError } from '../../src/shared/DomainError.js';
-
-function createDispatcher(): CommandDispatcher {
-  const history = new CommandHistory();
-  const context = new CommandContext({
-    history,
-    shapeFactory: new ShapeFactory(),
-    showFormatter: new ShowFormatter(),
-    treeFormatter: new TreeFormatter(),
-  });
-  const catalog = new CommandCatalog([
-    ['init', () => new InitCommand()],
-    ['canvas', () => new CanvasCommand()],
-    ['create', () => new CreateCommand()],
-    ['tree', () => new TreeCommand()],
-    ['show', () => new ShowCommand()],
-    ['help', () => new HelpCommand()],
-    ['undo', () => new UndoCommand()],
-    ['redo', () => new RedoCommand()],
-  ]);
-  return new CommandDispatcher(catalog, new CommandInvoker(context));
-}
+import { createDispatcher } from '../support/createDispatcher.js';
 
 test('[spec 6.1, 6.10, 6.11, 9] undoes and redoes a rectangle without changing its order', () => {
   const dispatcher = createDispatcher();

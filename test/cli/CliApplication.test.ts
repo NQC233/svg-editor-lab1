@@ -5,24 +5,9 @@ import { fileURLToPath } from 'node:url';
 import test from 'node:test';
 
 import { CliApplication } from '../../src/cli/CliApplication.js';
-import { CommandCatalog } from '../../src/cli/CommandCatalog.js';
-import { CommandDispatcher } from '../../src/cli/CommandDispatcher.js';
 import { ConsoleOutput } from '../../src/cli/ConsoleOutput.js';
 import { LineTokenizer } from '../../src/cli/LineTokenizer.js';
-import { CanvasCommand } from '../../src/commands/CanvasCommand.js';
-import { CommandContext } from '../../src/commands/CommandContext.js';
-import { CommandHistory } from '../../src/commands/CommandHistory.js';
-import { CommandInvoker } from '../../src/commands/CommandInvoker.js';
-import { CreateCommand } from '../../src/commands/CreateCommand.js';
-import { HelpCommand } from '../../src/commands/HelpCommand.js';
-import { InitCommand } from '../../src/commands/InitCommand.js';
-import { RedoCommand } from '../../src/commands/RedoCommand.js';
-import { ShowCommand } from '../../src/commands/ShowCommand.js';
-import { TreeCommand } from '../../src/commands/TreeCommand.js';
-import { UndoCommand } from '../../src/commands/UndoCommand.js';
-import { ShowFormatter } from '../../src/display/ShowFormatter.js';
-import { TreeFormatter } from '../../src/display/TreeFormatter.js';
-import { ShapeFactory } from '../../src/domain/ShapeFactory.js';
+import { createDispatcher } from '../support/createDispatcher.js';
 
 const projectRoot = fileURLToPath(new URL('../..', import.meta.url));
 
@@ -57,27 +42,6 @@ async function runCli(input: string): Promise<RunResult> {
   });
 
   return { code, stderr, stdout };
-}
-
-function createDispatcher(): CommandDispatcher {
-  const history = new CommandHistory();
-  const context = new CommandContext({
-    history,
-    shapeFactory: new ShapeFactory(),
-    showFormatter: new ShowFormatter(),
-    treeFormatter: new TreeFormatter(),
-  });
-  const catalog = new CommandCatalog([
-    ['init', () => new InitCommand()],
-    ['canvas', () => new CanvasCommand()],
-    ['create', () => new CreateCommand()],
-    ['tree', () => new TreeCommand()],
-    ['show', () => new ShowCommand()],
-    ['help', () => new HelpCommand()],
-    ['undo', () => new UndoCommand()],
-    ['redo', () => new RedoCommand()],
-  ]);
-  return new CommandDispatcher(catalog, new CommandInvoker(context));
 }
 
 test('[spec 4.1-4.3, 6.11, 6.14, 6.17] runs a scripted empty-canvas session through EOF', async () => {

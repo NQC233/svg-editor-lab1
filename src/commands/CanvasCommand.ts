@@ -2,14 +2,9 @@ import { DomainError } from '../shared/DomainError.js';
 import { NumberFormatter } from '../shared/NumberFormatter.js';
 import { Command } from './Command.js';
 import type { CommandContext } from './CommandContext.js';
-import { CommandKind } from './CommandKind.js';
 import { CommandResult } from './CommandResult.js';
 
 export class CanvasCommand extends Command {
-  public override get kind(): CommandKind {
-    return CommandKind.Display;
-  }
-
   public execute(context: CommandContext, args: readonly string[]): CommandResult {
     const document = context.requireDocument();
 

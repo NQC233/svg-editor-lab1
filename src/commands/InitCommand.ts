@@ -2,16 +2,11 @@ import { SvgDocument } from '../domain/SvgDocument.js';
 import { DomainError } from '../shared/DomainError.js';
 import { NumberFormatter } from '../shared/NumberFormatter.js';
 import { NumberParser } from '../shared/NumberParser.js';
-import { Command } from './Command.js';
 import type { CommandContext } from './CommandContext.js';
-import { CommandKind } from './CommandKind.js';
 import { CommandResult } from './CommandResult.js';
+import { DocumentCommand } from './DocumentCommand.js';
 
-export class InitCommand extends Command {
-  public override get kind(): CommandKind {
-    return CommandKind.Document;
-  }
-
+export class InitCommand extends DocumentCommand {
   public execute(context: CommandContext, args: readonly string[]): CommandResult {
     if (args.length > 2) {
       throw new DomainError('usage: init [w] [h]');
