@@ -1,18 +1,20 @@
 @startuml
-title 图形模型（Ticket 13 已落地部分）
+title 图形模型（Ticket 09 已落地部分）
 
 abstract class Shape {
   +get id(): string
   +get label(): string
   +get type(): string
+  +get fill(): string | undefined
+  +get stroke(): string | undefined
+  +get strokeWidth(): number | undefined
+  +setAttribute(attribute, value): ShapeAttributeSnapshot
   +movementAnchor(): Point | undefined
   +treeAttributes(): string
   +detailLines(): readonly string[]
 }
 
 abstract class LeafShape {
-  +get fill(): string | undefined
-  +get stroke(): string | undefined
   +movementAnchor(): Point
   +moveOwnGeometry(dx, dy): void
   +scaleOwnGeometry(factor): void
@@ -30,6 +32,14 @@ class Text
 class GeometrySnapshot {
   +restore(): void
   +matchesCurrent(): boolean
+}
+
+class ShapeAttributeSnapshot {
+  +get attribute(): string
+  +get changed(): boolean
+  +get updatedDescription(): string
+  +get restoredDescription(): string
+  +restore(): void
 }
 
 class Point {
@@ -87,10 +97,11 @@ SvgDocument --> UngroupSnapshot : captures and restores structure
 LeafShape ..> GeometrySnapshot : captures exact geometry
 LeafShape ..> Point : exposes movement anchor
 ShapeFactory ..> Shape : creates
+Shape ..> ShapeAttributeSnapshot : returns attribute memento
 @enduml
 
 @startuml
-title 命令与历史（Ticket 13 已落地部分）
+title 命令与历史（Ticket 09 已落地部分）
 
 abstract class Command {
   +execute(context, args): CommandResult
@@ -116,6 +127,7 @@ class DeleteCommand
 class UngroupCommand
 class MoveCommand
 class ScaleCommand
+class SetCommand
 class CanvasCommand
 class InitCommand
 class TreeCommand
@@ -131,6 +143,7 @@ EditCommand <|.. DeleteCommand
 EditCommand <|.. UngroupCommand
 EditCommand <|.. MoveCommand
 EditCommand <|.. ScaleCommand
+EditCommand <|.. SetCommand
 DocumentCommand <|.. CanvasCommand
 DocumentCommand <|.. InitCommand
 Command <|.. TreeCommand
@@ -151,4 +164,5 @@ DeleteCommand --> ShapePlacement : restores original position
 UngroupCommand --> UngroupSnapshot : restores original container
 MoveCommand --> GeometrySnapshot : keeps undo snapshots
 ScaleCommand --> GeometrySnapshot : keeps undo snapshots
+SetCommand --> ShapeAttributeSnapshot : keeps previous attribute
 @enduml
