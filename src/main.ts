@@ -12,6 +12,7 @@ import { HelpCommand } from './commands/HelpCommand.js';
 import { InitCommand } from './commands/InitCommand.js';
 import { MoveCommand } from './commands/MoveCommand.js';
 import { RedoCommand } from './commands/RedoCommand.js';
+import { ScaleCommand } from './commands/ScaleCommand.js';
 import { ShowCommand } from './commands/ShowCommand.js';
 import { TreeCommand } from './commands/TreeCommand.js';
 import { UndoCommand } from './commands/UndoCommand.js';
@@ -31,6 +32,7 @@ const catalog = new CommandCatalog([
   ['canvas', () => new CanvasCommand()],
   ['create', () => new CreateCommand()],
   ['move', () => new MoveCommand()],
+  ['scale', () => new ScaleCommand()],
   ['tree', () => new TreeCommand()],
   ['show', () => new ShowCommand()],
   ['help', () => new HelpCommand()],

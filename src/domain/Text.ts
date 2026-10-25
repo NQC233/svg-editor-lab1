@@ -42,6 +42,15 @@ export class Text extends LeafShape {
     this.yValue = y;
   }
 
+  public override scaleOwnGeometry(factor: number): void {
+    const x = this.xValue * factor;
+    const y = this.yValue * factor;
+    LeafShape.assertFinite(x);
+    LeafShape.assertFinite(y);
+    this.xValue = x;
+    this.yValue = y;
+  }
+
   public override snapshotGeometry(): GeometrySnapshot {
     const x = this.xValue;
     const y = this.yValue;

@@ -64,6 +64,21 @@ export class Line extends LeafShape {
     this.endYValue = endY;
   }
 
+  public override scaleOwnGeometry(factor: number): void {
+    const startX = this.startXValue * factor;
+    const startY = this.startYValue * factor;
+    const endX = this.endXValue * factor;
+    const endY = this.endYValue * factor;
+    LeafShape.assertFinite(startX);
+    LeafShape.assertFinite(startY);
+    LeafShape.assertFinite(endX);
+    LeafShape.assertFinite(endY);
+    this.startXValue = startX;
+    this.startYValue = startY;
+    this.endXValue = endX;
+    this.endYValue = endY;
+  }
+
   public override snapshotGeometry(): GeometrySnapshot {
     const startX = this.startXValue;
     const startY = this.startYValue;

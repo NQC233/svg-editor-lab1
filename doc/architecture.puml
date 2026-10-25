@@ -1,6 +1,6 @@
 @startuml
 skinparam componentStyle rectangle
-title SVG 编辑器 Phase 1 模块依赖（Ticket 07 已落地部分；其余规划）
+title SVG 编辑器 Phase 1 模块依赖（Ticket 08 已落地部分；其余规划）
 
 package "cli" {
   [CliApplication]
