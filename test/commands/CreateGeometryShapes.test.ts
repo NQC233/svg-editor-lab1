@@ -53,3 +53,30 @@ test('[spec 3.1, 5.2, 5.5, 5.6, 6.1, 6.10] creates and restores an unfilled elli
     '  cx=-1.5 cy=2.25 rx=30.5 ry=20',
   ]);
 });
+
+test('[spec 3.1, 5.1, 5.2, 5.5, 5.6, 6.1, 6.10] creates and restores a line with an optional stroke', () => {
+  const dispatcher = createDispatcher();
+
+  dispatcher.dispatch(['init', '400', '200']);
+  assert.deepEqual(
+    dispatcher.dispatch(['create', 'line', 'edge', '-10', '2.5', '30', '40', '#0a0']),
+    ['line#edge created'],
+  );
+  assert.deepEqual(dispatcher.dispatch(['show', 'edge']), [
+    'line#edge  parent=svg',
+    '  x1=-10 y1=2.5 x2=30 y2=40',
+    '  stroke=#0a0',
+  ]);
+  assert.deepEqual(dispatcher.dispatch(['tree']), [
+    'svg (400x200)',
+    '└── line#edge  (-10,2.5) -> (30,40)',
+  ]);
+
+  assert.deepEqual(dispatcher.dispatch(['undo']), ['line#edge removed']);
+  assert.deepEqual(dispatcher.dispatch(['redo']), ['line#edge created']);
+  assert.deepEqual(dispatcher.dispatch(['show', 'edge']), [
+    'line#edge  parent=svg',
+    '  x1=-10 y1=2.5 x2=30 y2=40',
+    '  stroke=#0a0',
+  ]);
+});

@@ -2,6 +2,7 @@ import { DomainError } from '../shared/DomainError.js';
 import { NumberParser } from '../shared/NumberParser.js';
 import { Circle } from './Circle.js';
 import { Ellipse } from './Ellipse.js';
+import { Line } from './Line.js';
 import { Rect } from './Rect.js';
 import type { Shape } from './Shape.js';
 import { ShapeUsageError } from './ShapeUsageError.js';
@@ -9,6 +10,7 @@ import { ShapeUsageError } from './ShapeUsageError.js';
 export class ShapeFactory {
   private static readonly CIRCLE_SYNTAX = 'circle <id> <cx> <cy> <r> [fill]';
   private static readonly ELLIPSE_SYNTAX = 'ellipse <id> <cx> <cy> <rx> <ry> [fill]';
+  private static readonly LINE_SYNTAX = 'line <id> <x1> <y1> <x2> <y2> [stroke]';
   private static readonly RECT_SYNTAX = 'rect <id> <x> <y> <w> <h> [fill]';
 
   public create(type: string, id: string, args: readonly string[]): Shape {
@@ -17,6 +19,8 @@ export class ShapeFactory {
         return this.createCircle(id, args);
       case 'ellipse':
         return this.createEllipse(id, args);
+      case 'line':
+        return this.createLine(id, args);
       case 'rect':
         return this.createRect(id, args);
       default:
@@ -69,6 +73,34 @@ export class ShapeFactory {
       NumberParser.parse(centerYToken),
       NumberParser.parse(radiusXToken),
       NumberParser.parse(radiusYToken),
+      args[4],
+    );
+  }
+
+  private createLine(id: string, args: readonly string[]): Line {
+    if (args.length < 4 || args.length > 5) {
+      throw new ShapeUsageError(ShapeFactory.LINE_SYNTAX);
+    }
+
+    const startXToken = args[0];
+    const startYToken = args[1];
+    const endXToken = args[2];
+    const endYToken = args[3];
+    if (
+      startXToken === undefined ||
+      startYToken === undefined ||
+      endXToken === undefined ||
+      endYToken === undefined
+    ) {
+      throw new ShapeUsageError(ShapeFactory.LINE_SYNTAX);
+    }
+
+    return new Line(
+      id,
+      NumberParser.parse(startXToken),
+      NumberParser.parse(startYToken),
+      NumberParser.parse(endXToken),
+      NumberParser.parse(endYToken),
       args[4],
     );
   }
