@@ -1,6 +1,6 @@
 # Lab1 Phase 1：课程报告与过程记录
 
-状态：Ticket 01–04 已合入 `main`，其中 Ticket 04 通过 [PR #25](https://github.com/NQC233/svg-editor-lab1/pull/25) 合并；Ticket 05 已完成实现与本地验收，待 PR 合并；测试累计 34 个。其余 14 张票仍是计划。本报告继续把“计划”和“已实现”分开记录。
+状态：Ticket 01–05 已合入 `main`，其中 Ticket 04 通过 [PR #25](https://github.com/NQC233/svg-editor-lab1/pull/25) 合并，Ticket 05 通过 [PR #27](https://github.com/NQC233/svg-editor-lab1/pull/27) 合并；测试累计 34 个。其余 14 张票仍是计划。本报告继续把“计划”和“已实现”分开记录。
 
 需求依据：[课程原始要求](../phase_cli_1.md)。
 
@@ -363,11 +363,12 @@ package "shared" {
 - 分词器改为生成 `CommandToken`，保留每个 token 是否来自引号段的信息；命令层新增 `CommandArguments` 作为只读参数封装，所有命令通过值访问参数。这样 Ticket06 解析未加引号的 `in` 后缀时，不会把 `create text … "in"` 的内容误判为语法关键字，同时保持 `commands` 不依赖 `cli`。
 - 双轴审查发现文档状态未同步、换行/控制字符转义缺少直接测试，以及分词测试重复投影逻辑。已更新 README、任务计划、测试说明和本报告，补齐转义测试并提取测试辅助函数；`CommandToken.quoted` 暂无生产消费者，但由 Ticket06 的已记录接口需求保留。
 - 验证：`npm run check` 通过（类型、格式、34 个测试、构建）；`npm run cli` 与构建后的 `npm start` 使用同一文本脚本回放创建、tree/show、undo/redo，去掉 npm 自身脚本横幅后应用输出一致，stderr 为空。
+- Ticket 05 通过 [PR #27](https://github.com/NQC233/svg-editor-lab1/pull/27) 合入 `main`；Issue #5 随 PR 关闭。
 - 本票未实现 `g`、`create … in`、move/scale/set、SVG IO 或带参数 `canvas`；这些仍由后续票负责。
 
 ## 一致性自查
 
-当前状态为“Ticket 01–04 已合入 `main` 并验证；Ticket 05 已实现并通过本地验收，待 PR 合并；其余能力仍为计划”。
+当前状态为“Ticket 01–05 已合入 `main` 并验证；其余能力仍为计划”。
 
 1. **模块划分**：已落地 `src/shared/`（错误与数值）、`src/domain/`（`Shape`、`LeafShape`、`Rect`、`Circle`、`Ellipse`、`Line`、`Text`、`ShapeFactory`、`SvgDocument`）、`src/display/`（`TreeFormatter`、`ShowFormatter`、`DisplayWidth`）、`src/commands/`（命令、token/参数封装、结果、历史、上下文、执行器、create/tree/show/undo/redo）、`src/cli/`（分词、命令表、分发、REPL、输出）与 `src/main.ts`（组合根）。`io/`、容器和其余编辑命令仍为计划，与当前票边界一致。
 2. **依赖方向**：抽查 import 后，`domain` 只依赖 `shared`；`display` 依赖 `domain` 和 `shared`；`commands` 依赖 `domain`、`display` 和 `shared`；`cli` 依赖 `commands` 和 `shared`；`main` 装配全部模块。`commands` 不 import `cli`，`cli` 不直接 import `domain`/`display`，未发现循环依赖。
