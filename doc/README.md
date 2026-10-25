@@ -385,5 +385,6 @@ package "shared" {
 - Ticket 03 的真实开发入口和构建入口回放同一脚本：`init 320 240`、`create rect r1 10 20 30 40 #4a90d9`、`undo`、`tree`、`redo`、`show r1`、失败的 `init 0 1`、`undo`；两者输出一致，失败初始化后仍可撤销 `r1`。
 - 真实开发入口 `npm run cli` 已回放 `init 320 240`、`create rect r1 10 20 40 30 #4a90d9`、`show r1`、`tree`；构建入口 `npm start` 已回放相同创建与显示链路，均无 stderr 输出。
 - Ticket 04 的 `npm run check` 通过：类型检查、格式检查、27 个测试和构建全部成功。命令测试覆盖三种类型的成功、失败和历史边界；真实 CLI 测试通过独立进程回放创建、tree/show、undo/redo 和失败后继续撤销。
+- Ticket 04 的开发入口与构建入口使用同一脚本回放：`init 320 240`、创建圆/椭圆/直线、`tree`、`undo`、`redo`、`show edge`、失败的零半径椭圆、再次 `undo`；`npm run cli` 与 `npm start` 输出一致。
 - 脚本回放测试通过 spawn 运行 `src/main.ts`，断言空白/注释、成功输出、错误前缀、颜色参数、失败前后树一致、无横幅/提示符和 EOF 正常退出；TTY 模式通过注入终端流验证横幅、`svg> ` 提示符、stdout 错误和结果。
 - 当前完成 Ticket 01–04 的功能实现。历史基础设施已接入矩形、圆、椭圆和直线的创建；文本、容器、IO 和其余编辑命令仍未实现；带参数 `canvas` 在 Ticket 15 前不可用。这些限制不能由本票测试通过覆盖。
