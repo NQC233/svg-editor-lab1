@@ -1,6 +1,6 @@
 # Lab1 Phase 1：课程报告与过程记录
 
-状态：Ticket 01–19 已实现并通过本地验收，其中 Ticket 06 通过 [PR #29](https://github.com/NQC233/svg-editor-lab1/pull/29)、Ticket 07 通过 [PR #30](https://github.com/NQC233/svg-editor-lab1/pull/30)、Ticket 08 通过 [PR #31](https://github.com/NQC233/svg-editor-lab1/pull/31)、Ticket 14 通过 [PR #37](https://github.com/NQC233/svg-editor-lab1/pull/37)、Ticket 16 通过 [PR #38](https://github.com/NQC233/svg-editor-lab1/pull/38)、Ticket 17 通过 [PR #40](https://github.com/NQC233/svg-editor-lab1/pull/40)、Ticket 18 通过 [PR #41](https://github.com/NQC233/svg-editor-lab1/pull/41) 合入 `main`。Ticket 01–19 已于 2026-10-25 完成实现与验收；测试累计 134 个。本报告继续把“计划”和“已实现”分开记录。
+状态：Ticket 01–19 已实现并通过本地验收，其中 Ticket 06 通过 [PR #29](https://github.com/NQC233/svg-editor-lab1/pull/29)、Ticket 07 通过 [PR #30](https://github.com/NQC233/svg-editor-lab1/pull/30)、Ticket 08 通过 [PR #31](https://github.com/NQC233/svg-editor-lab1/pull/31)、Ticket 14 通过 [PR #37](https://github.com/NQC233/svg-editor-lab1/pull/37)、Ticket 16 通过 [PR #38](https://github.com/NQC233/svg-editor-lab1/pull/38)、Ticket 17 通过 [PR #40](https://github.com/NQC233/svg-editor-lab1/pull/40)、Ticket 18 通过 [PR #41](https://github.com/NQC233/svg-editor-lab1/pull/41) 合入 `main`。Ticket 01–19 已于 2026-10-25 完成实现与验收；测试累计 134 个。`final` 标签待课程截止时间与最终提交时点确认。本报告继续把“计划”和“已实现”分开记录。
 
 需求依据：[课程原始要求](../phase_cli_1.md)。
 
@@ -56,7 +56,7 @@ src/
 ```plantuml
 @startuml
 skinparam componentStyle rectangle
-title SVG 编辑器 Phase 1 模块依赖（当前已实现部分，截至 Ticket 18；其余规划）
+title SVG 编辑器 Phase 1 模块依赖（当前已实现部分，截至 Ticket 19）
 
 package "cli" {
   [CliApplication]
@@ -553,7 +553,7 @@ package "shared" {
 
 ## 一致性自查
 
-当前状态为“Ticket 01–19 已实现并通过本地验收；134 个测试真实执行通过”。
+当前状态为“Ticket 01–19 已实现并通过本地验收；134 个测试真实执行通过；`final` 标签待确认”。
 
 1. **模块划分**：已落地 `src/shared/`（错误与数值）、`src/domain/`（`Shape`、`LeafShape`、`Container`、`Group`、`Rect`、`Circle`、`Ellipse`、`Line`、`Text`、`GeometrySnapshot`、`ShapeAttributeSnapshot`、`UnmodeledAttributes`、`UngroupSnapshot`、`GroupSnapshot`、`GroupedShapePlacement`、`Point`、`ShapePlacement`、`ShapeFactory`、`SvgDocument`）、`src/io/`（`XmlNode`、`XmlElement`、`XmlText`、`XmlDocument`、`XmlParser`、`SvgIdAllocator`、`SvgIdAllocation`、`SvgReader`、`SvgReadResult`、`SvgWriter`、`XmlEscaper`）、`src/display/`（`TreeFormatter`、`ShowFormatter`、`DisplayWidth`）、`src/commands/`（命令、token/参数封装、结果、历史、上下文、执行器、create/delete/group/ungroup/addto/front/back/move/scale/set/read/save/canvas/tree/show/undo/redo）、`src/cli/`（分词、命令表、分发、REPL、输出）与 `src/main.ts`（组合根）。实际目录与规划一致。
 2. **依赖方向**：抽查 import 后，`domain` 只依赖 `shared`；`io` 只依赖 `domain` 和 `shared`；`display` 依赖 `domain` 和 `shared`；`commands` 通过 `CommandContext` 注入 `SvgReader`/`SvgWriter`，依赖 `domain`、`io`、`display` 和 `shared`；`cli` 依赖 `commands` 和 `shared`；`main` 装配 `ShapeFactory`、`SvgIdAllocator`、`SvgReader` 等全部依赖。`commands` 不 import `cli`，`cli` 不直接 import `domain`/`io`/`display`，未发现循环依赖。
