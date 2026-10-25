@@ -1,6 +1,7 @@
 import { NumberFormatter } from '../shared/NumberFormatter.js';
 import { GeometrySnapshot } from './GeometrySnapshot.js';
 import { LeafShape } from './LeafShape.js';
+import { Point } from './Point.js';
 
 export class Text extends LeafShape {
   private xValue: number;
@@ -44,18 +45,17 @@ export class Text extends LeafShape {
   public override snapshotGeometry(): GeometrySnapshot {
     const x = this.xValue;
     const y = this.yValue;
-    return new GeometrySnapshot(() => {
-      this.xValue = x;
-      this.yValue = y;
-    });
+    return new GeometrySnapshot(
+      () => {
+        this.xValue = x;
+        this.yValue = y;
+      },
+      () => this.xValue === x && this.yValue === y,
+    );
   }
 
-  public override movedMessage(_dx: number, _dy: number): string {
-    return `${this.label} moved to (${NumberFormatter.format(this.x)},${NumberFormatter.format(this.y)})`;
-  }
-
-  public override moveBackMessage(_dx: number, _dy: number): string {
-    return `${this.label} moved back to (${NumberFormatter.format(this.x)},${NumberFormatter.format(this.y)})`;
+  public override movementAnchor(): Point {
+    return new Point(this.x, this.y);
   }
 
   public override treeAttributes(): string {

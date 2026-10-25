@@ -1,6 +1,7 @@
 import { NumberFormatter } from '../shared/NumberFormatter.js';
 import { GeometrySnapshot } from './GeometrySnapshot.js';
 import { LeafShape } from './LeafShape.js';
+import { Point } from './Point.js';
 
 export class Line extends LeafShape {
   private startXValue: number;
@@ -68,20 +69,23 @@ export class Line extends LeafShape {
     const startY = this.startYValue;
     const endX = this.endXValue;
     const endY = this.endYValue;
-    return new GeometrySnapshot(() => {
-      this.startXValue = startX;
-      this.startYValue = startY;
-      this.endXValue = endX;
-      this.endYValue = endY;
-    });
+    return new GeometrySnapshot(
+      () => {
+        this.startXValue = startX;
+        this.startYValue = startY;
+        this.endXValue = endX;
+        this.endYValue = endY;
+      },
+      () =>
+        this.startXValue === startX &&
+        this.startYValue === startY &&
+        this.endXValue === endX &&
+        this.endYValue === endY,
+    );
   }
 
-  public override movedMessage(_dx: number, _dy: number): string {
-    return `${this.label} moved to (${NumberFormatter.format(this.startX)},${NumberFormatter.format(this.startY)})`;
-  }
-
-  public override moveBackMessage(_dx: number, _dy: number): string {
-    return `${this.label} moved back to (${NumberFormatter.format(this.startX)},${NumberFormatter.format(this.startY)})`;
+  public override movementAnchor(): Point {
+    return new Point(this.startX, this.startY);
   }
 
   public override treeAttributes(): string {

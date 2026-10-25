@@ -503,6 +503,8 @@ test('[spec 5.4, 6.3, 6.10, 9] replays leaf and nested-container movement throug
       'move box nope 1',
       'move box 1',
       'move box 1 2 3',
+      'undo',
+      'redo',
       'tree scene',
     ].join('\n'),
   );
@@ -532,6 +534,8 @@ test('[spec 5.4, 6.3, 6.10, 9] replays leaf and nested-container movement throug
       'error: invalid number: nope',
       'error: usage: move <id> <dx> <dy>',
       'error: usage: move <id> <dx> <dy>',
+      'g#node moved back by (-5,2.5)',
+      'g#node moved by (5,-2.5)',
       'g#scene',
       '└── g#node',
       '    ├── rect#box    x=15 y=17.5 w=30 h=40 fill=red',

@@ -2,6 +2,7 @@ import { DomainError } from '../shared/DomainError.js';
 import { NumberFormatter } from '../shared/NumberFormatter.js';
 import { GeometrySnapshot } from './GeometrySnapshot.js';
 import { LeafShape } from './LeafShape.js';
+import { Point } from './Point.js';
 
 export class Ellipse extends LeafShape {
   private centerXValue: number;
@@ -71,20 +72,23 @@ export class Ellipse extends LeafShape {
     const centerY = this.centerYValue;
     const radiusX = this.radiusXValue;
     const radiusY = this.radiusYValue;
-    return new GeometrySnapshot(() => {
-      this.centerXValue = centerX;
-      this.centerYValue = centerY;
-      this.radiusXValue = radiusX;
-      this.radiusYValue = radiusY;
-    });
+    return new GeometrySnapshot(
+      () => {
+        this.centerXValue = centerX;
+        this.centerYValue = centerY;
+        this.radiusXValue = radiusX;
+        this.radiusYValue = radiusY;
+      },
+      () =>
+        this.centerXValue === centerX &&
+        this.centerYValue === centerY &&
+        this.radiusXValue === radiusX &&
+        this.radiusYValue === radiusY,
+    );
   }
 
-  public override movedMessage(_dx: number, _dy: number): string {
-    return `${this.label} moved to (${NumberFormatter.format(this.centerX)},${NumberFormatter.format(this.centerY)})`;
-  }
-
-  public override moveBackMessage(_dx: number, _dy: number): string {
-    return `${this.label} moved back to (${NumberFormatter.format(this.centerX)},${NumberFormatter.format(this.centerY)})`;
+  public override movementAnchor(): Point {
+    return new Point(this.centerX, this.centerY);
   }
 
   public override treeAttributes(): string {

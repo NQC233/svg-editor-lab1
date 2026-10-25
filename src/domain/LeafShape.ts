@@ -1,5 +1,7 @@
 import { DomainError } from '../shared/DomainError.js';
+import type { GeometrySnapshot } from './GeometrySnapshot.js';
 import { NumberFormatter } from '../shared/NumberFormatter.js';
+import type { Point } from './Point.js';
 import { Shape } from './Shape.js';
 
 export abstract class LeafShape extends Shape {
@@ -21,6 +23,12 @@ export abstract class LeafShape extends Shape {
   public get stroke(): string | undefined {
     return this.strokeValue;
   }
+
+  public abstract override movementAnchor(): Point;
+
+  public abstract moveOwnGeometry(dx: number, dy: number): void;
+
+  public abstract snapshotGeometry(): GeometrySnapshot;
 
   protected static assertFinite(value: number): void {
     if (!Number.isFinite(value)) {

@@ -48,6 +48,13 @@ test('[spec 5.4, 6.3, 6.10] moves every leaf type by finite positive and negativ
     '  x=15 y=45',
     '  text="开始"',
   ]);
+
+  assert.deepEqual(dispatcher.dispatch(['undo']), ['text#t moved back to (20,40)']);
+  assert.deepEqual(dispatcher.dispatch(['undo']), ['line#l moved back to (5,6)']);
+  assert.deepEqual(dispatcher.dispatch(['redo']), ['line#l moved to (0,10)']);
+  assert.deepEqual(dispatcher.dispatch(['undo']), ['line#l moved back to (5,6)']);
+  assert.deepEqual(dispatcher.dispatch(['undo']), ['ellipse#e moved back to (-1.5,2.25)']);
+  assert.deepEqual(dispatcher.dispatch(['redo']), ['ellipse#e moved to (0,2)']);
 });
 
 test('[spec 5.4, 6.3, 6.10] moves a nested container subtree once and restores exact geometry', () => {
@@ -105,6 +112,22 @@ test('[spec 2, 6.3, 6.10, 9] treats zero deltas and empty containers as history-
   assert.deepEqual(dispatcher.dispatch(['undo']), ['rect#temporary removed']);
   assert.deepEqual(dispatcher.dispatch(['move', 'empty', '5', '-3']), ['g#empty unchanged']);
   assert.deepEqual(dispatcher.dispatch(['redo']), ['rect#temporary created']);
+});
+
+test('[spec 2, 6.3, 6.10, 9] treats a move lost to floating-point precision as a no-op', () => {
+  const dispatcher = createDispatcher();
+
+  dispatcher.dispatch(['init', '800', '600']);
+  dispatcher.dispatch(['create', 'rect', 'huge', '1e20', '0', '10', '10']);
+  dispatcher.dispatch(['create', 'rect', 'pending', '20', '20', '5', '5']);
+  assert.deepEqual(dispatcher.dispatch(['undo']), ['rect#pending removed']);
+
+  assert.deepEqual(dispatcher.dispatch(['move', 'huge', '1', '0']), ['rect#huge unchanged']);
+  assert.deepEqual(dispatcher.dispatch(['show', 'huge']), [
+    'rect#huge  parent=svg',
+    '  x=100000000000000000000 y=0 width=10 height=10',
+  ]);
+  assert.deepEqual(dispatcher.dispatch(['redo']), ['rect#pending created']);
 });
 
 test('[spec 6.3, 6.10, 9] a no-op move does not unlock an existing history barrier', () => {

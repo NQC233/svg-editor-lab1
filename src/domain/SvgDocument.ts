@@ -2,6 +2,7 @@ import { DomainError } from '../shared/DomainError.js';
 import { NumberFormatter } from '../shared/NumberFormatter.js';
 import { Container } from './Container.js';
 import type { GeometrySnapshot } from './GeometrySnapshot.js';
+import { LeafShape } from './LeafShape.js';
 import type { Shape } from './Shape.js';
 
 export class SvgDocument {
@@ -125,18 +126,16 @@ export class SvgDocument {
     }
 
     const subtree = this.collectSubtree(shape);
-    const snapshots = subtree.flatMap((member) => {
-      const snapshot = member.snapshotGeometry();
-      return snapshot === undefined ? [] : [snapshot];
-    });
+    const leaves = subtree.filter((member): member is LeafShape => member instanceof LeafShape);
+    const snapshots = leaves.map((leaf) => leaf.snapshotGeometry());
 
     if ((dx === 0 && dy === 0) || snapshots.length === 0) {
       return [];
     }
 
     try {
-      for (const member of subtree) {
-        member.moveOwnGeometry(dx, dy);
+      for (const leaf of leaves) {
+        leaf.moveOwnGeometry(dx, dy);
       }
     } catch (error) {
       for (const snapshot of snapshots) {
@@ -146,7 +145,7 @@ export class SvgDocument {
       throw error;
     }
 
-    return snapshots;
+    return snapshots.every((snapshot) => snapshot.matchesCurrent()) ? [] : snapshots;
   }
 
   private assertPositiveDimensions(width: number, height: number): void {

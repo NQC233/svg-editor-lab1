@@ -2,6 +2,7 @@ import { DomainError } from '../shared/DomainError.js';
 import { NumberFormatter } from '../shared/NumberFormatter.js';
 import { GeometrySnapshot } from './GeometrySnapshot.js';
 import { LeafShape } from './LeafShape.js';
+import { Point } from './Point.js';
 
 export class Rect extends LeafShape {
   private xValue: number;
@@ -71,20 +72,23 @@ export class Rect extends LeafShape {
     const y = this.yValue;
     const width = this.widthValue;
     const height = this.heightValue;
-    return new GeometrySnapshot(() => {
-      this.xValue = x;
-      this.yValue = y;
-      this.widthValue = width;
-      this.heightValue = height;
-    });
+    return new GeometrySnapshot(
+      () => {
+        this.xValue = x;
+        this.yValue = y;
+        this.widthValue = width;
+        this.heightValue = height;
+      },
+      () =>
+        this.xValue === x &&
+        this.yValue === y &&
+        this.widthValue === width &&
+        this.heightValue === height,
+    );
   }
 
-  public override movedMessage(_dx: number, _dy: number): string {
-    return `${this.label} moved to (${NumberFormatter.format(this.x)},${NumberFormatter.format(this.y)})`;
-  }
-
-  public override moveBackMessage(_dx: number, _dy: number): string {
-    return `${this.label} moved back to (${NumberFormatter.format(this.x)},${NumberFormatter.format(this.y)})`;
+  public override movementAnchor(): Point {
+    return new Point(this.x, this.y);
   }
 
   public override treeAttributes(): string {

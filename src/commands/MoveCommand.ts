@@ -1,6 +1,7 @@
 import type { GeometrySnapshot } from '../domain/GeometrySnapshot.js';
 import type { Shape } from '../domain/Shape.js';
 import { DomainError } from '../shared/DomainError.js';
+import { NumberFormatter } from '../shared/NumberFormatter.js';
 import { NumberParser } from '../shared/NumberParser.js';
 import type { CommandArguments } from './CommandArguments.js';
 import type { CommandContext } from './CommandContext.js';
@@ -35,16 +36,16 @@ export class MoveCommand extends EditCommand {
     const dy = NumberParser.parse(dyToken);
     const shape = document.require(id);
     if (dx === 0 && dy === 0) {
-      return new CommandResult([shape.unchangedMessage], false);
+      return new CommandResult([this.unchangedMessage(shape)], false);
     }
 
     const snapshots = document.move(shape, dx, dy);
     if (snapshots.length === 0) {
-      return new CommandResult([shape.unchangedMessage], false);
+      return new CommandResult([this.unchangedMessage(shape)], false);
     }
 
     this.moved = { shape, dx, dy, snapshots };
-    return new CommandResult([shape.movedMessage(dx, dy)]);
+    return new CommandResult([this.movedMessage(shape, dx, dy)]);
   }
 
   public undo(context: CommandContext): CommandResult {
@@ -54,14 +55,14 @@ export class MoveCommand extends EditCommand {
       snapshot.restore();
     }
 
-    return new CommandResult([shape.moveBackMessage(dx, dy)]);
+    return new CommandResult([this.moveBackMessage(shape, dx, dy)]);
   }
 
   public redo(context: CommandContext): CommandResult {
     const document = context.requireDocument();
     const { shape, dx, dy } = this.requireMoved();
     document.move(shape, dx, dy);
-    return new CommandResult([shape.movedMessage(dx, dy)]);
+    return new CommandResult([this.movedMessage(shape, dx, dy)]);
   }
 
   private requireMoved(): MovedShape {
@@ -70,5 +71,27 @@ export class MoveCommand extends EditCommand {
     }
 
     return this.moved;
+  }
+
+  private unchangedMessage(shape: Shape): string {
+    return `${shape.label} unchanged`;
+  }
+
+  private movedMessage(shape: Shape, dx: number, dy: number): string {
+    const anchor = shape.movementAnchor();
+    if (anchor === undefined) {
+      return `${shape.label} moved by (${NumberFormatter.format(dx)},${NumberFormatter.format(dy)})`;
+    }
+
+    return `${shape.label} moved to (${NumberFormatter.format(anchor.x)},${NumberFormatter.format(anchor.y)})`;
+  }
+
+  private moveBackMessage(shape: Shape, dx: number, dy: number): string {
+    const anchor = shape.movementAnchor();
+    if (anchor === undefined) {
+      return `${shape.label} moved back by (${NumberFormatter.format(-dx)},${NumberFormatter.format(-dy)})`;
+    }
+
+    return `${shape.label} moved back to (${NumberFormatter.format(anchor.x)},${NumberFormatter.format(anchor.y)})`;
   }
 }
