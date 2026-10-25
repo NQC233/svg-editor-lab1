@@ -3,15 +3,22 @@ import test from 'node:test';
 
 import { Group } from '../../src/domain/Group.js';
 import { Rect } from '../../src/domain/Rect.js';
-import { DomainError } from '../../src/shared/DomainError.js';
+import { SvgDocument } from '../../src/domain/SvgDocument.js';
 
-test('[spec 6.1] rejects container structure changes without the document capability', () => {
+test('[spec 6.1] returns a detached child view without bypassing document indexes', () => {
+  const document = new SvgDocument(100, 100);
   const group = new Group('scene');
   const rectangle = new Rect('r1', 0, 0, 10, 10);
+  document.appendShape(group);
+  document.appendShape(rectangle, group);
 
-  assert.throws(
-    () => group.insertChild(rectangle, 0, Symbol('not-document')),
-    new DomainError('container structure must be changed through SvgDocument'),
-  );
-  assert.deepEqual(group.children, []);
+  const children = document.childrenOf(group) as Rect[];
+  children.length = 0;
+  const roots = document.rootShapes as Group[];
+  roots.length = 0;
+
+  assert.deepEqual(document.childrenOf(group), [rectangle]);
+  assert.deepEqual(document.rootShapes, [group]);
+  assert.equal(document.find('r1'), rectangle);
+  assert.equal(document.parentLabelOf(rectangle), 'g#scene');
 });

@@ -8,17 +8,22 @@ export class TreeFormatter {
     const lines = [
       `svg (${NumberFormatter.format(document.width)}x${NumberFormatter.format(document.height)})`,
     ];
-    this.appendChildren(lines, document.rootShapes, '');
+    this.appendChildren(document, lines, document.rootShapes, '');
     return lines;
   }
 
-  public formatShape(shape: Shape): readonly string[] {
+  public formatShape(document: SvgDocument, shape: Shape): readonly string[] {
     const lines = [this.formatShapeLine(shape, '', DisplayWidth.measure(shape.label))];
-    this.appendChildren(lines, shape.childShapes(), '');
+    this.appendChildren(document, lines, document.childrenOf(shape), '');
     return lines;
   }
 
-  private appendChildren(lines: string[], shapes: readonly Shape[], prefix: string): void {
+  private appendChildren(
+    document: SvgDocument,
+    lines: string[],
+    shapes: readonly Shape[],
+    prefix: string,
+  ): void {
     const labelWidth = shapes.reduce(
       (width, shape) => Math.max(width, DisplayWidth.measure(shape.label)),
       0,
@@ -28,7 +33,7 @@ export class TreeFormatter {
       const branch = index === shapes.length - 1 ? '└── ' : '├── ';
       lines.push(this.formatShapeLine(shape, `${prefix}${branch}`, labelWidth));
       const childPrefix = `${prefix}${index === shapes.length - 1 ? '    ' : '│   '}`;
-      this.appendChildren(lines, shape.childShapes(), childPrefix);
+      this.appendChildren(document, lines, document.childrenOf(shape), childPrefix);
     });
   }
 

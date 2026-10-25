@@ -16,6 +16,9 @@ export class TreeCommand extends Command {
       return new CommandResult(context.treeFormatter.formatDocument(document), false);
     }
 
-    return new CommandResult(context.treeFormatter.formatShape(document.require(id)), false);
+    return new CommandResult(
+      context.treeFormatter.formatShape(document, document.require(id)),
+      false,
+    );
   }
 }

@@ -1,5 +1,5 @@
 import { DomainError } from '../shared/DomainError.js';
-import { Container, containerMutationKey } from './Container.js';
+import { Container } from './Container.js';
 import type { Shape } from './Shape.js';
 
 export class SvgDocument {
@@ -8,6 +8,7 @@ export class SvgDocument {
   private readonly rootShapesValue: Shape[] = [];
   private readonly shapesById = new Map<string, Shape>();
   private readonly parents = new Map<Shape, Container | undefined>();
+  private readonly childrenByShape = new Map<Shape, Shape[]>();
 
   public constructor(width: number, height: number) {
     this.assertPositiveDimensions(width, height);
@@ -24,7 +25,7 @@ export class SvgDocument {
   }
 
   public get rootShapes(): readonly Shape[] {
-    return this.rootShapesValue;
+    return [...this.rootShapesValue];
   }
 
   public resize(width: number, height: number): void {
@@ -35,6 +36,10 @@ export class SvgDocument {
 
   public find(id: string): Shape | undefined {
     return this.shapesById.get(id);
+  }
+
+  public childrenOf(shape: Shape): readonly Shape[] {
+    return [...(this.childrenByShape.get(shape) ?? [])];
   }
 
   public require(id: string): Shape {
@@ -57,10 +62,14 @@ export class SvgDocument {
     this.assertInsertionIndex(insertionIndex, this.siblingsOf(container).length);
     this.assertSubtreeIdsAvailable(shape);
 
+    if (shape instanceof Container && !this.childrenByShape.has(shape)) {
+      this.childrenByShape.set(shape, []);
+    }
+
     if (container === undefined) {
       this.rootShapesValue.splice(insertionIndex, 0, shape);
     } else {
-      container.insertChild(shape, insertionIndex, containerMutationKey);
+      this.mutableChildrenOf(container).splice(insertionIndex, 0, shape);
     }
 
     this.registerSubtree(shape, container);
@@ -72,11 +81,13 @@ export class SvgDocument {
     }
 
     const parent = this.parents.get(shape);
-    if (parent === undefined) {
-      this.rootShapesValue.splice(this.rootShapesValue.indexOf(shape), 1);
-    } else {
-      parent.removeChild(shape, containerMutationKey);
+    const siblings = parent === undefined ? this.rootShapesValue : this.mutableChildrenOf(parent);
+    const insertionIndex = siblings.indexOf(shape);
+    if (insertionIndex < 0) {
+      throw new DomainError(`no such shape: ${shape.id}`);
     }
+
+    siblings.splice(insertionIndex, 1);
 
     this.unregisterSubtree(shape);
   }
@@ -131,7 +142,7 @@ export class SvgDocument {
     }
 
     ids.add(shape.id);
-    for (const child of shape.childShapes()) {
+    for (const child of this.childrenByShape.get(shape) ?? []) {
       this.collectIds(child, ids);
     }
   }
@@ -139,13 +150,21 @@ export class SvgDocument {
   private registerSubtree(shape: Shape, parent: Container | undefined): void {
     this.shapesById.set(shape.id, shape);
     this.parents.set(shape, parent);
-    for (const child of shape.childShapes()) {
-      this.registerSubtree(child, shape instanceof Container ? shape : undefined);
+    if (shape instanceof Container && !this.childrenByShape.has(shape)) {
+      this.childrenByShape.set(shape, []);
+    }
+
+    for (const child of this.childrenByShape.get(shape) ?? []) {
+      if (!(shape instanceof Container)) {
+        throw new DomainError(`shape has children but is not a container: ${shape.id}`);
+      }
+
+      this.registerSubtree(child, shape);
     }
   }
 
   private unregisterSubtree(shape: Shape): void {
-    for (const child of shape.childShapes()) {
+    for (const child of this.childrenByShape.get(shape) ?? []) {
       this.unregisterSubtree(child);
     }
 
@@ -154,6 +173,15 @@ export class SvgDocument {
   }
 
   private siblingsOf(container: Container | undefined): readonly Shape[] {
-    return container?.children ?? this.rootShapesValue;
+    return container === undefined ? this.rootShapesValue : this.mutableChildrenOf(container);
+  }
+
+  private mutableChildrenOf(container: Container): Shape[] {
+    const children = this.childrenByShape.get(container);
+    if (children === undefined) {
+      throw new DomainError(`no such shape: ${container.id}`);
+    }
+
+    return children;
   }
 }
