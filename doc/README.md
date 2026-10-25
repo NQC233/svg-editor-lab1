@@ -1,6 +1,6 @@
 # Lab1 Phase 1：课程报告与过程记录
 
-状态：Ticket 01–16 已实现并通过本地验收，其中 Ticket 06 通过 [PR #29](https://github.com/NQC233/svg-editor-lab1/pull/29)、Ticket 07 通过 [PR #30](https://github.com/NQC233/svg-editor-lab1/pull/30)、Ticket 08 通过 [PR #31](https://github.com/NQC233/svg-editor-lab1/pull/31)、Ticket 14 通过 [PR #37](https://github.com/NQC233/svg-editor-lab1/pull/37) 交付；Ticket 09–16 已于 2026-10-25 完成实现与验收；测试累计 115 个。Ticket 17–19 仍是计划。本报告继续把“计划”和“已实现”分开记录。
+状态：Ticket 01–16 已实现并通过本地验收，其中 Ticket 06 通过 [PR #29](https://github.com/NQC233/svg-editor-lab1/pull/29)、Ticket 07 通过 [PR #30](https://github.com/NQC233/svg-editor-lab1/pull/30)、Ticket 08 通过 [PR #31](https://github.com/NQC233/svg-editor-lab1/pull/31)、Ticket 14 通过 [PR #37](https://github.com/NQC233/svg-editor-lab1/pull/37)、Ticket 16 通过 [PR #38](https://github.com/NQC233/svg-editor-lab1/pull/38) 交付；Ticket 09–16 已于 2026-10-25 完成实现与验收；测试累计 115 个。Ticket 17–19 仍是计划。本报告继续把“计划”和“已实现”分开记录。
 
 需求依据：[课程原始要求](../phase_cli_1.md)。
 
@@ -502,6 +502,7 @@ package "shared" {
 - 小步提交保留为 `05ab31a`（基本写出）、`3f0b42a`（全部图形与转义）、`c8a2c9c`（路径与失败原子性）、`e238b44`（历史屏障）和 `6148423`（帮助覆盖），随后单独更新 ADR 与报告。
 - 双轴审查的 Spec 轴未发现缺失、越界或行为错误。Standards 轴未发现硬性标准违反，但指出写出与计数各自遍历、样式/几何显示文本重复维护的判断性气味；已让 `SvgWriter.write` 在单次渲染中返回元素数，并让 `Shape` 的样式描述和各类图形的详细几何文本复用同一有序属性来源。树形显示的 `w`/`h` 缩写属于展示契约，保留独立格式化。
 - 审查同时指出相对 CWD 只靠人工验证。已补真实子进程用例：把 CLI 工作目录切到临时目录，`save "relative output.svg"` 与后续无参数 `save` 都解析到该目录；失败后 `init` 清空路径的行为也由同一回放覆盖。
+- Ticket 16 通过 [PR #38](https://github.com/NQC233/svg-editor-lab1/pull/38) 合入 `main`（merge commit `fa34b14`），Issue #16 由 PR 关联关闭。
 
 ## 一致性自查
 
