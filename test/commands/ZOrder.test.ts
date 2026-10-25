@@ -59,7 +59,7 @@ test('[spec 6.9, 6.10, 9] moves a container without changing its subtree order',
   assert.deepEqual(dispatcher.dispatch(['front', 'middle']), ['g#middle moved to front']);
   assert.deepEqual(dispatcher.dispatch(['tree', 'outer']), [
     'g#outer',
-    '├── rect#back  x=0 y=0 w=10 h=10',
+    '├── rect#back   x=0 y=0 w=10 h=10',
     '├── rect#front  x=60 y=60 w=10 h=10',
     '└── g#middle',
     '    ├── rect#nested-a  x=20 y=20 w=10 h=10',
@@ -69,7 +69,7 @@ test('[spec 6.9, 6.10, 9] moves a container without changing its subtree order',
   assert.deepEqual(dispatcher.dispatch(['undo']), ['g#middle moved back']);
   assert.deepEqual(dispatcher.dispatch(['tree', 'outer']), [
     'g#outer',
-    '├── rect#back  x=0 y=0 w=10 h=10',
+    '├── rect#back   x=0 y=0 w=10 h=10',
     '├── g#middle',
     '│   ├── rect#nested-a  x=20 y=20 w=10 h=10',
     '│   └── rect#nested-b  x=40 y=40 w=10 h=10',
