@@ -1,7 +1,6 @@
 import type { ShapeFactory } from '../domain/ShapeFactory.js';
 import { DomainError } from '../shared/DomainError.js';
 import { SvgIdAllocation } from './SvgIdAllocation.js';
-import { SvgMetadata } from './SvgMetadata.js';
 import type { XmlElement } from './XmlElement.js';
 
 export class SvgIdAllocator {
@@ -49,7 +48,7 @@ export class SvgIdAllocator {
     elements: XmlElement[],
     explicitIds: Set<string>,
   ): void {
-    if (SvgMetadata.isIgnoredElement(element.name)) {
+    if (this.shapeFactory.isIgnoredSvgElement(element.name)) {
       return;
     }
 

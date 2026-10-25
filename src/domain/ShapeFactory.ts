@@ -27,6 +27,7 @@ export class ShapeFactory {
     'rect',
     'text',
   ]);
+  private static readonly IGNORED_SVG_ELEMENTS = new Set(['title', 'desc', 'metadata']);
 
   public create(type: string, id: string, args: readonly string[]): Shape {
     switch (type) {
@@ -55,6 +56,10 @@ export class ShapeFactory {
     return ShapeFactory.SVG_ELEMENTS.has(type);
   }
 
+  public isIgnoredSvgElement(type: string): boolean {
+    return ShapeFactory.IGNORED_SVG_ELEMENTS.has(type);
+  }
+
   public createFromSvg(
     type: string,
     id: string,
@@ -67,9 +72,11 @@ export class ShapeFactory {
       case 'ellipse':
         return this.createEllipseFromSvg(id, attributes);
       case 'g':
-        return this.applySvgStyle(
-          new Group(id, this.collectSvgAttributes(type, attributes, [])),
+        return this.createStyledShapeFromSvg(
+          type,
           attributes,
+          [],
+          (unmodeled) => new Group(id, unmodeled),
         );
       case 'line':
         return this.createLineFromSvg(id, attributes);
@@ -211,65 +218,73 @@ export class ShapeFactory {
   }
 
   private createCircleFromSvg(id: string, attributes: ReadonlyMap<string, string>): Circle {
-    const unmodeled = this.collectSvgAttributes('circle', attributes, ['cx', 'cy', 'r']);
-    return this.applySvgStyle(
-      new Circle(
-        id,
-        this.svgNumber(attributes, 'cx'),
-        this.svgNumber(attributes, 'cy'),
-        this.svgNumber(attributes, 'r'),
-        undefined,
-        unmodeled,
-      ),
+    return this.createStyledShapeFromSvg(
+      'circle',
       attributes,
+      ['cx', 'cy', 'r'],
+      (unmodeled) =>
+        new Circle(
+          id,
+          this.svgNumber(attributes, 'cx'),
+          this.svgNumber(attributes, 'cy'),
+          this.svgNumber(attributes, 'r'),
+          undefined,
+          unmodeled,
+        ),
     );
   }
 
   private createEllipseFromSvg(id: string, attributes: ReadonlyMap<string, string>): Ellipse {
-    const unmodeled = this.collectSvgAttributes('ellipse', attributes, ['cx', 'cy', 'rx', 'ry']);
-    return this.applySvgStyle(
-      new Ellipse(
-        id,
-        this.svgNumber(attributes, 'cx'),
-        this.svgNumber(attributes, 'cy'),
-        this.svgNumber(attributes, 'rx'),
-        this.svgNumber(attributes, 'ry'),
-        undefined,
-        unmodeled,
-      ),
+    return this.createStyledShapeFromSvg(
+      'ellipse',
       attributes,
+      ['cx', 'cy', 'rx', 'ry'],
+      (unmodeled) =>
+        new Ellipse(
+          id,
+          this.svgNumber(attributes, 'cx'),
+          this.svgNumber(attributes, 'cy'),
+          this.svgNumber(attributes, 'rx'),
+          this.svgNumber(attributes, 'ry'),
+          undefined,
+          unmodeled,
+        ),
     );
   }
 
   private createLineFromSvg(id: string, attributes: ReadonlyMap<string, string>): Line {
-    const unmodeled = this.collectSvgAttributes('line', attributes, ['x1', 'y1', 'x2', 'y2']);
-    return this.applySvgStyle(
-      new Line(
-        id,
-        this.svgNumber(attributes, 'x1'),
-        this.svgNumber(attributes, 'y1'),
-        this.svgNumber(attributes, 'x2'),
-        this.svgNumber(attributes, 'y2'),
-        undefined,
-        unmodeled,
-      ),
+    return this.createStyledShapeFromSvg(
+      'line',
       attributes,
+      ['x1', 'y1', 'x2', 'y2'],
+      (unmodeled) =>
+        new Line(
+          id,
+          this.svgNumber(attributes, 'x1'),
+          this.svgNumber(attributes, 'y1'),
+          this.svgNumber(attributes, 'x2'),
+          this.svgNumber(attributes, 'y2'),
+          undefined,
+          unmodeled,
+        ),
     );
   }
 
   private createRectFromSvg(id: string, attributes: ReadonlyMap<string, string>): Rect {
-    const unmodeled = this.collectSvgAttributes('rect', attributes, ['x', 'y', 'width', 'height']);
-    return this.applySvgStyle(
-      new Rect(
-        id,
-        this.svgNumber(attributes, 'x'),
-        this.svgNumber(attributes, 'y'),
-        this.svgNumber(attributes, 'width'),
-        this.svgNumber(attributes, 'height'),
-        undefined,
-        unmodeled,
-      ),
+    return this.createStyledShapeFromSvg(
+      'rect',
       attributes,
+      ['x', 'y', 'width', 'height'],
+      (unmodeled) =>
+        new Rect(
+          id,
+          this.svgNumber(attributes, 'x'),
+          this.svgNumber(attributes, 'y'),
+          this.svgNumber(attributes, 'width'),
+          this.svgNumber(attributes, 'height'),
+          undefined,
+          unmodeled,
+        ),
     );
   }
 
@@ -278,17 +293,29 @@ export class ShapeFactory {
     attributes: ReadonlyMap<string, string>,
     content: string,
   ): Text {
-    const unmodeled = this.collectSvgAttributes('text', attributes, ['x', 'y']);
-    return this.applySvgStyle(
-      new Text(
-        id,
-        this.svgNumber(attributes, 'x'),
-        this.svgNumber(attributes, 'y'),
-        content,
-        unmodeled,
-      ),
+    return this.createStyledShapeFromSvg(
+      'text',
       attributes,
+      ['x', 'y'],
+      (unmodeled) =>
+        new Text(
+          id,
+          this.svgNumber(attributes, 'x'),
+          this.svgNumber(attributes, 'y'),
+          content,
+          unmodeled,
+        ),
     );
+  }
+
+  private createStyledShapeFromSvg<T extends Shape>(
+    type: string,
+    attributes: ReadonlyMap<string, string>,
+    geometry: readonly string[],
+    createShape: (unmodeled: UnmodeledAttributes) => T,
+  ): T {
+    const unmodeled = this.collectUnmodeledSvgAttributes(type, attributes, geometry);
+    return this.applySvgStyle(createShape(unmodeled), attributes);
   }
 
   private svgNumber(attributes: ReadonlyMap<string, string>, name: string): number {
@@ -306,7 +333,7 @@ export class ShapeFactory {
     return shape;
   }
 
-  private collectSvgAttributes(
+  private collectUnmodeledSvgAttributes(
     type: string,
     attributes: ReadonlyMap<string, string>,
     geometry: readonly string[],

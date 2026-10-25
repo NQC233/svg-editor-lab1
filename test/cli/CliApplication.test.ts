@@ -1232,6 +1232,7 @@ test('[spec 6.12, 6.13, 7.3, 7.4, 8] replays assigned-id warnings, attribute rou
       `read "${invalid}"`,
       'tree',
       'redo',
+      'save',
     ].join('\n'),
     directory,
   );
@@ -1252,6 +1253,7 @@ test('[spec 6.12, 6.13, 7.3, 7.4, 8] replays assigned-id warnings, attribute rou
       'svg (100x80)',
       '└── rect#rect1  x=1 y=2 w=3 h=4',
       'rect#temp created',
+      `saved to ${saved} (2 elements)`,
       '',
     ].join('\n'),
   );
@@ -1261,6 +1263,7 @@ test('[spec 6.12, 6.13, 7.3, 7.4, 8] replays assigned-id warnings, attribute rou
       '<?xml version="1.0" encoding="UTF-8"?>',
       '<svg xmlns="http://www.w3.org/2000/svg" width="100" height="80" viewBox="0 0 100 80">',
       '  <rect id="rect1" x="1" y="2" width="3" height="4" data-extra="keep"/>',
+      '  <rect id="temp" x="10" y="10" width="5" height="5"/>',
       '</svg>',
       '',
     ].join('\n'),

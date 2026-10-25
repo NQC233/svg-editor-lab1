@@ -10,8 +10,7 @@ import { NumberParser } from '../shared/NumberParser.js';
 import type { XmlElement } from './XmlElement.js';
 import { XmlParser } from './XmlParser.js';
 import type { SvgIdAllocation } from './SvgIdAllocation.js';
-import { SvgIdAllocator } from './SvgIdAllocator.js';
-import { SvgMetadata } from './SvgMetadata.js';
+import type { SvgIdAllocator } from './SvgIdAllocator.js';
 import { SvgReadResult } from './SvgReadResult.js';
 import type { XmlText } from './XmlText.js';
 
@@ -19,14 +18,11 @@ const ROOT_ERROR = 'svg root width and height must be positive numbers';
 const SVG_NAMESPACE = 'http://www.w3.org/2000/svg';
 
 export class SvgReader {
-  private readonly idAllocator: SvgIdAllocator;
-
   public constructor(
     private readonly xmlParser: XmlParser,
     private readonly shapeFactory: ShapeFactory,
-  ) {
-    this.idAllocator = new SvgIdAllocator(shapeFactory);
-  }
+    private readonly idAllocator: SvgIdAllocator,
+  ) {}
 
   public read(path: string): SvgReadResult {
     let bytes: Buffer;
@@ -106,7 +102,7 @@ export class SvgReader {
     for (const child of element.children) {
       elementCount += child.accept({
         visitElement: (childElement) => {
-          if (SvgMetadata.isIgnoredElement(childElement.name)) {
+          if (this.shapeFactory.isIgnoredSvgElement(childElement.name)) {
             return 0;
           }
 
@@ -126,7 +122,7 @@ export class SvgReader {
     for (const child of element.children) {
       child.accept({
         visitElement: (childElement) => {
-          if (SvgMetadata.isIgnoredElement(childElement.name)) {
+          if (this.shapeFactory.isIgnoredSvgElement(childElement.name)) {
             return;
           }
 
@@ -143,7 +139,7 @@ export class SvgReader {
     for (const child of element.children) {
       child.accept({
         visitElement: (childElement) => {
-          if (SvgMetadata.isIgnoredElement(childElement.name)) {
+          if (this.shapeFactory.isIgnoredSvgElement(childElement.name)) {
             return;
           }
 
