@@ -35,16 +35,7 @@ export class CanvasCommand extends DocumentCommand {
 
     const width = NumberParser.parse(widthToken);
     const height = NumberParser.parse(heightToken);
-    try {
-      document.resize(width, height);
-    } catch (error) {
-      if (error instanceof DomainError) {
-        throw new DomainError('canvas width and height must be positive');
-      }
-
-      throw error;
-    }
-
+    document.resize(width, height);
     return new CommandResult([
       `canvas resized to ${NumberFormatter.format(width)}x${NumberFormatter.format(height)}`,
     ]);
