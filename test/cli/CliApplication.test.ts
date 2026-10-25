@@ -602,3 +602,77 @@ test('[spec 5.4, 6.4, 6.10, 9] replays scaling, failures, and history through th
     ].join('\n'),
   );
 });
+
+test('[spec 3.3, 5.2, 6.2, 9] replays subtree deletion, restore, and failures through the CLI', async () => {
+  const result = await runCli(
+    [
+      'init 400 200',
+      'create g scene',
+      'create rect box 10 20 30 40 red in scene',
+      'create g branch in scene',
+      'create text label 15 25 "开始" in branch',
+      'create rect after 200 100 20 20',
+      'delete label',
+      'undo',
+      'delete branch',
+      'delete missing',
+      'delete',
+      'delete box extra',
+      'tree',
+      'undo',
+      'show label',
+      'redo',
+      'tree',
+      'undo',
+      'delete scene',
+      'tree',
+      'undo',
+      'tree',
+    ].join('\n'),
+  );
+
+  assert.equal(result.code, 0);
+  assert.equal(result.stderr, '');
+  assert.equal(
+    result.stdout,
+    [
+      'canvas 400x200 created',
+      'g#scene created',
+      'rect#box created in g#scene',
+      'g#branch created in g#scene',
+      'text#label created in g#branch',
+      'rect#after created',
+      'text#label deleted',
+      'text#label restored into g#branch',
+      'g#branch deleted',
+      'error: no such shape: missing',
+      'error: usage: delete <id>',
+      'error: usage: delete <id>',
+      'svg (400x200)',
+      '├── g#scene',
+      '│   └── rect#box  x=10 y=20 w=30 h=40 fill=red',
+      '└── rect#after  x=200 y=100 w=20 h=20',
+      'g#branch restored into g#scene',
+      'text#label  parent=g#branch',
+      '  x=15 y=25',
+      '  text="开始"',
+      'g#branch deleted',
+      'svg (400x200)',
+      '├── g#scene',
+      '│   └── rect#box  x=10 y=20 w=30 h=40 fill=red',
+      '└── rect#after  x=200 y=100 w=20 h=20',
+      'g#branch restored into g#scene',
+      'g#scene deleted',
+      'svg (400x200)',
+      '└── rect#after  x=200 y=100 w=20 h=20',
+      'g#scene restored into svg',
+      'svg (400x200)',
+      '├── g#scene',
+      '│   ├── rect#box  x=10 y=20 w=30 h=40 fill=red',
+      '│   └── g#branch',
+      '│       └── text#label  (15,25) "开始"',
+      '└── rect#after  x=200 y=100 w=20 h=20',
+      '',
+    ].join('\n'),
+  );
+});
