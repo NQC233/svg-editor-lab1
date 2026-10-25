@@ -279,6 +279,8 @@ create <type> <id> [params…] [in <containerId>]
 语法：`front <id>` / `back <id>`。
 
 - 在同一父级内移动；容器连同整棵子树移动，子树内部顺序不变。
+- 父级子节点数组索引 `0` 对应最先绘制，即 `back`；末尾索引对应最后绘制，即 `front`。`tree` 顺序与绘制顺序一致。
+- `front` 移到同级末尾，`back` 移到同级开头。
 - 已在最前/最后时是无操作：输出 `<type>#<id> is already at front` 或 `... is already at back`，不进入历史。
 - 输出：`<type>#<id> moved to front` 或 `... moved to back`。
 - 撤销：移回原索引，输出 `<type>#<id> moved back`。
