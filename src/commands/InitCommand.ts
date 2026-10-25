@@ -27,13 +27,17 @@ export class InitCommand extends Command {
 
       width = NumberParser.parse(widthToken);
       height = NumberParser.parse(heightToken);
-
-      if (width <= 0 || height <= 0) {
-        throw new DomainError('init width and height must be positive');
-      }
     }
 
-    context.setDocument(new SvgDocument(width, height));
+    try {
+      context.setDocument(new SvgDocument(width, height));
+    } catch (error) {
+      if (error instanceof DomainError) {
+        throw new DomainError('init width and height must be positive');
+      }
+
+      throw error;
+    }
 
     return [`canvas ${NumberFormatter.format(width)}x${NumberFormatter.format(height)} created`];
   }

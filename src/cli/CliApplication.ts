@@ -1,14 +1,12 @@
 import { createInterface } from 'node:readline';
 
-import { CommandContext } from '../commands/CommandContext.js';
-import { CommandInvoker } from '../commands/CommandInvoker.js';
 import { DomainError } from '../shared/DomainError.js';
-import { CommandCatalog } from './CommandCatalog.js';
-import { CommandDispatcher } from './CommandDispatcher.js';
+import type { CommandDispatcher } from './CommandDispatcher.js';
 import { ConsoleOutput } from './ConsoleOutput.js';
 import { LineTokenizer } from './LineTokenizer.js';
 
 interface CliApplicationOptions {
+  readonly dispatcher: CommandDispatcher;
   readonly input?: NodeJS.ReadableStream & { readonly isTTY?: boolean };
   readonly interactive?: boolean;
   readonly output?: NodeJS.WritableStream;
@@ -23,13 +21,11 @@ export class CliApplication {
   private readonly tokenizer = new LineTokenizer();
   private readonly dispatcher: CommandDispatcher;
 
-  public constructor(options: CliApplicationOptions = {}) {
+  public constructor(options: CliApplicationOptions) {
+    this.dispatcher = options.dispatcher;
     this.input = options.input ?? process.stdin;
     this.output = options.output ?? process.stdout;
     this.interactive = options.interactive ?? this.input.isTTY === true;
-
-    const context = new CommandContext();
-    this.dispatcher = new CommandDispatcher(new CommandCatalog(), new CommandInvoker(context));
   }
 
   public async run(): Promise<void> {

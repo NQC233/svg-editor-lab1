@@ -28,6 +28,7 @@ export class HelpCommand extends Command {
     '  undo',
     '  redo',
     'Partial implementation: available commands are help, init, and canvas.',
+    'Canvas resizing is not available yet.',
   ] as const;
 
   public execute(_context: CommandContext, args: readonly string[]): readonly string[] {

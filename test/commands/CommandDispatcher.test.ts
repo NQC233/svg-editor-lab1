@@ -7,7 +7,7 @@ import { CommandCatalog } from '../../src/cli/CommandCatalog.js';
 import { CommandDispatcher } from '../../src/cli/CommandDispatcher.js';
 import { DomainError } from '../../src/shared/DomainError.js';
 
-test('init creates an empty document that canvas can display', () => {
+test('[spec 6.11, 6.14] init creates an empty document that canvas can display', () => {
   const context = new CommandContext();
   const dispatcher = new CommandDispatcher(new CommandCatalog(), new CommandInvoker(context));
 
@@ -15,7 +15,7 @@ test('init creates an empty document that canvas can display', () => {
   assert.deepEqual(dispatcher.dispatch(['canvas']), ['canvas 800x600']);
 });
 
-test('help works without a document and lists the complete target grammar', () => {
+test('[spec 6.17] help works without a document and lists the complete target grammar', () => {
   const context = new CommandContext();
   const dispatcher = new CommandDispatcher(new CommandCatalog(), new CommandInvoker(context));
 
@@ -44,10 +44,11 @@ test('help works without a document and lists the complete target grammar', () =
     '  undo',
     '  redo',
     'Partial implementation: available commands are help, init, and canvas.',
+    'Canvas resizing is not available yet.',
   ]);
 });
 
-test('failed canvas commands leave the existing size unchanged', () => {
+test('[spec 3.3, 6.14] failed canvas commands leave the existing size unchanged', () => {
   const context = new CommandContext();
   const dispatcher = new CommandDispatcher(new CommandCatalog(), new CommandInvoker(context));
 
@@ -59,12 +60,12 @@ test('failed canvas commands leave the existing size unchanged', () => {
   dispatcher.dispatch(['init', '400', '200']);
 
   assert.throws(
-    () => dispatcher.dispatch(['canvas', '0', '200']),
-    new DomainError('canvas width and height must be positive'),
+    () => dispatcher.dispatch(['canvas', '100']),
+    new DomainError('canvas requires both width and height'),
   );
   assert.throws(
-    () => dispatcher.dispatch(['canvas', 'wide', '200']),
-    new DomainError('invalid number: wide'),
+    () => dispatcher.dispatch(['canvas', '100', '200']),
+    new DomainError('canvas resizing is not available yet'),
   );
   assert.throws(
     () => dispatcher.dispatch(['canvas', '1', '2', '3']),

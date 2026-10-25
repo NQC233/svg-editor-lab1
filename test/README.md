@@ -1,19 +1,16 @@
 # 测试目录
 
-使用 Node.js 内置的 `node:test` 和 `node:assert/strict`，文件命名为 `*.test.ts`，通过 tsx 加载 TypeScript。当前尚未实现业务代码，测试数量为 0；`npm test` 只证明测试入口可运行。
+使用 Node.js 内置的 `node:test` 和 `node:assert/strict`，文件命名为 `*.test.ts`，通过 tsx 加载 TypeScript。当前 Ticket 01 已有 7 个测试，覆盖分词、命令分发、失败原子性、脚本回放和 TTY 输出。
 
-## 规划布局
+## 当前布局
 
 ```text
 test/
-├── shared/          # 数值解析、格式化、错误
-├── domain/          # 图形、文档、id 索引、ShapeFactory
-├── commands/        # 每条命令、历史、执行器、无操作和失败原子性
-├── io/              # XML 解析、读取子集、写出、往返
-├── cli/             # 分词、命令表、REPL
-├── integration/     # 课程会话、流程图、脚本回放
-└── fixtures/        # 有效/无效 SVG 文件
+├── cli/             # 分词、REPL、真实脚本回放
+└── commands/        # help、init、canvas、无文档和失败原子性
 ```
+
+后续图形、历史、IO 和 fixture 测试按 [任务计划](../doc/ticket-plan.md) 逐步加入。
 
 ## 验收重点
 

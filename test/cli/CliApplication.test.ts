@@ -5,6 +5,10 @@ import { fileURLToPath } from 'node:url';
 import test from 'node:test';
 
 import { CliApplication } from '../../src/cli/CliApplication.js';
+import { CommandCatalog } from '../../src/cli/CommandCatalog.js';
+import { CommandDispatcher } from '../../src/cli/CommandDispatcher.js';
+import { CommandContext } from '../../src/commands/CommandContext.js';
+import { CommandInvoker } from '../../src/commands/CommandInvoker.js';
 
 const projectRoot = fileURLToPath(new URL('../..', import.meta.url));
 
@@ -41,7 +45,12 @@ async function runCli(input: string): Promise<RunResult> {
   return { code, stderr, stdout };
 }
 
-test('runs a scripted empty-canvas session through EOF', async () => {
+function createDispatcher(): CommandDispatcher {
+  const context = new CommandContext();
+  return new CommandDispatcher(new CommandCatalog(), new CommandInvoker(context));
+}
+
+test('[spec 4.1-4.3, 6.11, 6.14, 6.17] runs a scripted empty-canvas session through EOF', async () => {
   const result = await runCli(
     [
       'help',
@@ -77,7 +86,7 @@ test('runs a scripted empty-canvas session through EOF', async () => {
   assert.match(result.stdout, /\nerror: usage: init \[w\] \[h\]\ncanvas 640x480\n/);
   assert.match(
     result.stdout,
-    /\nerror: canvas requires both width and height\ncanvas resized to 100x200\ncanvas 100x200\n/,
+    /\nerror: canvas requires both width and height\nerror: canvas resizing is not available yet\ncanvas 640x480\n/,
   );
   assert.match(
     result.stdout,
@@ -85,7 +94,7 @@ test('runs a scripted empty-canvas session through EOF', async () => {
   );
 });
 
-test('interactive mode prints the banner, prompt, results, and errors', async () => {
+test('[spec 4.1, 4.3] interactive mode prints the banner, prompt, results, and errors', async () => {
   const input = new PassThrough();
   const output = new PassThrough();
   let stdout = '';
@@ -95,6 +104,7 @@ test('interactive mode prints the banner, prompt, results, and errors', async ()
   });
 
   const application = new CliApplication({
+    dispatcher: createDispatcher(),
     input,
     interactive: true,
     output,

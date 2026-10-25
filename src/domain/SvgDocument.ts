@@ -18,12 +18,6 @@ export class SvgDocument {
     return this.heightValue;
   }
 
-  public resize(width: number, height: number): void {
-    this.assertPositiveDimensions(width, height);
-    this.widthValue = width;
-    this.heightValue = height;
-  }
-
   private assertPositiveDimensions(width: number, height: number): void {
     if (!Number.isFinite(width) || !Number.isFinite(height) || width <= 0 || height <= 0) {
       throw new DomainError('canvas width and height must be positive');
