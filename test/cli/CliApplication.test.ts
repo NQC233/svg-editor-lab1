@@ -20,11 +20,15 @@ interface RunResult {
   readonly stdout: string;
 }
 
-async function runCli(input: string): Promise<RunResult> {
-  const child = spawn(process.execPath, ['--import', 'tsx', 'src/main.ts'], {
-    cwd: projectRoot,
-    stdio: ['pipe', 'pipe', 'pipe'],
-  });
+async function runCli(input: string, cwd = projectRoot): Promise<RunResult> {
+  const child = spawn(
+    process.execPath,
+    [join(projectRoot, 'node_modules/tsx/dist/cli.mjs'), join(projectRoot, 'src/main.ts')],
+    {
+      cwd,
+      stdio: ['pipe', 'pipe', 'pipe'],
+    },
+  );
 
   let stdout = '';
   let stderr = '';
@@ -153,6 +157,35 @@ test('[spec 6.13, 8] replays save success, path reuse, and write failures throug
     `error: cannot write file: ${directory}`,
   ]);
   assert.match(await readFile(file, 'utf8'), /你好 &amp; &lt;x&gt;/);
+});
+
+test('[spec 6.13, ADR-0008] resolves relative paths from the process working directory', async (t) => {
+  const directory = await mkdtemp(join(tmpdir(), 'svg-editor-relative-cwd-'));
+  t.after(() => rm(directory, { force: true, recursive: true }));
+  const relativePath = 'relative output.svg';
+  const result = await runCli(
+    [
+      'init 100 80',
+      'create rect r 1 2 3 4',
+      `save "${relativePath}"`,
+      'save',
+      'init 200 100',
+      'save',
+    ].join('\n'),
+    directory,
+  );
+
+  assert.equal(result.code, 0);
+  assert.equal(result.stderr, '');
+  assert.deepEqual(result.stdout.split('\n').slice(0, -1), [
+    'canvas 100x80 created',
+    'rect#r created',
+    `saved to ${relativePath} (1 elements)`,
+    `saved to ${relativePath} (1 elements)`,
+    'canvas 200x100 created',
+    'error: no file path; use save <file.svg>',
+  ]);
+  assert.match(await readFile(join(directory, relativePath), 'utf8'), /<rect id="r"/);
 });
 
 test('[spec 4.1, 4.2] blank and comment-only scripts produce no output', async () => {
