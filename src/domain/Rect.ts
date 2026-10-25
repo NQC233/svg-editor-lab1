@@ -3,6 +3,7 @@ import { NumberFormatter } from '../shared/NumberFormatter.js';
 import { GeometrySnapshot } from './GeometrySnapshot.js';
 import { LeafShape } from './LeafShape.js';
 import { Point } from './Point.js';
+import type { ShapeAttributeSnapshot } from './ShapeAttributeSnapshot.js';
 
 export class Rect extends LeafShape {
   private xValue: number;
@@ -135,5 +136,36 @@ export class Rect extends LeafShape {
       ].join(' '),
       ...this.styleLines(),
     ];
+  }
+
+  protected override setOwnAttribute(attribute: string, value: string): ShapeAttributeSnapshot {
+    switch (attribute) {
+      case 'x':
+        return this.setNumberAttribute(attribute, value, this.xValue, (next) => {
+          this.xValue = next;
+        });
+      case 'y':
+        return this.setNumberAttribute(attribute, value, this.yValue, (next) => {
+          this.yValue = next;
+        });
+      case 'width':
+        return this.setNumberAttribute(attribute, value, this.widthValue, (next) => {
+          if (next <= 0) {
+            throw new DomainError('rect width must be positive');
+          }
+
+          this.widthValue = next;
+        });
+      case 'height':
+        return this.setNumberAttribute(attribute, value, this.heightValue, (next) => {
+          if (next <= 0) {
+            throw new DomainError('rect height must be positive');
+          }
+
+          this.heightValue = next;
+        });
+      default:
+        throw new DomainError(`unknown attribute: ${attribute}`);
+    }
   }
 }

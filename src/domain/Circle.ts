@@ -3,6 +3,7 @@ import { NumberFormatter } from '../shared/NumberFormatter.js';
 import { GeometrySnapshot } from './GeometrySnapshot.js';
 import { LeafShape } from './LeafShape.js';
 import { Point } from './Point.js';
+import type { ShapeAttributeSnapshot } from './ShapeAttributeSnapshot.js';
 
 export class Circle extends LeafShape {
   private centerXValue: number;
@@ -105,5 +106,28 @@ export class Circle extends LeafShape {
       ].join(' '),
       ...this.styleLines(),
     ];
+  }
+
+  protected override setOwnAttribute(attribute: string, value: string): ShapeAttributeSnapshot {
+    switch (attribute) {
+      case 'cx':
+        return this.setNumberAttribute(attribute, value, this.centerXValue, (next) => {
+          this.centerXValue = next;
+        });
+      case 'cy':
+        return this.setNumberAttribute(attribute, value, this.centerYValue, (next) => {
+          this.centerYValue = next;
+        });
+      case 'r':
+        return this.setNumberAttribute(attribute, value, this.radiusValue, (next) => {
+          if (next <= 0) {
+            throw new DomainError('circle r must be positive');
+          }
+
+          this.radiusValue = next;
+        });
+      default:
+        throw new DomainError(`unknown attribute: ${attribute}`);
+    }
   }
 }

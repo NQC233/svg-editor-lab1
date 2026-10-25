@@ -1,27 +1,14 @@
 import { DomainError } from '../shared/DomainError.js';
 import type { GeometrySnapshot } from './GeometrySnapshot.js';
 import { NumberFormatter } from '../shared/NumberFormatter.js';
+import { NumberParser } from '../shared/NumberParser.js';
 import type { Point } from './Point.js';
 import { Shape } from './Shape.js';
+import { ShapeAttributeSnapshot } from './ShapeAttributeSnapshot.js';
 
 export abstract class LeafShape extends Shape {
-  private readonly fillValue: string | undefined;
-  private readonly strokeValue: string | undefined;
-
   protected constructor(id: string, fill?: string, stroke?: string) {
-    super(id);
-    LeafShape.assertOptionalText(fill, 'fill');
-    LeafShape.assertOptionalText(stroke, 'stroke');
-    this.fillValue = fill;
-    this.strokeValue = stroke;
-  }
-
-  public get fill(): string | undefined {
-    return this.fillValue;
-  }
-
-  public get stroke(): string | undefined {
-    return this.strokeValue;
+    super(id, fill, stroke);
   }
 
   public abstract override movementAnchor(): Point;
@@ -38,22 +25,24 @@ export abstract class LeafShape extends Shape {
     }
   }
 
-  protected styleLines(): readonly string[] {
-    const attributes: string[] = [];
-    if (this.fill !== undefined) {
-      attributes.push(`fill=${this.fill}`);
+  protected setNumberAttribute(
+    attribute: string,
+    value: string,
+    current: number,
+    write: (next: number) => void,
+  ): ShapeAttributeSnapshot {
+    const next = NumberParser.parse(value);
+    const changed = current !== next;
+    if (changed) {
+      write(next);
     }
 
-    if (this.stroke !== undefined) {
-      attributes.push(`stroke=${this.stroke}`);
-    }
-
-    return attributes;
-  }
-
-  private static assertOptionalText(value: string | undefined, attribute: string): void {
-    if (value !== undefined && value.length === 0) {
-      throw new DomainError(`${attribute} must not be empty`);
-    }
+    return new ShapeAttributeSnapshot(
+      attribute,
+      changed,
+      NumberFormatter.format(current),
+      NumberFormatter.format(next),
+      () => write(current),
+    );
   }
 }
