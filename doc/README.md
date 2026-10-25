@@ -1,6 +1,6 @@
 # Lab1 Phase 1：课程报告与过程记录
 
-状态：Ticket 01“空画布命令会话”已实现，当前 11 个业务测试通过；其余 18 张票仍是计划。本报告继续把“计划”和“已实现”分开记录。
+状态：Ticket 01–02 已实现，当前 16 个业务测试通过；其余 17 张票仍是计划。本报告继续把“计划”和“已实现”分开记录。
 
 需求依据：[课程原始要求](../phase_cli_1.md)。
 
@@ -21,7 +21,7 @@
 | 共享   | `src/shared/`   | 领域错误、错误码、数值解析与格式化            | 无                                  |
 | 领域   | `src/domain/`   | 图形层次、文档、id 索引、结构不变量、图形工厂 | `shared`                            |
 | 持久化 | `src/io/`       | 最小 XML 解析、SVG 读取子集、SVG 写出         | `domain`、`shared`                  |
-| 显示   | `src/display/`  | `tree`/`show` 的树形缩进与格式化              | `domain`、`shared`                  |
+| 显示   | `src/display/`  | `tree`/`show` 的树形缩进、显示宽度与格式化    | `domain`、`shared`                  |
 | 应用   | `src/commands/` | 命令对象、撤销历史、命令上下文、执行器        | `domain`、`io`、`display`、`shared` |
 | 交付   | `src/cli/`      | 分词、命令表、命令分发、REPL、终端输出        | `commands`、`shared`                |
 | 装配   | `src/main.ts`   | 组合根：创建并连接以上模块                    | 全部                                |
@@ -311,15 +311,27 @@ package "shared" {
 - 验证：`npm run check` 通过（类型、格式、11 个测试、构建）；`npm run cli` 回放 `help`、`init 320 240`、`canvas` 得到完整帮助和 `canvas 320x240`；构建后的 `npm start` 回放 `init`、`canvas` 得到 `canvas 800x600`。
 - 当前范围仍只是 Ticket 01，不包含图形创建、SVG 读写、撤销重做或带参数 `canvas`；因此不能据此宣称 Phase 1 完成。
 
+### 2026-10-25：Ticket 02 创建并查看矩形
+
+- 开始前复核分支拓扑：远端当时只有 `main`，且 `origin/main` 不包含 Ticket 01；直接将本地 `main` 更新到远端会丢失 Ticket 02 的前置。由于 Ticket 01 尚未合入 `main`，先把 `feat/ticket-01-cli-session` 补推到远端，再以该分支末端 `e02ddbb` 作为 `feat/ticket-02-rect-create` 的堆叠基准，没有重做 Ticket 01。
+- 按 TDD 在命令分发和真实 CLI 两个 seam 先写失败用例，再补最小实现。新增测试覆盖显式尺寸与可选填色、负数/浮点坐标、根级插入顺序、大小写敏感 id、重复 id、未知类型、非法数值、非法 id、缺失目标、失败原子性、`tree <id>` 与颜色 `#` 不被误判为注释。
+- 领域层新增 `Shape` → `Rect` 多态层次和唯一类型工厂 `ShapeFactory`；`SvgDocument` 负责 id 索引、根级顺序和插入。`Rect` 封装几何与填色，自行提供 tree/show 文本片段，不在命令或格式化器中按 `rect` 分支。
+- 显示层新增 `TreeFormatter` 与 `ShowFormatter`。树形输出按同组最长标签宽度加两个空格对齐；`show` 输出父级 `svg`、完整几何属性和已设置的 `fill`。
+- 失败路径均在状态写入前完成参数、id、几何和工厂校验；重复 id 由 `SvgDocument` 的索引再次拒绝。本票没有加入 undo/redo、`create … in`、容器、其他五种图形或 IO，这些行为留给各自票据。
+- 双轴审查发现初版由命令自行装配工厂/格式化器，且树对齐使用 UTF-16 长度而误解宽字符。依赖装配已集中回 `main.ts` 并注入 `CommandContext`；新增 `DisplayWidth` 按终端显示宽度对齐，真实 CLI 回放也补齐了非法数值、尺寸、id、填色和未知类型。
+- PR 集成复审进一步把 `create` 命令名从领域 usage 文案移回命令层，由 `ShapeUsageError` 只携带图形参数语法；同时统一在数值解析入口去除首尾空白，并补充矩形坐标空白回放。
+- Ticket 01 通过 PR #20（merge commit `311409e`）进入 `main` 后，Ticket 02 已 rebase 到最新主线；与 Ticket 01 的组合根和 11 个既有测试合并后，当前测试基线为 16 个。
+- 验证：`npm run check` 通过（类型、格式、16 个测试、构建）；`npm run cli` 和构建后的 `npm start` 回放见下方质量证据。
+
 ## 一致性自查
 
-当前状态为“Ticket 01 已按方案实现并验证；其余能力仍为计划”。
+当前状态为“Ticket 01–02 已按方案实现并验证；其余能力仍为计划”。
 
-1. **模块划分**：已落地 `src/shared/`（错误与数值）、`src/domain/SvgDocument.ts`、`src/commands/`（命令、上下文、执行器）、`src/cli/`（分词、命令表、分发、REPL、输出）与 `src/main.ts`（组合根）。`io/`、`display/`、完整图形层次和历史尚未实现，与当前票边界一致；差异已由本过程和任务计划记录。
-2. **依赖方向**：抽查 import 后，`domain` 只依赖 `shared`；`commands` 依赖 `domain` 和 `shared`；`cli` 依赖 `commands` 和 `shared`；`main` 装配全部模块。`commands` 不 import `cli`，`cli` 不直接 import `domain`/`io`/`display`，未发现循环依赖。
-3. **名字分派**：当前只有 `CommandCatalog` 一处“命令名 → 命令对象”分派；图形工厂尚未实现。终端和命令实现中没有第二套命令名 `switch`。
-4. **规格一致**：Ticket 01 按规格 3.1、3.3、4.1–4.3、6.11、6.14、6.17 实现；测试名称引用对应章节。带参数 `canvas` 按本票边界明确拒绝，历史屏障留给 Ticket 15。
-5. **文档一致**：`CONTEXT.md`、`doc/spec.md`、`doc/ticket-plan.md`、ADR-0005 与本报告一致；未实现的图形、IO、历史和显示能力没有写成已完成。
+1. **模块划分**：已落地 `src/shared/`（错误与数值）、`src/domain/`（`Shape`、`Rect`、`ShapeFactory`、`SvgDocument`）、`src/display/`（`TreeFormatter`、`ShowFormatter`、`DisplayWidth`）、`src/commands/`（命令、上下文、执行器、create/tree/show）、`src/cli/`（分词、命令表、分发、REPL、输出）与 `src/main.ts`（组合根）。`io/`、其余五种图形、容器和历史仍为计划，与当前票边界一致。
+2. **依赖方向**：抽查 import 后，`domain` 只依赖 `shared`；`display` 依赖 `domain` 和 `shared`；`commands` 依赖 `domain`、`display` 和 `shared`；`cli` 依赖 `commands` 和 `shared`；`main` 装配全部模块。`commands` 不 import `cli`，`cli` 不直接 import `domain`/`display`，未发现循环依赖。
+3. **名字分派**：当前只有两处名字分派，符合课程约束：`CommandCatalog` 做命令名到命令对象的分派，`ShapeFactory` 做图形类型名到类实例的分派。命令和格式化器中没有第二套类型 `switch`。
+4. **规格一致**：Ticket 01 按规格 3.1、3.3、4.1–4.3、6.11、6.14、6.17 实现；Ticket 02 按规格 3.1–3.3、5.1–5.2、5.5–5.6、6.1、6.15–6.16 实现。测试名称引用对应章节；Ticket 02 明确不提供撤销与容器能力。
+5. **文档一致**：`CONTEXT.md`、`doc/spec.md`、`doc/ticket-plan.md`、ADR-0005 与本报告一致；未实现的图形、IO、历史、容器和其他显示细节没有写成已完成。
 
 ## 质量保证手段
 
@@ -337,7 +349,8 @@ package "shared" {
 
 ### 当前证据与限制
 
-- Ticket 01 的 `npm run check` 通过：类型检查、格式检查、11 个测试和构建全部成功；测试由 Node.js 测试运行器实际发现，不是“零测试绿灯”。
-- 真实开发入口 `npm run cli` 已回放 `help`、`init 320 240`、`canvas`；构建入口 `npm start` 已回放 `init`、`canvas`，均无 stderr 输出。
-- 脚本模式测试通过 spawn 运行 `src/main.ts` 并断言无横幅/提示符、EOF 正常退出；TTY 模式通过注入终端流验证横幅、`svg> ` 提示符、stdout 错误和结果。
-- 当前只完成 Ticket 01。图形模型、IO、显示、历史和其余命令仍未实现；带参数 `canvas` 在 Ticket 15 前不可用。这些限制不能由本票测试通过覆盖。
+- Ticket 01 通过 PR #20 合入 `main`：类型检查、格式检查、11 个测试和构建全部成功。
+- Ticket 02 rebase 到该主线后，`npm run check` 通过：类型检查、格式检查、16 个测试和构建全部成功；测试由 Node.js 测试运行器实际发现，不是“零测试绿灯”。
+- 真实开发入口 `npm run cli` 已回放 `init 320 240`、`create rect r1 10 20 40 30 #4a90d9`、`show r1`、`tree`；构建入口 `npm start` 已回放相同创建与显示链路，均无 stderr 输出。
+- 脚本回放测试通过 spawn 运行 `src/main.ts`，断言空白/注释、成功输出、错误前缀、颜色参数、失败前后树一致、无横幅/提示符和 EOF 正常退出；TTY 模式通过注入终端流验证横幅、`svg> ` 提示符、stdout 错误和结果。
+- 当前只完成 Ticket 01–02。其余五种图形、容器、IO、历史和其余编辑命令仍未实现；带参数 `canvas` 在 Ticket 15 前不可用。这些限制不能由本票测试通过覆盖。
