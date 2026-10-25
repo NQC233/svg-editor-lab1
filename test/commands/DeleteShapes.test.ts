@@ -109,3 +109,27 @@ test('[spec 3.3, 6.2, 9] rejects invalid deletes without changing the tree or re
   ]);
   assert.deepEqual(dispatcher.dispatch(['redo']), ['rect#b created']);
 });
+
+test('[spec 3.3, 6.2, 9] clears redo and releases descendant ids for reuse', () => {
+  const dispatcher = createDispatcher();
+
+  dispatcher.dispatch(['init', '800', '600']);
+  dispatcher.dispatch(['create', 'g', 'group']);
+  dispatcher.dispatch(['create', 'rect', 'child', '0', '0', '10', '10', 'in', 'group']);
+  dispatcher.dispatch(['create', 'rect', 'draft', '20', '20', '10', '10']);
+  assert.deepEqual(dispatcher.dispatch(['undo']), ['rect#draft removed']);
+
+  assert.deepEqual(dispatcher.dispatch(['delete', 'group']), ['g#group deleted']);
+  assert.throws(() => dispatcher.dispatch(['redo']), new DomainError('nothing to redo'));
+
+  assert.deepEqual(dispatcher.dispatch(['create', 'rect', 'child', '50', '50', '5', '5']), [
+    'rect#child created',
+  ]);
+  assert.deepEqual(dispatcher.dispatch(['undo']), ['rect#child removed']);
+  assert.deepEqual(dispatcher.dispatch(['undo']), ['g#group restored into svg']);
+  assert.deepEqual(dispatcher.dispatch(['tree']), [
+    'svg (800x600)',
+    '└── g#group',
+    '    └── rect#child  x=0 y=0 w=10 h=10',
+  ]);
+});
