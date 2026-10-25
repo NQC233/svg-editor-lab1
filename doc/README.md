@@ -383,7 +383,7 @@ package "shared" {
 - 按 TDD 分成四个纵向切片：空 `g` 创建与显示；`create … in` 的归属、索引和 undo/redo；六种内置类型的多层树及失败原子性；真实 CLI 成功/失败回放。先写接缝测试，再补最小实现。
 - 领域层新增 `Container` 与 `Group`；`SvgDocument` 独占子节点数组，统一维护父子映射、根级/容器内插入、完整子树的 id 注册与移除，并集中返回 `no such container` / `not a container`。这与早先类图草案“容器自己持有 children”不同：为满足父子关系不能绕过文档操作的要求，子节点只能由聚合根修改；`childrenOf()` 返回隔离副本，树遍历通过文档读取，领域测试验证外部修改返回值不会破坏 id/父级索引。
 - `ShapeFactory` 仍是唯一的图形类型名分派点，新增 `g` 构造；`CreateCommand` 解析末尾未加引号的 `in <containerId>`，保存父容器与原索引供 undo/redo 精确恢复，并保留 `CommandToken.quoted` 以区分文本内容 `"in"` 和语法后缀。未加引号的 `in` 若未完整构成后缀则报 usage，不能被当作 fill/stroke 或文本内容。
-- `TreeFormatter` 使用图形自己的 `childShapes()` 递归，按每组兄弟的最长标签宽度加两空格对齐；`tree <id>` 以目标图形为根显示局部子树，`show` 通过文档父子映射显示 `parent=svg` 或 `parent=g#id`。
+- `TreeFormatter` 通过 `SvgDocument.childrenOf()` 递归，按每组兄弟的最长标签宽度加两空格对齐；`tree <id>` 以目标图形为根显示局部子树，`show` 通过文档父子映射显示 `parent=svg` 或 `parent=g#id`。
 - 命令测试覆盖空容器、嵌套容器、六种类型后缀、局部 tree/show、兄弟对齐、撤销重做后的父级与索引、缺容器、非容器、重复 id、非法后缀、裸 `in` 占用参数槽、被引号保护的 `in`，并断言失败后树和已有 redo 不变。真实 CLI 回放独立验证相同成功链与失败链。
 - 验证：`npm run check` 通过（类型、格式、44 个测试、构建）；`npm run cli` 与构建后的 `npm start` 使用同一容器脚本回放成功创建、局部 tree/show、undo/redo、非容器、重复 id 与非法 `in` 失败，两个入口输出一致且 stderr 为空。
 - 本票未实现 move/scale/set/delete/group/ungroup/addto/front/back、SVG IO 或完整 Phase 1 验收；`SvgDocument` 当前是唯一可改变层级结构的领域入口。

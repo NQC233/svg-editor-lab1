@@ -184,7 +184,7 @@ create <type> <id> [params…] [in <containerId>]
 
 - `type` 为六种内置类型之一；其它类型报 `unknown shape type: <type> (is the plugin loaded?)`。
 - `id` 必填且唯一；重复报 `id already exists: <id>`。
-- `in` 是可选的尾缀，必须由未加引号的 `in` 加一个容器 id 组成；容器必须存在且为 `g`。缺失报 `no such container: <id>`，不是容器报 `not a container: <id>`。
+- `in` 是可选的尾缀，必须由未加引号的 `in` 加一个容器 id 组成；容器必须存在且为 `g`。缺失报 `no such container: <id>`，不是容器报 `not a container: <id>`。未加引号的 `in` 是保留后缀关键字：若没有紧跟容器 id，则报 `usage:`；要把字面值 `in` 用作 fill、stroke 或 text 内容时必须加双引号。
 - 新图形追加到目标容器（或画布）的最后一个子节点。
 - 输出：`<type>#<id> created`，或 `<type>#<id> created in g#<containerId>`。
 - 撤销：删除该图形及其子树；重做：插回原位置。

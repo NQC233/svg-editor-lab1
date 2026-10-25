@@ -5,7 +5,6 @@ abstract class Shape {
   +get id(): string
   +get label(): string
   +get type(): string
-  +childShapes(): readonly Shape[]
   +treeAttributes(): string
   +detailLines(): readonly string[]
 }
