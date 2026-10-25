@@ -15,6 +15,7 @@ import { GroupCommand } from './commands/GroupCommand.js';
 import { HelpCommand } from './commands/HelpCommand.js';
 import { InitCommand } from './commands/InitCommand.js';
 import { MoveCommand } from './commands/MoveCommand.js';
+import { ReadCommand } from './commands/ReadCommand.js';
 import { RedoCommand } from './commands/RedoCommand.js';
 import { SaveCommand } from './commands/SaveCommand.js';
 import { ScaleCommand } from './commands/ScaleCommand.js';
@@ -28,17 +29,22 @@ import { ShowFormatter } from './display/ShowFormatter.js';
 import { TreeFormatter } from './display/TreeFormatter.js';
 import { ShapeFactory } from './domain/ShapeFactory.js';
 import { SvgWriter } from './io/SvgWriter.js';
+import { SvgReader } from './io/SvgReader.js';
+import { XmlParser } from './io/XmlParser.js';
 
 const history = new CommandHistory();
+const shapeFactory = new ShapeFactory();
 const context = new CommandContext({
   history,
-  shapeFactory: new ShapeFactory(),
+  shapeFactory,
   showFormatter: new ShowFormatter(),
+  svgReader: new SvgReader(new XmlParser(), shapeFactory),
   svgWriter: new SvgWriter(),
   treeFormatter: new TreeFormatter(),
 });
 const catalog = new CommandCatalog([
   ['init', () => new InitCommand()],
+  ['read', () => new ReadCommand()],
   ['canvas', () => new CanvasCommand()],
   ['create', () => new CreateCommand()],
   ['delete', () => new DeleteCommand()],

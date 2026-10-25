@@ -12,6 +12,7 @@ import { GroupCommand } from '../../src/commands/GroupCommand.js';
 import { HelpCommand } from '../../src/commands/HelpCommand.js';
 import { InitCommand } from '../../src/commands/InitCommand.js';
 import { MoveCommand } from '../../src/commands/MoveCommand.js';
+import { ReadCommand } from '../../src/commands/ReadCommand.js';
 import { RedoCommand } from '../../src/commands/RedoCommand.js';
 import { SaveCommand } from '../../src/commands/SaveCommand.js';
 import { ScaleCommand } from '../../src/commands/ScaleCommand.js';
@@ -25,18 +26,23 @@ import { ShowFormatter } from '../../src/display/ShowFormatter.js';
 import { TreeFormatter } from '../../src/display/TreeFormatter.js';
 import { ShapeFactory } from '../../src/domain/ShapeFactory.js';
 import { SvgWriter } from '../../src/io/SvgWriter.js';
+import { SvgReader } from '../../src/io/SvgReader.js';
+import { XmlParser } from '../../src/io/XmlParser.js';
 
 export function createDispatcher(): CommandDispatcher {
   const history = new CommandHistory();
+  const shapeFactory = new ShapeFactory();
   const context = new CommandContext({
     history,
-    shapeFactory: new ShapeFactory(),
+    shapeFactory,
     showFormatter: new ShowFormatter(),
+    svgReader: new SvgReader(new XmlParser(), shapeFactory),
     svgWriter: new SvgWriter(),
     treeFormatter: new TreeFormatter(),
   });
   const catalog = new CommandCatalog([
     ['init', () => new InitCommand()],
+    ['read', () => new ReadCommand()],
     ['canvas', () => new CanvasCommand()],
     ['create', () => new CreateCommand()],
     ['delete', () => new DeleteCommand()],
