@@ -12,8 +12,14 @@ import { LineTokenizer } from '../../src/cli/LineTokenizer.js';
 import { CanvasCommand } from '../../src/commands/CanvasCommand.js';
 import { CommandContext } from '../../src/commands/CommandContext.js';
 import { CommandInvoker } from '../../src/commands/CommandInvoker.js';
+import { CreateCommand } from '../../src/commands/CreateCommand.js';
 import { HelpCommand } from '../../src/commands/HelpCommand.js';
 import { InitCommand } from '../../src/commands/InitCommand.js';
+import { ShowCommand } from '../../src/commands/ShowCommand.js';
+import { TreeCommand } from '../../src/commands/TreeCommand.js';
+import { ShowFormatter } from '../../src/display/ShowFormatter.js';
+import { TreeFormatter } from '../../src/display/TreeFormatter.js';
+import { ShapeFactory } from '../../src/domain/ShapeFactory.js';
 
 const projectRoot = fileURLToPath(new URL('../..', import.meta.url));
 
@@ -51,10 +57,17 @@ async function runCli(input: string): Promise<RunResult> {
 }
 
 function createDispatcher(): CommandDispatcher {
-  const context = new CommandContext();
+  const context = new CommandContext({
+    shapeFactory: new ShapeFactory(),
+    showFormatter: new ShowFormatter(),
+    treeFormatter: new TreeFormatter(),
+  });
   const catalog = new CommandCatalog([
     ['init', new InitCommand()],
     ['canvas', new CanvasCommand()],
+    ['create', new CreateCommand()],
+    ['tree', new TreeCommand()],
+    ['show', new ShowCommand()],
     ['help', new HelpCommand()],
   ]);
   return new CommandDispatcher(catalog, new CommandInvoker(context));
@@ -140,4 +153,54 @@ test('[spec 4.1, 4.2] blank and comment-only scripts produce no output', async (
   assert.equal(result.code, 0);
   assert.equal(result.stderr, '');
   assert.equal(result.stdout, '');
+});
+
+test('[spec 4.2, 5.5, 5.6, 6.1] replays rectangle creation, display, and failures without comments swallowing colors', async () => {
+  const result = await runCli(
+    [
+      'create rect r1 0 0 10 10',
+      'tree',
+      'show r1',
+      'init 320 240',
+      'create rect r1 10 20 40 30 #4a90d9',
+      'show r1',
+      'tree',
+      'create rect r1 0 0 1 1',
+      'create rect bad-number nope 0 10 10',
+      'create rect zero 0 0 0 10',
+      'create rect "bad id" 1 2 3 4',
+      'create rect empty-fill 0 0 10 10 ""',
+      'create hexagon h1 0 0 10 10',
+      'show missing',
+      'tree',
+    ].join('\n'),
+  );
+
+  assert.equal(result.code, 0);
+  assert.equal(result.stderr, '');
+  assert.equal(
+    result.stdout,
+    [
+      "error: no document. use 'init' or 'read' first",
+      "error: no document. use 'init' or 'read' first",
+      "error: no document. use 'init' or 'read' first",
+      'canvas 320x240 created',
+      'rect#r1 created',
+      'rect#r1  parent=svg',
+      '  x=10 y=20 width=40 height=30',
+      '  fill=#4a90d9',
+      'svg (320x240)',
+      '└── rect#r1  x=10 y=20 w=40 h=30 fill=#4a90d9',
+      'error: id already exists: r1',
+      'error: invalid number: nope',
+      'error: rect width must be positive',
+      'error: invalid id: bad id',
+      'error: fill must not be empty',
+      'error: unknown shape type: hexagon (is the plugin loaded?)',
+      'error: no such shape: missing',
+      'svg (320x240)',
+      '└── rect#r1  x=10 y=20 w=40 h=30 fill=#4a90d9',
+      '',
+    ].join('\n'),
+  );
 });
