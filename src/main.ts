@@ -3,6 +3,7 @@ import { CommandCatalog } from './cli/CommandCatalog.js';
 import { CommandDispatcher } from './cli/CommandDispatcher.js';
 import { ConsoleOutput } from './cli/ConsoleOutput.js';
 import { LineTokenizer } from './cli/LineTokenizer.js';
+import { AddToContainerCommand } from './commands/AddToContainerCommand.js';
 import { CanvasCommand } from './commands/CanvasCommand.js';
 import { CommandContext } from './commands/CommandContext.js';
 import { CommandHistory } from './commands/CommandHistory.js';
@@ -36,6 +37,7 @@ const catalog = new CommandCatalog([
   ['create', () => new CreateCommand()],
   ['delete', () => new DeleteCommand()],
   ['ungroup', () => new UngroupCommand()],
+  ['addto', () => new AddToContainerCommand()],
   ['move', () => new MoveCommand()],
   ['scale', () => new ScaleCommand()],
   ['set', () => new SetCommand()],

@@ -1,5 +1,6 @@
 import { CommandCatalog } from '../../src/cli/CommandCatalog.js';
 import { CommandDispatcher } from '../../src/cli/CommandDispatcher.js';
+import { AddToContainerCommand } from '../../src/commands/AddToContainerCommand.js';
 import { CanvasCommand } from '../../src/commands/CanvasCommand.js';
 import { CommandContext } from '../../src/commands/CommandContext.js';
 import { CommandHistory } from '../../src/commands/CommandHistory.js';
@@ -34,6 +35,7 @@ export function createDispatcher(): CommandDispatcher {
     ['create', () => new CreateCommand()],
     ['delete', () => new DeleteCommand()],
     ['ungroup', () => new UngroupCommand()],
+    ['addto', () => new AddToContainerCommand()],
     ['move', () => new MoveCommand()],
     ['scale', () => new ScaleCommand()],
     ['set', () => new SetCommand()],
