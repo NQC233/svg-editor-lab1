@@ -125,27 +125,11 @@ export class SvgDocument {
       throw new DomainError(`invalid number: ${NumberFormatter.format(dy)}`);
     }
 
-    const subtree = this.collectSubtree(shape);
-    const leaves = subtree.filter((member): member is LeafShape => member instanceof LeafShape);
-    const snapshots = leaves.map((leaf) => leaf.snapshotGeometry());
-
-    if ((dx === 0 && dy === 0) || snapshots.length === 0) {
-      return [];
-    }
-
-    try {
-      for (const leaf of leaves) {
-        leaf.moveOwnGeometry(dx, dy);
-      }
-    } catch (error) {
-      for (const snapshot of snapshots) {
-        snapshot.restore();
-      }
-
-      throw error;
-    }
-
-    return snapshots.every((snapshot) => snapshot.matchesCurrent()) ? [] : snapshots;
+    return this.transformLeafGeometry(
+      shape,
+      (leaf) => leaf.moveOwnGeometry(dx, dy),
+      dx === 0 && dy === 0,
+    );
   }
 
   public scale(shape: Shape, factor: number): readonly GeometrySnapshot[] {
@@ -157,27 +141,7 @@ export class SvgDocument {
       throw new DomainError('scale factor must be positive');
     }
 
-    const subtree = this.collectSubtree(shape);
-    const leaves = subtree.filter((member): member is LeafShape => member instanceof LeafShape);
-    const snapshots = leaves.map((leaf) => leaf.snapshotGeometry());
-
-    if (factor === 1 || snapshots.length === 0) {
-      return [];
-    }
-
-    try {
-      for (const leaf of leaves) {
-        leaf.scaleOwnGeometry(factor);
-      }
-    } catch (error) {
-      for (const snapshot of snapshots) {
-        snapshot.restore();
-      }
-
-      throw error;
-    }
-
-    return snapshots.every((snapshot) => snapshot.matchesCurrent()) ? [] : snapshots;
+    return this.transformLeafGeometry(shape, (leaf) => leaf.scaleOwnGeometry(factor), factor === 1);
   }
 
   private assertPositiveDimensions(width: number, height: number): void {
@@ -252,6 +216,34 @@ export class SvgDocument {
       shape,
       ...(this.childrenByShape.get(shape)?.flatMap((child) => this.collectSubtree(child)) ?? []),
     ];
+  }
+
+  private transformLeafGeometry(
+    shape: Shape,
+    transform: (leaf: LeafShape) => void,
+    requestedNoOp: boolean,
+  ): readonly GeometrySnapshot[] {
+    const subtree = this.collectSubtree(shape);
+    const leaves = subtree.filter((member): member is LeafShape => member instanceof LeafShape);
+    const snapshots = leaves.map((leaf) => leaf.snapshotGeometry());
+
+    if (requestedNoOp || snapshots.length === 0) {
+      return [];
+    }
+
+    try {
+      for (const leaf of leaves) {
+        transform(leaf);
+      }
+    } catch (error) {
+      for (const snapshot of snapshots) {
+        snapshot.restore();
+      }
+
+      throw error;
+    }
+
+    return snapshots.every((snapshot) => snapshot.matchesCurrent()) ? [] : snapshots;
   }
 
   private mutableChildrenOf(container: Container): Shape[] {

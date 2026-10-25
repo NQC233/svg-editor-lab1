@@ -405,12 +405,13 @@ package "shared" {
 ### 2026-10-25：Ticket 08 缩放图形与整棵子树
 
 - 开始前确认工作区干净，`main` 与 `origin/main` 同为 `95eec84`；Ticket #8 的直接前置 #4、#5、#6 均已关闭，C1 无操作历史规则已由 ADR-0003 和 Ticket 03 收口。Issue 上遗留的 `needs-info` 标签与当前规格、任务计划不一致，不构成新的语义阻塞；从最新 `main` 新建 `feat/ticket-08-scale-shapes`。
-- 按 TDD 先在命令层和真实 CLI 两个接缝写失败用例，新增 8 个缩放测试全部以 `unknown command: scale` 红灯；提交 `3fe530c test: define shape scaling behavior` 后补最小实现，再提交 `9edffcf feat: scale shapes and nested subtrees`。
+- 按 TDD 先在命令层和真实 CLI 两个接缝写失败用例，新增 9 个测试（8 个命令测试、1 个 CLI 回放）全部以 `unknown command: scale` 红灯；提交 `3fe530c test: define shape scaling behavior` 后补最小实现，再提交 `9edffcf feat: scale shapes and nested subtrees`。
 - `LeafShape` 增加多态 `scaleOwnGeometry`；`Rect`、`Circle`、`Ellipse`、`Line`、`Text` 分别乘以因子并先校验全部计算结果再赋值。位置允许负数和负零；尺寸仍必须为有限正数，因此极小尺寸下溢为 0 时整条命令失败。`Text` 只缩放 `x`/`y`，内容与样式不变；当前未建模的 `stroke-width` 不属于几何字段，缩放路径不会触碰。
 - `SvgDocument.scale` 与移动事务一样按树序遍历叶子，复用同一份 `GeometrySnapshot` 设施；任一叶子溢出或尺寸非法时恢复全部快照。`ScaleCommand` 负责有限正数因子、摘要、成功事务和 undo/redo；因子 1、空容器以及精度导致的零变化均返回 `<label> unchanged`，不记录历史、不清空 redo、不解除屏障。
 - 测试覆盖五类叶子的几何、文本仅坐标、嵌套容器整树缩放、负数与浮点、因子 1/空容器、redo 清空、屏障、非法因子、缺失图形、参数错误、子树后部溢出及尺寸下溢回滚。新增真实 CLI 回放同时断言成功摘要、局部树、undo/redo 和失败后的状态保持。
 - 验证：`npm run check` 通过（类型、格式、63 个测试、构建）。`npm run cli` 与构建后的 `npm start` 使用同一缩放脚本回放，输出一致且 stderr 为空。
 - 本票未实现 set/delete/group/ungroup/addto/front/back、SVG IO 或完整 Phase 1 验收；`read`/`set` 接入后仍需确认 `stroke-width` 往返且不被缩放。
+- 双轴审查未发现硬性规范或功能错误；根据判断项把 `move`/`scale` 重复的子树遍历、快照和失败回滚提取为 `SvgDocument.transformLeafGeometry`，并修正“新增测试数”证据。两个具体命令类保留各自的摘要与重放逻辑，不为一处相似生命周期引入泛化基类。
 
 ## 一致性自查
 
