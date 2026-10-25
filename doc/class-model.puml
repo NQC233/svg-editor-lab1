@@ -1,5 +1,5 @@
 @startuml
-title 图形模型（Ticket 09 已落地部分）
+title 图形模型（当前已实现部分，截至 Ticket 09）
 
 abstract class Shape {
   +get id(): string
@@ -37,8 +37,8 @@ class GeometrySnapshot {
 class ShapeAttributeSnapshot {
   +get attribute(): string
   +get changed(): boolean
-  +get updatedDescription(): string
-  +get restoredDescription(): string
+  +get previousValue(): string | undefined
+  +get currentValue(): string
   +restore(): void
 }
 
@@ -101,7 +101,7 @@ Shape ..> ShapeAttributeSnapshot : returns attribute memento
 @enduml
 
 @startuml
-title 命令与历史（Ticket 09 已落地部分）
+title 命令与历史（当前已实现部分，截至 Ticket 09）
 
 abstract class Command {
   +execute(context, args): CommandResult

@@ -1,6 +1,6 @@
 # Phase 1 纵向任务计划
 
-状态：19 张票的粒度与阻塞关系已于 2026-10-23 获用户批准；Ticket 01–08 已实现并通过本地验收，其中 Ticket 06 通过 [PR #29](https://github.com/NQC233/svg-editor-lab1/pull/29)、Ticket 07 通过 [PR #30](https://github.com/NQC233/svg-editor-lab1/pull/30)、Ticket 08 通过 [PR #31](https://github.com/NQC233/svg-editor-lab1/pull/31) 交付 `main`；Ticket 09、10、13 和 15 已于 2026-10-25 完成实现与验收。当前 84 个测试通过，其余 7 张票尚未开始；未决契约仍按下表保留。
+状态：19 张票的粒度与阻塞关系已于 2026-10-23 获用户批准；Ticket 01–08 已实现并通过本地验收，其中 Ticket 06 通过 [PR #29](https://github.com/NQC233/svg-editor-lab1/pull/29)、Ticket 07 通过 [PR #30](https://github.com/NQC233/svg-editor-lab1/pull/30)、Ticket 08 通过 [PR #31](https://github.com/NQC233/svg-editor-lab1/pull/31) 交付 `main`；Ticket 09、10、13 和 15 已于 2026-10-25 完成实现与验收。当前 85 个测试通过，其余 7 张票尚未开始；未决契约仍按下表保留。
 
 依据：[规格](./spec.md)、[课程要求](../phase_cli_1.md)、[领域术语](../CONTEXT.md)和[架构方案](./README.md)。本计划取代原 [T1–T8](./tasks.md) 的执行顺序；旧内容仅作历史技术工作清单。下列编号为计划编号，GitHub 对应关系见发布索引。
 
@@ -147,7 +147,7 @@
 - 影响模块/接口：图形属性校验与多态方法、属性命令、显示。
 - 风险与人工审核：未设置与显式默认值不能混同；未知属性不能通过公共数据袋写入。
 
-**实现状态（2026-10-25）：** 已完成本地实现与验收。`Shape` 统一持有公共样式并暴露多态 `setAttribute`，各叶子类只声明自身几何白名单，`Group` 仅允许公共属性；`ShapeAttributeSnapshot` 保存旧值或未设置状态，支持精确 undo/redo。`SetCommand` 对相同值返回无操作，不进入历史、不清空 redo 或解除屏障；所有校验在写入前完成。84 个测试覆盖六种类型、白名单与边界、文本 JSON 格式、空样式、失败原子性、历史和真实 CLI 回放。
+**实现状态（2026-10-25）：** 已完成本地实现与验收。`Shape` 统一持有公共样式并暴露多态 `setAttribute`，各叶子类只声明自身几何白名单，`Group` 仅允许公共属性；`ShapeAttributeSnapshot` 保存旧值或未设置状态，支持精确 undo/redo。`SetCommand` 对相同值返回无操作，不进入历史、不清空 redo 或解除屏障；所有校验在写入前完成。85 个测试覆盖六种类型、白名单与边界、文本 JSON 格式、空样式、失败原子性、历史和真实 CLI 回放。
 
 ### 10 删除与恢复子树
 

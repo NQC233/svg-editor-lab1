@@ -1,6 +1,6 @@
 # Lab1 Phase 1：课程报告与过程记录
 
-状态：Ticket 01–10、13 和 15 已实现并通过本地验收，其中 Ticket 06 通过 [PR #29](https://github.com/NQC233/svg-editor-lab1/pull/29)、Ticket 07 通过 [PR #30](https://github.com/NQC233/svg-editor-lab1/pull/30)、Ticket 08 通过 [PR #31](https://github.com/NQC233/svg-editor-lab1/pull/31) 交付 `main`；Ticket 09、10、13 和 15 已于 2026-10-25 完成实现与验收；测试累计 84 个。其余 7 张票仍是计划。本报告继续把“计划”和“已实现”分开记录。
+状态：Ticket 01–10、13 和 15 已实现并通过本地验收，其中 Ticket 06 通过 [PR #29](https://github.com/NQC233/svg-editor-lab1/pull/29)、Ticket 07 通过 [PR #30](https://github.com/NQC233/svg-editor-lab1/pull/30)、Ticket 08 通过 [PR #31](https://github.com/NQC233/svg-editor-lab1/pull/31) 交付 `main`；Ticket 09、10、13 和 15 已于 2026-10-25 完成实现与验收；测试累计 85 个。其余 7 张票仍是计划。本报告继续把“计划”和“已实现”分开记录。
 
 需求依据：[课程原始要求](../phase_cli_1.md)。
 
@@ -26,7 +26,7 @@
 | 交付   | `src/cli/`      | 分词、命令表、命令分发、REPL、终端输出        | `commands`、`shared`                |
 | 装配   | `src/main.ts`   | 组合根：创建并连接以上模块                    | 全部                                |
 
-目标目录结构（Ticket 09 已落地六种内置图形、公共属性更新、容器树、子树删除/恢复、嵌套容器解散/恢复、移动/缩放事务、命令参数封装与历史相关部分）：
+目标目录结构（当前已实现部分：六种内置图形、公共属性更新、容器树、子树删除/恢复、嵌套容器解散/恢复、移动/缩放事务、命令参数封装与历史相关部分；截至 Ticket 09）：
 
 ```text
 src/
@@ -51,7 +51,7 @@ src/
 ```plantuml
 @startuml
 skinparam componentStyle rectangle
-title SVG 编辑器 Phase 1 模块依赖（Ticket 09 已落地部分；其余规划）
+title SVG 编辑器 Phase 1 模块依赖（当前已实现部分，截至 Ticket 09；其余规划）
 
 package "cli" {
   [CliApplication]
@@ -441,10 +441,11 @@ package "shared" {
 - 开始前确认工作区干净，本地 `main` 与 `origin/main` 同为 `4a8de28`；Ticket #9 的直接前置 #4、#5、#6 均已关闭。规格第 2 节与 ADR-0003 已明确“相同值 set 为无操作”，Issue 中残留的 `needs-info` 不再需要新语义决策。从最新 `main` 新建 `feat/ticket-09-set-attributes`，没有在 `main` 上修改业务代码。
 - 按 TDD 先写命令与真实 CLI 失败测试，首个红灯为 `unknown command: set`；随后按领域、命令、测试三个小提交推进，避免最终一次性大提交。
 - 公共 `fill`、`stroke`、`stroke-width` 状态从 `LeafShape` 上移到 `Shape`，因此叶子与 `g` 使用同一套样式设置路径；`Shape.setAttribute` 负责公共属性，子类通过 `setOwnAttribute` 声明各自几何白名单，`set` 命令不维护类型分派表。容器样式只改变自身，不递归修改子孙。
-- 新增 `ShapeAttributeSnapshot` 保存属性旧值；旧样式不存在时用 `undefined` 明确表示“未设置”，undo 输出 `=(unset)` 并移除该值，不与显式默认值混同。数值属性在写入前完成解析和尺寸约束校验，文本内容使用 JSON 字符串格式化，失败不留下部分修改。
+- 新增 `ShapeAttributeSnapshot` 保存属性旧值；旧样式不存在时用 `undefined` 明确表示“未设置”。快照只暴露状态和恢复能力，`updated:`/`(unset)` 等 CLI 文案由 `SetCommand` 生成；数值属性在写入前完成解析和尺寸约束校验，文本内容使用 JSON 字符串格式化，失败不留下部分修改。
 - `SetCommand` 校验参数、查找目标并调用多态属性方法；相同值返回 `unchanged` 且 `changed=false`，不进入历史、不清空 redo、不解除屏障。成功更新作为一个撤销单元，redo 重新应用同一属性值。
 - 帮助文案、组合根、测试装配和类图同步加入 `set`、`SetCommand` 与 `ShapeAttributeSnapshot`；报告仍明确 IO、group/addto/front/back 等能力尚未实现。
-- 验证：`npm run check` 通过（类型、格式、84 个测试、构建）。真实 CLI 回放覆盖样式与几何更新、文本转义、`(unset)` 恢复、无操作保 redo、失败原子性、redo 和 `canvas` 屏障。
+- 审查发现 `tree` 误复用 `show` 的全部样式列；修正为 `tree` 对 rect/circle/ellipse 仅输出 `fill`，`show` 才输出 `fill`、`stroke`、`stroke-width`。同时加强容器样式隔离、各类型白名单拒绝和成功 `set` 清空 redo 的回归测试。
+- 验证：`npm run check` 通过（类型、格式、85 个测试、构建）。真实 CLI 回放覆盖样式与几何更新、文本转义、`(unset)` 恢复、无操作保 redo、失败原子性、redo 和 `canvas` 屏障；同一脚本经 `npm run cli` 与构建后的 `npm start` 运行，输出逐字节一致，stderr 均为空。
 
 ## 一致性自查
 
@@ -499,6 +500,6 @@ package "shared" {
 - Ticket 13 的 `npm run check` 通过：类型检查、格式检查、76 个测试和构建全部成功。真实 CLI 回放从 `init 800 600` 构建 `outer → n → m/x` 多层树，验证解散后的完整/局部树、show、undo/redo、根级/叶子/缺失目标/参数失败及失败后的 redo。
 - Ticket 13 的开发入口与构建入口使用同一脚本回放：`init 800 600`、嵌套容器 `outer → n → m/x`、`ungroup n`、tree、undo/redo、根级 `ungroup` 失败；去掉 npm 启动横幅后，`npm run cli` 与 `npm start` 的应用输出一致，两者 stderr 均为空。
 - Ticket 09 的命令测试覆盖六种类型公共样式、各类型几何白名单、文本内容、空样式拒绝、相同值无操作、`(unset)` 恢复、redo 清空、屏障保持、失败原子性和真实 CLI 回放。
-- Ticket 09 的 `npm run check` 通过：类型检查、格式检查、84 个测试和构建全部成功。真实 CLI 回放验证 `fill`、`x`、`stroke-width`、`text`、无操作、非法属性/数值/空样式、undo/redo 和 `canvas` 屏障。
+- Ticket 09 的 `npm run check` 通过：类型检查、格式检查、85 个测试和构建全部成功。真实 CLI 回放验证 `fill`、`stroke`、`x`、`stroke-width`、`text`、无操作、非法属性/数值/空样式、undo/redo 和 `canvas` 屏障；开发入口与构建入口使用同一脚本，输出一致。
 - 脚本回放测试通过 spawn 运行 `src/main.ts`，断言空白/注释、成功输出、错误前缀、颜色参数、失败前后树一致、无横幅/提示符和 EOF 正常退出；TTY 模式通过注入终端流验证横幅、`svg> ` 提示符、stdout 错误和结果。
 - 当前完成 Ticket 01–10、13 和 15 的功能实现。历史基础设施已接入六种内置类型创建、属性更新、叶子/整棵子树删除、嵌套容器解散、叶子/整棵子树移动/缩放及带参数 `canvas` 的屏障；IO 和其余编辑命令仍未实现。这些限制不能由这些票的测试通过覆盖。
