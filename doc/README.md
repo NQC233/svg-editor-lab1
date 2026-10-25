@@ -1,6 +1,6 @@
 # Lab1 Phase 1：课程报告与过程记录
 
-状态：Ticket 01–04 已合入 `main`，其中 Ticket 04 通过 [PR #25](https://github.com/NQC233/svg-editor-lab1/pull/25) 合并；测试累计 27 个。其余 15 张票仍是计划。本报告继续把“计划”和“已实现”分开记录。
+状态：Ticket 01–04 已合入 `main`，其中 Ticket 04 通过 [PR #25](https://github.com/NQC233/svg-editor-lab1/pull/25) 合并；Ticket 05 已完成实现与本地验收，待 PR 合并；测试累计 34 个。其余 14 张票仍是计划。本报告继续把“计划”和“已实现”分开记录。
 
 需求依据：[课程原始要求](../phase_cli_1.md)。
 
@@ -26,7 +26,7 @@
 | 交付   | `src/cli/`      | 分词、命令表、命令分发、REPL、终端输出        | `commands`、`shared`                |
 | 装配   | `src/main.ts`   | 组合根：创建并连接以上模块                    | 全部                                |
 
-目标目录结构（Ticket 04 已落地四个叶子图形与历史相关部分）：
+目标目录结构（Ticket 05 已落地五个叶子图形、命令参数封装与历史相关部分）：
 
 ```text
 src/
@@ -37,7 +37,8 @@ src/
 ├── io/              # XmlParser、XmlElement、SvgReader、SvgWriter
 ├── display/         # TreeFormatter、ShowFormatter
 ├── commands/        # Command、EditCommand、DocumentCommand、CommandResult
-│                    # CommandHistory、CommandInvoker、CommandContext、各具体命令
+│                    # CommandToken、CommandArguments、CommandHistory、CommandInvoker
+│                    # CommandContext、各具体命令
 └── cli/             # LineTokenizer、CommandCatalog、CommandDispatcher
                      # CliApplication、ConsoleOutput
 ```
@@ -131,11 +132,11 @@ package "shared" {
 
 关键职责：
 
-- **领域层**不依赖 I/O、终端或命令对象。`SvgDocument` 是聚合根，统一维护 id 索引和结构变更；当前 `Shape` 层次由 `Rect`、`Circle`、`Ellipse`、`Line` 各自负责几何、属性文本和显示描述。
+- **领域层**不依赖 I/O、终端或命令对象。`SvgDocument` 是聚合根，统一维护 id 索引和结构变更；当前 `Shape` 层次由 `Rect`、`Circle`、`Ellipse`、`Line`、`Text` 各自负责几何、属性文本和显示描述。
 - **持久化层**只处理文件、XML 结构和根元素；图形类型解析仍通过 `ShapeFactory`，不引入第二处类型名分派。
 - **显示层**负责树形前缀与兄弟列对齐；图形只提供自己的标签和属性文本。
 - **应用层**接收命令对象并执行；执行器只在成功后提交历史影响，命令自己实现正向、撤销和重做。
-- **交付层**只做分词、命令名查找、REPL 和输出，不直接操作领域对象。
+- **交付层**只做分词、命令名查找、REPL 和输出，不直接操作领域对象。分词器生成带引号来源的 `CommandToken`，由命令层 `CommandArguments` 读取，避免应用层反向依赖 CLI。
 - **组合根**在 `main.ts` 创建并注入所有依赖，便于测试时替换 I/O 和输出。
 
 ### 设计模式的选择
@@ -354,14 +355,24 @@ package "shared" {
 - Ticket 04 通过 [PR #25](https://github.com/NQC233/svg-editor-lab1/pull/25) 合入 `main`，merge commit 为 `7c9a366`；Issue #4 已关闭。
 - 本票未实现 `text`、`g`、`create … in`、move/scale/set、SVG IO 或带参数 `canvas`；这些仍由后续票负责。
 
+### 2026-10-25：Ticket 05 创建与显示文本
+
+- 开始前 refresh 远端并确认本地 `main` 与 `origin/main` 同为 `b047ddf`，Ticket #3 已关闭、Ticket #5 无 `needs-info` 门禁；随后从最新 `main` 新建 `feat/ticket-05-text-create`，并把 #5 标记为 `ready-for-agent` 后领取。
+- 按 TDD 先补命令层、分词器和真实 CLI 失败用例，红灯为 33 个测试中 10 个失败；再补最小实现。新增 7 个测试，覆盖文本创建、中文、空内容、空格、引号、反斜杠、换行/制表符 JSON 转义、内容为 `in`、错误输出、失败原子性、撤销重做和分词引号元数据；其中换行/控制字符测试由审查后补。
+- 领域层新增 `Text` 类并接入唯一类型工厂 `ShapeFactory`；`Text` 封装坐标与内容，自行提供 tree/show 文本，命令和格式化器没有新增类型分支。tree/show 使用 JSON 字符串表示内容，统一处理双引号、反斜杠、换行和控制字符。
+- 分词器改为生成 `CommandToken`，保留每个 token 是否来自引号段的信息；命令层新增 `CommandArguments` 作为只读参数封装，所有命令通过值访问参数。这样 Ticket06 解析未加引号的 `in` 后缀时，不会把 `create text … "in"` 的内容误判为语法关键字，同时保持 `commands` 不依赖 `cli`。
+- 双轴审查发现文档状态未同步、换行/控制字符转义缺少直接测试，以及分词测试重复投影逻辑。已更新 README、任务计划、测试说明和本报告，补齐转义测试并提取测试辅助函数；`CommandToken.quoted` 暂无生产消费者，但由 Ticket06 的已记录接口需求保留。
+- 验证：`npm run check` 通过（类型、格式、34 个测试、构建）；`npm run cli` 与构建后的 `npm start` 使用同一文本脚本回放创建、tree/show、undo/redo，去掉 npm 自身脚本横幅后应用输出一致，stderr 为空。
+- 本票未实现 `g`、`create … in`、move/scale/set、SVG IO 或带参数 `canvas`；这些仍由后续票负责。
+
 ## 一致性自查
 
-当前状态为“Ticket 01–04 已合入 `main` 并验证；其余能力仍为计划”。
+当前状态为“Ticket 01–04 已合入 `main` 并验证；Ticket 05 已实现并通过本地验收，待 PR 合并；其余能力仍为计划”。
 
-1. **模块划分**：已落地 `src/shared/`（错误与数值）、`src/domain/`（`Shape`、`LeafShape`、`Rect`、`Circle`、`Ellipse`、`Line`、`ShapeFactory`、`SvgDocument`）、`src/display/`（`TreeFormatter`、`ShowFormatter`、`DisplayWidth`）、`src/commands/`（命令、结果、历史、上下文、执行器、create/tree/show/undo/redo）、`src/cli/`（分词、命令表、分发、REPL、输出）与 `src/main.ts`（组合根）。`io/`、`text`、容器和其余编辑命令仍为计划，与当前票边界一致。
+1. **模块划分**：已落地 `src/shared/`（错误与数值）、`src/domain/`（`Shape`、`LeafShape`、`Rect`、`Circle`、`Ellipse`、`Line`、`Text`、`ShapeFactory`、`SvgDocument`）、`src/display/`（`TreeFormatter`、`ShowFormatter`、`DisplayWidth`）、`src/commands/`（命令、token/参数封装、结果、历史、上下文、执行器、create/tree/show/undo/redo）、`src/cli/`（分词、命令表、分发、REPL、输出）与 `src/main.ts`（组合根）。`io/`、容器和其余编辑命令仍为计划，与当前票边界一致。
 2. **依赖方向**：抽查 import 后，`domain` 只依赖 `shared`；`display` 依赖 `domain` 和 `shared`；`commands` 依赖 `domain`、`display` 和 `shared`；`cli` 依赖 `commands` 和 `shared`；`main` 装配全部模块。`commands` 不 import `cli`，`cli` 不直接 import `domain`/`display`，未发现循环依赖。
 3. **名字分派**：当前只有两处名字分派，符合课程约束：`CommandCatalog` 做命令名到命令工厂的分派，`ShapeFactory` 做图形类型名到类实例的分派。命令和格式化器中没有第二套类型 `switch`。
-4. **规格一致**：Ticket 01 按规格 3.1、3.3、4.1–4.3、6.11、6.14、6.17 实现；Ticket 02 按规格 3.1–3.3、5.1–5.2、5.5–5.6、6.1、6.15–6.16 实现；Ticket 03 按规格 3.3、6.10–6.11、9 实现；Ticket 04 按规格 3.1、3.3、5.1–5.2、5.5–5.6、6.1、6.10 实现。测试名称引用对应章节；当前 undo/redo 只覆盖已交付的四种叶子图形创建，其他编辑命令仍需各自交付历史。
+4. **规格一致**：Ticket 01 按规格 3.1、3.3、4.1–4.3、6.11、6.14、6.17 实现；Ticket 02 按规格 3.1–3.3、5.1–5.2、5.5–5.6、6.1、6.15–6.16 实现；Ticket 03 按规格 3.3、6.10–6.11、9 实现；Ticket 04 按规格 3.1、3.3、5.1–5.2、5.5–5.6、6.1、6.10 实现；Ticket 05 按规格 3.1、4.2、5.2、5.5–5.6、6.1、6.10、9 实现。测试名称引用对应章节；当前 undo/redo 只覆盖已交付的五个叶子图形创建，其他编辑命令仍需各自交付历史。
 5. **文档一致**：`CONTEXT.md`、`doc/spec.md`、`doc/ticket-plan.md`、ADR-0005 与本报告一致；未实现的图形、IO、历史、容器和其他显示细节没有写成已完成。
 
 ## 质量保证手段
@@ -387,5 +398,7 @@ package "shared" {
 - 真实开发入口 `npm run cli` 已回放 `init 320 240`、`create rect r1 10 20 40 30 #4a90d9`、`show r1`、`tree`；构建入口 `npm start` 已回放相同创建与显示链路，均无 stderr 输出。
 - Ticket 04 的 `npm run check` 通过：类型检查、格式检查、27 个测试和构建全部成功。命令测试覆盖三种类型的成功、失败和历史边界；真实 CLI 测试通过独立进程回放创建、tree/show、undo/redo 和失败后继续撤销。
 - Ticket 04 的开发入口与构建入口使用同一脚本回放：`init 320 240`、创建圆/椭圆/直线、`tree`、`undo`、`redo`、`show edge`、失败的零半径椭圆、再次 `undo`；`npm run cli` 与 `npm start` 输出一致。
+- Ticket 05 的 `npm run check` 通过：类型检查、格式检查、34 个测试和构建全部成功。测试覆盖文本创建的坐标与内容、中文、空内容、引号、反斜杠、换行/制表符 JSON 转义、内容为 `in`、分词引号元数据、错误输出、失败原子性和撤销重做。
+- Ticket 05 的开发入口与构建入口使用同一脚本回放：`init 400 200`、创建带空格/转义/中文/`in` 内容的文本、`tree`、`show`、`undo`、`redo`；去掉 npm 脚本横幅后应用输出一致，构建入口 stderr 为空。
 - 脚本回放测试通过 spawn 运行 `src/main.ts`，断言空白/注释、成功输出、错误前缀、颜色参数、失败前后树一致、无横幅/提示符和 EOF 正常退出；TTY 模式通过注入终端流验证横幅、`svg> ` 提示符、stdout 错误和结果。
-- 当前完成 Ticket 01–04 的功能实现。历史基础设施已接入矩形、圆、椭圆和直线的创建；文本、容器、IO 和其余编辑命令仍未实现；带参数 `canvas` 在 Ticket 15 前不可用。这些限制不能由本票测试通过覆盖。
+- 当前完成 Ticket 01–05 的功能实现。历史基础设施已接入矩形、圆、椭圆、直线和文本的创建；容器、IO 和其余编辑命令仍未实现；带参数 `canvas` 在 Ticket 15 前不可用。这些限制不能由本票测试通过覆盖。
