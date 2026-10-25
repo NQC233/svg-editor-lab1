@@ -1,5 +1,8 @@
 import assert from 'node:assert/strict';
 import { spawn } from 'node:child_process';
+import { mkdtemp, readFile, rm } from 'node:fs/promises';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
 import { PassThrough } from 'node:stream';
 import { fileURLToPath } from 'node:url';
 import test from 'node:test';
@@ -116,6 +119,40 @@ test('[spec 4.1, 4.3] interactive mode prints the banner, prompt, results, and e
   assert.match(stdout, /svg> /);
   assert.match(stdout, /error: no document\. use 'init' or 'read' first/);
   assert.match(stdout, /canvas 320x240 created/);
+});
+
+test('[spec 6.13, 8] replays save success, path reuse, and write failures through the CLI', async (t) => {
+  const directory = await mkdtemp(join(tmpdir(), 'svg-editor-cli-save-'));
+  t.after(() => rm(directory, { force: true, recursive: true }));
+  const file = join(directory, 'cli output.svg');
+  const result = await runCli(
+    [
+      `save "${file}"`,
+      'init 320 240',
+      'create g scene',
+      'create text label 10 20 "你好 & <x>"',
+      `save "${file}"`,
+      'save',
+      'init 100 80',
+      'save',
+      `save "${directory}"`,
+    ].join('\n'),
+  );
+
+  assert.equal(result.code, 0);
+  assert.equal(result.stderr, '');
+  assert.deepEqual(result.stdout.split('\n').slice(0, -1), [
+    "error: no document. use 'init' or 'read' first",
+    'canvas 320x240 created',
+    'g#scene created',
+    'text#label created',
+    `saved to ${file} (2 elements)`,
+    `saved to ${file} (2 elements)`,
+    'canvas 100x80 created',
+    'error: no file path; use save <file.svg>',
+    `error: cannot write file: ${directory}`,
+  ]);
+  assert.match(await readFile(file, 'utf8'), /你好 &amp; &lt;x&gt;/);
 });
 
 test('[spec 4.1, 4.2] blank and comment-only scripts produce no output', async () => {

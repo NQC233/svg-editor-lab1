@@ -4,6 +4,7 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import test from 'node:test';
 
+import { DomainError } from '../../src/shared/DomainError.js';
 import { createDispatcher } from '../support/createDispatcher.js';
 
 test('[spec 6.13, 8] saves a rectangle as a UTF-8 SVG document', async (t) => {
@@ -68,4 +69,71 @@ test('[spec 8] serializes every shape, nested containers, styles, and escaped te
       '',
     ].join('\n'),
   );
+});
+
+test('[spec 6.11, 6.13] reuses the current path and clears it on init', async (t) => {
+  const directory = await mkdtemp(join(tmpdir(), 'svg-editor-save-path-'));
+  t.after(() => rm(directory, { force: true, recursive: true }));
+  const file = join(directory, 'with space.svg');
+  const dispatcher = createDispatcher();
+
+  dispatcher.dispatch(['init', '100', '80']);
+  dispatcher.dispatch(['create', 'rect', 'r', '1', '2', '3', '4']);
+  assert.deepEqual(dispatcher.dispatch(['save', file]), [`saved to ${file} (1 elements)`]);
+  dispatcher.dispatch(['create', 'circle', 'c', '5', '6', '7']);
+
+  assert.deepEqual(dispatcher.dispatch(['save']), [`saved to ${file} (2 elements)`]);
+  assert.match(await readFile(file, 'utf8'), /<circle id="c"/);
+
+  dispatcher.dispatch(['init', '200', '100']);
+  assert.throws(
+    () => dispatcher.dispatch(['save']),
+    new DomainError('no file path; use save <file.svg>'),
+  );
+});
+
+test('[spec 3.3, 6.13] reports save usage and failed writes without establishing a path', async (t) => {
+  const directory = await mkdtemp(join(tmpdir(), 'svg-editor-save-fail-path-'));
+  t.after(() => rm(directory, { force: true, recursive: true }));
+  const dispatcher = createDispatcher();
+
+  assert.throws(
+    () => dispatcher.dispatch(['save']),
+    new DomainError("no document. use 'init' or 'read' first"),
+  );
+
+  dispatcher.dispatch(['init', '100', '80']);
+  assert.throws(
+    () => dispatcher.dispatch(['save', 'a.svg', 'b.svg']),
+    new DomainError('usage: save [file.svg]'),
+  );
+  assert.throws(
+    () => dispatcher.dispatch(['save', directory]),
+    new DomainError(`cannot write file: ${directory}`),
+  );
+  assert.throws(
+    () => dispatcher.dispatch(['save']),
+    new DomainError('no file path; use save <file.svg>'),
+  );
+});
+
+test('[spec 6.10, 6.13] a failed overwrite preserves the current path and history', async (t) => {
+  const directory = await mkdtemp(join(tmpdir(), 'svg-editor-save-atomic-'));
+  t.after(() => rm(directory, { force: true, recursive: true }));
+  const file = join(directory, 'kept.svg');
+  const dispatcher = createDispatcher();
+
+  dispatcher.dispatch(['init', '100', '80']);
+  dispatcher.dispatch(['create', 'rect', 'a', '1', '2', '3', '4']);
+  dispatcher.dispatch(['save', file]);
+  dispatcher.dispatch(['create', 'rect', 'b', '5', '6', '7', '8']);
+  dispatcher.dispatch(['undo']);
+
+  assert.throws(
+    () => dispatcher.dispatch(['save', directory]),
+    new DomainError(`cannot write file: ${directory}`),
+  );
+  assert.deepEqual(dispatcher.dispatch(['redo']), ['rect#b created']);
+  assert.deepEqual(dispatcher.dispatch(['save']), [`saved to ${file} (2 elements)`]);
+  assert.match(await readFile(file, 'utf8'), /<rect id="b"/);
 });
