@@ -1,21 +1,18 @@
 import type { Container } from './Container.js';
 import type { Group } from './Group.js';
+import type { GroupedShapePlacement } from './GroupedShapePlacement.js';
 import type { Shape } from './Shape.js';
-import type { ShapePlacement } from './ShapePlacement.js';
 
 export class GroupSnapshot {
-  private readonly childrenValue: readonly Shape[];
-  private readonly placementsValue: readonly ShapePlacement[];
+  private readonly entriesValue: readonly GroupedShapePlacement[];
 
   public constructor(
     private readonly groupValue: Group,
     private readonly parentValue: Container | undefined,
     private readonly indexValue: number,
-    children: readonly Shape[],
-    placements: readonly ShapePlacement[],
+    entries: readonly GroupedShapePlacement[],
   ) {
-    this.childrenValue = [...children];
-    this.placementsValue = [...placements];
+    this.entriesValue = [...entries];
   }
 
   public get group(): Group {
@@ -31,10 +28,10 @@ export class GroupSnapshot {
   }
 
   public get children(): readonly Shape[] {
-    return [...this.childrenValue];
+    return this.entriesValue.map((entry) => entry.shape);
   }
 
-  public get placements(): readonly ShapePlacement[] {
-    return [...this.placementsValue];
+  public get entries(): readonly GroupedShapePlacement[] {
+    return [...this.entriesValue];
   }
 }

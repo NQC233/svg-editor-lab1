@@ -9,36 +9,40 @@ test('[spec 5.2, 6.6, 6.10, 9] groups siblings in original order and restores th
 
   dispatcher.dispatch(['init', '800', '600']);
   dispatcher.dispatch(['create', 'g', 'outer']);
-  dispatcher.dispatch(['create', 'rect', 'a', '0', '0', '10', '10', 'in', 'outer']);
-  dispatcher.dispatch(['create', 'rect', 'b', '20', '20', '10', '10', 'in', 'outer']);
-  dispatcher.dispatch(['create', 'rect', 'c', '40', '40', '10', '10', 'in', 'outer']);
+  dispatcher.dispatch(['create', 'rect', 'before', '0', '0', '10', '10', 'in', 'outer']);
+  dispatcher.dispatch(['create', 'rect', 'a', '20', '20', '10', '10', 'in', 'outer']);
+  dispatcher.dispatch(['create', 'rect', 'b', '40', '40', '10', '10', 'in', 'outer']);
+  dispatcher.dispatch(['create', 'rect', 'c', '60', '60', '10', '10', 'in', 'outer']);
 
   assert.deepEqual(dispatcher.dispatch(['group', 'combined', 'b', 'a']), [
     'g#combined created with 2 children',
   ]);
   assert.deepEqual(dispatcher.dispatch(['tree', 'outer']), [
     'g#outer',
+    '├── rect#before  x=0 y=0 w=10 h=10',
     '├── g#combined',
-    '│   ├── rect#a  x=0 y=0 w=10 h=10',
-    '│   └── rect#b  x=20 y=20 w=10 h=10',
-    '└── rect#c      x=40 y=40 w=10 h=10',
+    '│   ├── rect#a  x=20 y=20 w=10 h=10',
+    '│   └── rect#b  x=40 y=40 w=10 h=10',
+    '└── rect#c       x=60 y=60 w=10 h=10',
   ]);
 
   assert.deepEqual(dispatcher.dispatch(['undo']), ['g#combined removed; 2 children restored']);
   assert.deepEqual(dispatcher.dispatch(['tree', 'outer']), [
     'g#outer',
-    '├── rect#a  x=0 y=0 w=10 h=10',
-    '├── rect#b  x=20 y=20 w=10 h=10',
-    '└── rect#c  x=40 y=40 w=10 h=10',
+    '├── rect#before  x=0 y=0 w=10 h=10',
+    '├── rect#a       x=20 y=20 w=10 h=10',
+    '├── rect#b       x=40 y=40 w=10 h=10',
+    '└── rect#c       x=60 y=60 w=10 h=10',
   ]);
 
   assert.deepEqual(dispatcher.dispatch(['redo']), ['g#combined created with 2 children']);
   assert.deepEqual(dispatcher.dispatch(['tree', 'outer']), [
     'g#outer',
+    '├── rect#before  x=0 y=0 w=10 h=10',
     '├── g#combined',
-    '│   ├── rect#a  x=0 y=0 w=10 h=10',
-    '│   └── rect#b  x=20 y=20 w=10 h=10',
-    '└── rect#c      x=40 y=40 w=10 h=10',
+    '│   ├── rect#a  x=20 y=20 w=10 h=10',
+    '│   └── rect#b  x=40 y=40 w=10 h=10',
+    '└── rect#c       x=60 y=60 w=10 h=10',
   ]);
 });
 

@@ -3,7 +3,10 @@ import test from 'node:test';
 
 import { DomainError } from '../../src/shared/DomainError.js';
 import { Group } from '../../src/domain/Group.js';
+import { GroupedShapePlacement } from '../../src/domain/GroupedShapePlacement.js';
+import { GroupSnapshot } from '../../src/domain/GroupSnapshot.js';
 import { Rect } from '../../src/domain/Rect.js';
+import { ShapePlacement } from '../../src/domain/ShapePlacement.js';
 import { SvgDocument } from '../../src/domain/SvgDocument.js';
 
 test('[spec 6.1] returns a detached child view without bypassing document indexes', () => {
@@ -154,6 +157,7 @@ test('[spec 6.8, 9] moves within one parent, reports a last-child no-op, and rej
 test('[spec 6.6] groups mixed targets at the first target location in original document order', () => {
   const document = new SvgDocument(800, 600);
   const same = new Group('same');
+  const before = new Rect('before', 0, 0, 10, 10);
   const a = new Rect('a', 0, 0, 10, 10);
   const b = new Rect('b', 20, 20, 10, 10);
   const c = new Rect('c', 40, 40, 10, 10);
@@ -163,6 +167,7 @@ test('[spec 6.6] groups mixed targets at the first target location in original d
   const combined = new Group('combined');
 
   document.appendShape(same);
+  document.appendShape(before, same);
   document.appendShape(a, same);
   document.appendShape(b, same);
   document.appendShape(c, same);
@@ -174,9 +179,9 @@ test('[spec 6.6] groups mixed targets at the first target location in original d
 
   assert.equal(snapshot.group, combined);
   assert.equal(snapshot.parent, same);
-  assert.equal(snapshot.index, 0);
+  assert.equal(snapshot.index, 1);
   assert.deepEqual(snapshot.children, [a, b, d]);
-  assert.deepEqual(document.childrenOf(same), [combined, c]);
+  assert.deepEqual(document.childrenOf(same), [before, combined, c]);
   assert.deepEqual(document.childrenOf(combined), [a, b, d]);
   assert.deepEqual(document.childrenOf(other), [e]);
   assert.equal(document.parentLabelOf(a), 'g#combined');
@@ -184,7 +189,7 @@ test('[spec 6.6] groups mixed targets at the first target location in original d
 
   document.restoreGrouped(snapshot);
 
-  assert.deepEqual(document.childrenOf(same), [a, b, c]);
+  assert.deepEqual(document.childrenOf(same), [before, a, b, c]);
   assert.deepEqual(document.childrenOf(other), [d, e]);
   assert.deepEqual(document.childrenOf(combined), []);
   assert.equal(document.find('combined'), undefined);
@@ -193,7 +198,7 @@ test('[spec 6.6] groups mixed targets at the first target location in original d
 
   document.reapplyGroup(snapshot);
 
-  assert.deepEqual(document.childrenOf(same), [combined, c]);
+  assert.deepEqual(document.childrenOf(same), [before, combined, c]);
   assert.deepEqual(document.childrenOf(combined), [a, b, d]);
   assert.deepEqual(document.childrenOf(other), [e]);
 });
@@ -223,9 +228,38 @@ test('[spec 3.3, 6.6] rejects invalid group targets without changing the tree', 
     () => document.groupShapes(new Group('combined'), ['outer', 'leaf']),
     new DomainError('cannot group a container into its own descendant: outer'),
   );
+  assert.throws(
+    () => document.groupShapes(new Group('combined'), ['inner', 'outer', 'leaf']),
+    new DomainError('cannot group a container into its own descendant: inner'),
+  );
 
   assert.deepEqual(document.rootShapes, [outer]);
   assert.deepEqual(document.childrenOf(outer), [inner]);
   assert.deepEqual(document.childrenOf(inner), [leaf]);
   assert.equal(document.find('combined'), undefined);
+});
+
+test('[spec 3.3, 6.6] rejects inconsistent group placements before changing the tree', () => {
+  const document = new SvgDocument(800, 600);
+  const source = new Group('source');
+  const a = new Rect('a', 0, 0, 10, 10);
+  const b = new Rect('b', 20, 20, 10, 10);
+  const combined = new Group('combined');
+  document.appendShape(source);
+  document.appendShape(a, source);
+  document.appendShape(b, source);
+
+  document.groupShapes(combined, ['a', 'b']);
+  const inconsistent = new GroupSnapshot(combined, source, 0, [
+    new GroupedShapePlacement(a, new ShapePlacement(source, 0)),
+    new GroupedShapePlacement(b, new ShapePlacement(source, 99)),
+  ]);
+
+  assert.throws(
+    () => document.restoreGrouped(inconsistent),
+    new DomainError('cannot restore grouped container: combined'),
+  );
+  assert.equal(document.find('combined'), combined);
+  assert.deepEqual(document.childrenOf(source), [combined]);
+  assert.deepEqual(document.childrenOf(combined), [a, b]);
 });

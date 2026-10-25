@@ -7,7 +7,7 @@ import { EditCommand } from './EditCommand.js';
 
 export class GroupCommand extends EditCommand {
   private static readonly USAGE = 'usage: group <newGid> <id1> <id2>...';
-  private grouped: GroupSnapshot | undefined;
+  private snapshot: GroupSnapshot | undefined;
 
   public execute(context: CommandContext, args: CommandArguments): CommandResult {
     const document = context.requireDocument();
@@ -22,32 +22,32 @@ export class GroupCommand extends EditCommand {
 
     const targetIds = args.values().slice(1);
     const group = context.shapeFactory.createGroup(newGroupId);
-    this.grouped = document.groupShapes(group, targetIds);
-    return new CommandResult([this.createdMessage(this.grouped)]);
+    this.snapshot = document.groupShapes(group, targetIds);
+    return new CommandResult([this.createdMessage(this.snapshot)]);
   }
 
   public undo(context: CommandContext): CommandResult {
     const document = context.requireDocument();
-    const grouped = this.requireGrouped();
-    document.restoreGrouped(grouped);
+    const snapshot = this.requireSnapshot();
+    document.restoreGrouped(snapshot);
     return new CommandResult([
-      `${grouped.group.label} removed; ${grouped.children.length} children restored`,
+      `${snapshot.group.label} removed; ${snapshot.children.length} children restored`,
     ]);
   }
 
   public redo(context: CommandContext): CommandResult {
     const document = context.requireDocument();
-    const grouped = this.requireGrouped();
-    document.reapplyGroup(grouped);
-    return new CommandResult([this.createdMessage(grouped)]);
+    const snapshot = this.requireSnapshot();
+    document.reapplyGroup(snapshot);
+    return new CommandResult([this.createdMessage(snapshot)]);
   }
 
-  private requireGrouped(): GroupSnapshot {
-    if (this.grouped === undefined) {
+  private requireSnapshot(): GroupSnapshot {
+    if (this.snapshot === undefined) {
       throw new DomainError('group command has not executed');
     }
 
-    return this.grouped;
+    return this.snapshot;
   }
 
   private createdMessage(snapshot: GroupSnapshot): string {

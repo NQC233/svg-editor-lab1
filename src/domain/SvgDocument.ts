@@ -3,6 +3,7 @@ import { NumberFormatter } from '../shared/NumberFormatter.js';
 import { Container } from './Container.js';
 import type { GeometrySnapshot } from './GeometrySnapshot.js';
 import type { Group } from './Group.js';
+import { GroupedShapePlacement } from './GroupedShapePlacement.js';
 import { GroupSnapshot } from './GroupSnapshot.js';
 import { LeafShape } from './LeafShape.js';
 import type { Shape } from './Shape.js';
@@ -241,24 +242,29 @@ export class SvgDocument {
     }
 
     const ranks = this.documentOrderRanks();
-    const children = [...targets].sort(
-      (left, right) =>
-        (ranks.get(left) ?? Number.MAX_SAFE_INTEGER) -
-        (ranks.get(right) ?? Number.MAX_SAFE_INTEGER),
-    );
-    const placements = children.map((child) => {
-      const location = locations.get(child);
-      if (location === undefined) {
-        throw new DomainError(`no such shape: ${child.id}`);
-      }
+    const entries = [...targets]
+      .sort(
+        (left, right) =>
+          (ranks.get(left) ?? Number.MAX_SAFE_INTEGER) -
+          (ranks.get(right) ?? Number.MAX_SAFE_INTEGER),
+      )
+      .map((child) => {
+        const location = locations.get(child);
+        if (location === undefined) {
+          throw new DomainError(`no such shape: ${child.id}`);
+        }
 
-      return new ShapePlacement(location.parent, location.index);
-    });
+        return new GroupedShapePlacement(
+          child,
+          new ShapePlacement(location.parent, location.index),
+        );
+      });
+    const children = entries.map((entry) => entry.shape);
 
     this.removeLocatedShapes(locations);
     this.insertShape(group, insertionIndex, anchor.parent);
     this.attachChildren(group, children);
-    return new GroupSnapshot(group, anchor.parent, insertionIndex, children, placements);
+    return new GroupSnapshot(group, anchor.parent, insertionIndex, entries);
   }
 
   public restoreGrouped(snapshot: GroupSnapshot): void {
@@ -277,11 +283,16 @@ export class SvgDocument {
       throw new DomainError(`cannot restore grouped container: ${group.id}`);
     }
 
+    const placementsByParent = this.groupOriginalPlacements(
+      snapshot.entries,
+      group,
+      location.parent,
+    );
     location.siblings.splice(location.index, 1);
     this.shapesById.delete(group.id);
     this.parents.delete(group);
     this.childrenByShape.set(group, []);
-    this.restoreOriginalPlacements(children, snapshot.placements, group);
+    this.restoreOriginalPlacements(placementsByParent);
   }
 
   public reapplyGroup(snapshot: GroupSnapshot): void {
@@ -292,15 +303,12 @@ export class SvgDocument {
 
     this.assertContainer(parent);
     const children = snapshot.children;
-    const placements = snapshot.placements;
+    const entries = snapshot.entries;
     const locations = new Map<Shape, ShapeLocation>();
-    children.forEach((child, offset) => {
-      const placement = placements[offset];
-      if (
-        placement === undefined ||
-        this.shapesById.get(child.id) !== child ||
-        !this.parents.has(child)
-      ) {
+    entries.forEach((entry) => {
+      const child = entry.shape;
+      const placement = entry.placement;
+      if (this.shapesById.get(child.id) !== child || !this.parents.has(child)) {
         throw new DomainError(`cannot redo grouped container: ${group.id}`);
       }
 
@@ -313,7 +321,7 @@ export class SvgDocument {
     });
 
     const siblingCount = this.siblingsOf(parent).length;
-    const removedFromParent = placements.filter((placement) => placement.parent === parent).length;
+    const removedFromParent = entries.filter((entry) => entry.placement.parent === parent).length;
     this.assertInsertionIndex(index, siblingCount - removedFromParent);
 
     this.removeLocatedShapes(locations);
@@ -465,35 +473,59 @@ export class SvgDocument {
     }
   }
 
-  private restoreOriginalPlacements(
-    children: readonly Shape[],
-    placements: readonly ShapePlacement[],
+  private groupOriginalPlacements(
+    entries: readonly GroupedShapePlacement[],
     groupedInto: Group,
-  ): void {
-    const byParent = new Map<
-      Container | undefined,
-      { readonly child: Shape; readonly placement: ShapePlacement }[]
-    >();
-
-    children.forEach((child, offset) => {
-      const placement = placements[offset];
-      if (placement === undefined || this.parents.get(child) !== groupedInto) {
+    groupedIntoParent: Container | undefined,
+  ): ReadonlyMap<Container | undefined, readonly GroupedShapePlacement[]> {
+    const byParent = new Map<Container | undefined, GroupedShapePlacement[]>();
+    for (const entry of entries) {
+      if (
+        this.parents.get(entry.shape) !== groupedInto ||
+        this.shapesById.get(entry.shape.id) !== entry.shape
+      ) {
         throw new DomainError(`cannot restore grouped container: ${groupedInto.id}`);
       }
 
-      const entries = byParent.get(placement.parent) ?? [];
-      entries.push({ child, placement });
-      byParent.set(placement.parent, entries);
-    });
+      const parentEntries = byParent.get(entry.placement.parent) ?? [];
+      parentEntries.push(entry);
+      byParent.set(entry.placement.parent, parentEntries);
+    }
 
-    for (const [parent, entries] of byParent) {
-      this.assertContainer(parent);
-      entries.sort((left, right) => left.placement.index - right.placement.index);
-      for (const { child, placement } of entries) {
-        const siblings = this.siblingsOf(parent);
-        this.assertInsertionIndex(placement.index, siblings.length);
-        siblings.splice(placement.index, 0, child);
-        this.parents.set(child, parent);
+    for (const [parent, parentEntries] of byParent) {
+      if (
+        parent !== undefined &&
+        (!this.parents.has(parent) || this.shapesById.get(parent.id) !== parent)
+      ) {
+        throw new DomainError(`cannot restore grouped container: ${groupedInto.id}`);
+      }
+
+      parentEntries.sort((left, right) => left.placement.index - right.placement.index);
+      let siblingCount = this.siblingsOf(parent).length;
+      if (parent === groupedIntoParent) {
+        siblingCount -= 1;
+      }
+
+      for (const entry of parentEntries) {
+        const { index } = entry.placement;
+        if (!Number.isInteger(index) || index < 0 || index > siblingCount) {
+          throw new DomainError(`cannot restore grouped container: ${groupedInto.id}`);
+        }
+
+        siblingCount += 1;
+      }
+    }
+
+    return byParent;
+  }
+
+  private restoreOriginalPlacements(
+    placementsByParent: ReadonlyMap<Container | undefined, readonly GroupedShapePlacement[]>,
+  ): void {
+    for (const [parent, entries] of placementsByParent) {
+      for (const entry of entries) {
+        this.siblingsOf(parent).splice(entry.placement.index, 0, entry.shape);
+        this.parents.set(entry.shape, parent);
       }
     }
   }
