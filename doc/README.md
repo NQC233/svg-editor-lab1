@@ -1,6 +1,6 @@
 # Lab1 Phase 1：课程报告与过程记录
 
-状态：Ticket 01–02 已合入 `main`，Ticket 03 已实现并完成 21 个业务测试，正在 PR 验收与合并流程中；其余 16 张票仍是计划。本报告继续把“计划”和“已实现”分开记录。
+状态：Ticket 01–03 已合入 `main`，其中 Ticket 03 完成 21 个业务测试并通过 PR #23 合并；其余 16 张票仍是计划。本报告继续把“计划”和“已实现”分开记录。
 
 需求依据：[课程原始要求](../phase_cli_1.md)。
 
@@ -341,10 +341,11 @@ package "shared" {
 - `CommandHistory` 维护 undo/redo 栈和屏障状态。undo/redo 只有在文档存在后检查、锁定时统一报 `undo not allowed after io command`，空栈分别报 `nothing to undo`/`nothing to redo`；新编辑清空 redo。
 - 真实 CLI 回放覆盖撤销后树与 `show`、redo 恢复、双次 undo、`init` 前后屏障和失败命令保留 redo。21 个测试全部通过；入口和构建验证见质量证据。
 - 双轴审查发现初版执行器同时依赖 `CommandKind` 和 `instanceof EditCommand`，分类来源不一致时可能漏记历史。已删除 `CommandKind`，新增 `DocumentCommand` 基类，只由命令类层次决定历史提交；测试装配提取到 `test/support/`，并让 `npm test` 显式匹配 `test/**/*.test.ts`，避免辅助文件被计为测试。
+- Ticket 03 通过 [PR #23](https://github.com/NQC233/svg-editor-lab1/pull/23) 合入 `main`，merge commit 为 `c232787`；Issue #3 已关闭，临时功能分支已删除。
 
 ## 一致性自查
 
-当前状态为“Ticket 01–02 已合入 `main` 并验证；Ticket 03 已实现并通过本地验证、等待 PR 合并；其余能力仍为计划”。
+当前状态为“Ticket 01–03 已合入 `main` 并验证；其余能力仍为计划”。
 
 1. **模块划分**：已落地 `src/shared/`（错误与数值）、`src/domain/`（`Shape`、`Rect`、`ShapeFactory`、`SvgDocument`）、`src/display/`（`TreeFormatter`、`ShowFormatter`、`DisplayWidth`）、`src/commands/`（命令、结果、历史、上下文、执行器、create/tree/show/undo/redo）、`src/cli/`（分词、命令表、分发、REPL、输出）与 `src/main.ts`（组合根）。`io/`、其余五种图形和容器仍为计划，与当前票边界一致。
 2. **依赖方向**：抽查 import 后，`domain` 只依赖 `shared`；`display` 依赖 `domain` 和 `shared`；`commands` 依赖 `domain`、`display` 和 `shared`；`cli` 依赖 `commands` 和 `shared`；`main` 装配全部模块。`commands` 不 import `cli`，`cli` 不直接 import `domain`/`display`，未发现循环依赖。
@@ -370,7 +371,7 @@ package "shared" {
 
 - Ticket 01 通过 PR #20 合入 `main`：类型检查、格式检查、11 个测试和构建全部成功。
 - Ticket 02 rebase 到该主线后，`npm run check` 通过：类型检查、格式检查、16 个测试和构建全部成功；测试由 Node.js 测试运行器实际发现，不是“零测试绿灯”。
-- Ticket 03 当前分支 `npm run check` 通过：类型检查、格式检查、21 个测试和构建全部成功。真实 CLI 回放覆盖 `create rect → undo → redo`、屏障、空栈和失败原子性；构建入口另行验证。
+- Ticket 03 在合并前分支及合并后的 `main` 上，`npm run check` 均通过：类型检查、格式检查、21 个测试和构建全部成功。真实 CLI 回放覆盖 `create rect → undo → redo`、屏障、空栈和失败原子性；构建入口另行验证。
 - Ticket 03 的真实开发入口和构建入口回放同一脚本：`init 320 240`、`create rect r1 10 20 30 40 #4a90d9`、`undo`、`tree`、`redo`、`show r1`、失败的 `init 0 1`、`undo`；两者输出一致，失败初始化后仍可撤销 `r1`。
 - 真实开发入口 `npm run cli` 已回放 `init 320 240`、`create rect r1 10 20 40 30 #4a90d9`、`show r1`、`tree`；构建入口 `npm start` 已回放相同创建与显示链路，均无 stderr 输出。
 - 脚本回放测试通过 spawn 运行 `src/main.ts`，断言空白/注释、成功输出、错误前缀、颜色参数、失败前后树一致、无横幅/提示符和 EOF 正常退出；TTY 模式通过注入终端流验证横幅、`svg> ` 提示符、stdout 错误和结果。
