@@ -1,5 +1,5 @@
 @startuml
-title 图形模型（当前已实现部分，截至 Ticket 11）
+title 图形模型（当前已实现部分，截至 Ticket 12）
 
 abstract class Shape {
   +get id(): string
@@ -59,6 +59,19 @@ class UngroupSnapshot {
   +get children(): readonly Shape[]
 }
 
+class GroupSnapshot {
+  +get group(): Group
+  +get parent(): Container | undefined
+  +get index(): number
+  +get children(): readonly Shape[]
+  +get entries(): readonly GroupedShapePlacement[]
+}
+
+class GroupedShapePlacement {
+  +get shape(): Shape
+  +get placement(): ShapePlacement
+}
+
 class SvgDocument {
   +get width(): number
   +get height(): number
@@ -71,6 +84,9 @@ class SvgDocument {
   +removeShape(shape): ShapePlacement
   +ungroup(container): UngroupSnapshot
   +restoreUngrouped(snapshot): void
+  +groupShapes(group, targetIds): GroupSnapshot
+  +restoreGrouped(snapshot): void
+  +reapplyGroup(snapshot): void
   +moveToEnd(shape, container): ShapePlacement | undefined
   +restorePlacement(shape, placement): void
   +requireContainer(id): Container
@@ -81,6 +97,7 @@ class SvgDocument {
 
 class ShapeFactory {
   +create(type, id, args): Shape
+  +createGroup(id): Group
 }
 
 Shape <|-- LeafShape
@@ -96,6 +113,8 @@ SvgDocument --> Container : validated structure changes
 SvgDocument --> GeometrySnapshot : creates transaction snapshots
 SvgDocument --> ShapePlacement : returns removal or relocation origin
 SvgDocument --> UngroupSnapshot : captures and restores structure
+SvgDocument --> GroupSnapshot : captures batch grouping placements
+GroupSnapshot o-- GroupedShapePlacement : snapshots each target placement
 LeafShape ..> GeometrySnapshot : captures exact geometry
 LeafShape ..> Point : exposes movement anchor
 ShapeFactory ..> Shape : creates
@@ -103,7 +122,7 @@ Shape ..> ShapeAttributeSnapshot : returns attribute memento
 @enduml
 
 @startuml
-title 命令与历史（当前已实现部分，截至 Ticket 11）
+title 命令与历史（当前已实现部分，截至 Ticket 12）
 
 abstract class Command {
   +execute(context, args): CommandResult
@@ -123,9 +142,11 @@ class CommandHistory
 class CommandContext
 class ShapePlacement
 class UngroupSnapshot
+class GroupSnapshot
 
 class CreateCommand
 class DeleteCommand
+class GroupCommand
 class UngroupCommand
 class AddToContainerCommand
 class MoveCommand
@@ -143,6 +164,7 @@ Command <|-- EditCommand
 Command <|-- DocumentCommand
 EditCommand <|.. CreateCommand
 EditCommand <|.. DeleteCommand
+EditCommand <|.. GroupCommand
 EditCommand <|.. UngroupCommand
 EditCommand <|.. AddToContainerCommand
 EditCommand <|.. MoveCommand
@@ -166,6 +188,7 @@ Command --> CommandContext
 Command --> CommandResult
 DeleteCommand --> ShapePlacement : restores original position
 UngroupCommand --> UngroupSnapshot : restores original container
+GroupCommand --> GroupSnapshot : restores original children and indexes
 AddToContainerCommand --> ShapePlacement : restores original parent and index
 MoveCommand --> GeometrySnapshot : keeps undo snapshots
 ScaleCommand --> GeometrySnapshot : keeps undo snapshots

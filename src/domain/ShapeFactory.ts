@@ -24,7 +24,7 @@ export class ShapeFactory {
       case 'ellipse':
         return this.createEllipse(id, args);
       case 'g':
-        return this.createGroup(id, args);
+        return this.createGroupFromArgs(id, args);
       case 'line':
         return this.createLine(id, args);
       case 'rect':
@@ -34,6 +34,10 @@ export class ShapeFactory {
       default:
         throw new DomainError(`unknown shape type: ${type} (is the plugin loaded?)`);
     }
+  }
+
+  public createGroup(id: string): Group {
+    return new Group(id);
   }
 
   private createCircle(id: string, args: readonly string[]): Circle {
@@ -85,12 +89,12 @@ export class ShapeFactory {
     );
   }
 
-  private createGroup(id: string, args: readonly string[]): Group {
+  private createGroupFromArgs(id: string, args: readonly string[]): Group {
     if (args.length !== 0) {
       throw new ShapeUsageError(ShapeFactory.GROUP_SYNTAX);
     }
 
-    return new Group(id);
+    return this.createGroup(id);
   }
 
   private createLine(id: string, args: readonly string[]): Line {
