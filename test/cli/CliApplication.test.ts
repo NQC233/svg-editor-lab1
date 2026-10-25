@@ -1269,3 +1269,175 @@ test('[spec 6.12, 6.13, 7.3, 7.4, 8] replays assigned-id warnings, attribute rou
     ].join('\n'),
   );
 });
+
+test('[spec 11.1] replays the complete basic acceptance session through the CLI', async (t) => {
+  const directory = await mkdtemp(join(tmpdir(), 'svg-editor-cli-basic-acceptance-'));
+  t.after(() => rm(directory, { force: true, recursive: true }));
+  const result = await runCli(
+    [
+      'help',
+      'init 800 600',
+      'create rect bg 0 0 800 600 #ffffff',
+      'create text title 20 40 "My Diagram"',
+      'create circle c1 100 100 20 red',
+      'create rect box 200 80 60 60 #3366ff',
+      'group markers c1 box',
+      'move c1 30 0',
+      'undo',
+      'redo',
+      'set title text "My Diagram v2"',
+      'undo',
+      'delete box',
+      'undo',
+      'save demo.svg',
+      'undo',
+    ].join('\n'),
+    directory,
+  );
+
+  assert.equal(result.code, 0);
+  assert.equal(result.stderr, '');
+  assert.equal(
+    result.stdout,
+    [
+      'Document:',
+      '  init [w] [h]',
+      '  read <file.svg>',
+      '  save [file.svg]',
+      '  canvas [w] [h]',
+      'Edit:',
+      '  create <type> <id> [params...] [in <containerId>]',
+      '  delete <id>',
+      '  move <id> <dx> <dy>',
+      '  scale <id> <factor>',
+      '  set <id> <attr> <value>',
+      '  group <newGid> <id1> <id2>...',
+      '  ungroup <gid>',
+      '  addto <gid> <id>',
+      '  front <id>',
+      '  back <id>',
+      'Display:',
+      '  tree [id]',
+      '  show <id>',
+      '  help',
+      'History:',
+      '  undo',
+      '  redo',
+      'Phase 1 implementation: available commands are help, init, read, canvas, create rect, circle, ellipse, line, text, g, delete, group, ungroup, addto, front, back, move, scale, set, save, tree, show, undo, and redo.',
+      'canvas 800x600 created',
+      'rect#bg created',
+      'text#title created',
+      'circle#c1 created',
+      'rect#box created',
+      'g#markers created with 2 children',
+      'circle#c1 moved to (130,100)',
+      'circle#c1 moved back to (100,100)',
+      'circle#c1 moved to (130,100)',
+      'text#title updated: text="My Diagram v2"',
+      'text#title updated: text="My Diagram"',
+      'rect#box deleted',
+      'rect#box restored into g#markers',
+      'saved to demo.svg (5 elements)',
+      'error: undo not allowed after io command',
+      '',
+    ].join('\n'),
+  );
+  assert.match(await readFile(join(directory, 'demo.svg'), 'utf8'), /<text id="title"/);
+});
+
+test('[spec 6.1, 11.2] replays the two-node flowchart session through the CLI', async (t) => {
+  const directory = await mkdtemp(join(tmpdir(), 'svg-editor-cli-flowchart-'));
+  t.after(() => rm(directory, { force: true, recursive: true }));
+  const result = await runCli(
+    [
+      'init 800 600',
+      'create g flowchart',
+      'create g node1 in flowchart',
+      'create rect start 120 100 160 60 #4a90d9 in node1',
+      'create text start-label 155 135 "开始" in node1',
+      'create g node2 in flowchart',
+      'create rect process 520 100 160 60 #f5a623 in node2',
+      'create text process-label 545 135 "处理数据" in node2',
+      'create line arrow1 280 130 520 130 black in flowchart',
+      'tree',
+      'move node2 0 100',
+      'undo',
+      'set process-label text "处理数据 v2"',
+      'save flowchart.svg',
+    ].join('\n'),
+    directory,
+  );
+
+  assert.equal(result.code, 0);
+  assert.equal(result.stderr, '');
+  assert.equal(
+    result.stdout,
+    [
+      'canvas 800x600 created',
+      'g#flowchart created',
+      'g#node1 created in g#flowchart',
+      'rect#start created in g#node1',
+      'text#start-label created in g#node1',
+      'g#node2 created in g#flowchart',
+      'rect#process created in g#node2',
+      'text#process-label created in g#node2',
+      'line#arrow1 created in g#flowchart',
+      'svg (800x600)',
+      '└── g#flowchart',
+      '    ├── g#node1',
+      '    │   ├── rect#start        x=120 y=100 w=160 h=60 fill=#4a90d9',
+      '    │   └── text#start-label  (155,135) "开始"',
+      '    ├── g#node2',
+      '    │   ├── rect#process        x=520 y=100 w=160 h=60 fill=#f5a623',
+      '    │   └── text#process-label  (545,135) "处理数据"',
+      '    └── line#arrow1  (280,130) -> (520,130)',
+      'g#node2 moved by (0,100)',
+      'g#node2 moved back by (0,-100)',
+      'text#process-label updated: text="处理数据 v2"',
+      'saved to flowchart.svg (8 elements)',
+      '',
+    ].join('\n'),
+  );
+  assert.match(await readFile(join(directory, 'flowchart.svg'), 'utf8'), /开始/);
+});
+
+test('[spec 11.3, 11.5] replays failure atomicity and the IO barrier through the CLI', async (t) => {
+  const directory = await mkdtemp(join(tmpdir(), 'svg-editor-cli-failure-barrier-'));
+  t.after(() => rm(directory, { force: true, recursive: true }));
+  const result = await runCli(
+    [
+      'init 800 600',
+      'create g g1',
+      'create rect r1 0 0 10 10 red in g1',
+      'group g2 r1 r9',
+      'tree',
+      'save a.svg',
+      'undo',
+      'create rect r2 10 10 10 10 blue',
+      'undo',
+      'undo',
+    ].join('\n'),
+    directory,
+  );
+
+  assert.equal(result.code, 0);
+  assert.equal(result.stderr, '');
+  assert.equal(
+    result.stdout,
+    [
+      'canvas 800x600 created',
+      'g#g1 created',
+      'rect#r1 created in g#g1',
+      'error: no such shape: r9',
+      'svg (800x600)',
+      '└── g#g1',
+      '    └── rect#r1  x=0 y=0 w=10 h=10 fill=red',
+      'saved to a.svg (2 elements)',
+      'error: undo not allowed after io command',
+      'rect#r2 created',
+      'rect#r2 removed',
+      'error: nothing to undo',
+      '',
+    ].join('\n'),
+  );
+});

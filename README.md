@@ -2,7 +2,7 @@
 
 高级软件开发技术课程作业：使用 TypeScript 和面向对象方式开发 SVG 命令行编辑器。
 
-**当前状态：Ticket 01–18 已完成实现与验收。** CLI 已支持 REPL、注释、引号参数、`help`、`init`、读取支持子集并自动补 id 的 `read`、查询和修改画布尺寸的 `canvas`、`create rect/circle/ellipse/line/text/g`、`create … in <containerId>`、删除叶子或整棵子树的 `delete`、按原文档顺序跨父级收编已有图形的 `group`、解散嵌套容器的 `ungroup`、把已有图形或子树移到容器末尾的 `addto`、按同级绘制顺序把叶子或容器移到 `front`/`back`、对叶子或整棵容器的 `move`/`scale`、`set` 修改公共样式、几何属性或文本内容、嵌套 `tree`、`show`、`undo`、`redo`，以及把全部支持图形写出为 SVG 并复用当前路径的 `save`。外部 SVG 的缺 id 自动分配、元数据忽略、未建模属性有序保留和 `read`/`save`/`read` 往返已完成；Ticket 19 的全会话验收仍在计划中。实现顺序和验收标准见[纵向任务计划](doc/ticket-plan.md)。
+**当前状态：Ticket 01–19 的实现与本地验收已完成。** CLI 已支持 REPL、注释、引号参数、`help`、`init`、读取支持子集并自动补 id 的 `read`、查询和修改画布尺寸的 `canvas`、`create rect/circle/ellipse/line/text/g`、`create … in <containerId>`、删除叶子或整棵子树的 `delete`、按原文档顺序跨父级收编已有图形的 `group`、解散嵌套容器的 `ungroup`、把已有图形或子树移到容器末尾的 `addto`、按同级绘制顺序把叶子或容器移到 `front`/`back`、对叶子或整棵容器的 `move`/`scale`、`set` 修改公共样式、几何属性或文本内容、嵌套 `tree`、`show`、`undo`、`redo`，以及把全部支持图形写出为 SVG 并复用当前路径的 `save`。外部 SVG 的缺 id 自动分配、元数据忽略、未建模属性有序保留和 `read`/`save`/`read` 往返已完成；课程基础会话、两节点流程图、跨票组合、失败原子性和 IO 屏障均已纳入自动回放。`final` 标签待课程截止时间与最终提交时点确认后处理。实现顺序和验收标准见[纵向任务计划](doc/ticket-plan.md)。
 
 ## 项目资料
 
@@ -35,7 +35,7 @@ npm run cli
 | `npm run typecheck`    | 严格检查源代码和测试代码的类型               |
 | `npm run build`        | 编译源代码到 `dist/`                         |
 | `npm start`            | 运行已编译的入口；需先构建                   |
-| `npm test`             | 使用 Node.js 测试运行器执行测试，当前 129 个 |
+| `npm test`             | 使用 Node.js 测试运行器执行测试，当前 134 个 |
 | `npm run format`       | 格式化工程文件，排除课程原始要求             |
 | `npm run format:check` | 检查文件格式                                 |
 | `npm run check`        | 依次执行类型检查、格式检查、测试和构建       |

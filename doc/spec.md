@@ -1,6 +1,6 @@
 # SVG 编辑器 Phase 1 需求规格
 
-状态：设计决策已确认；Ticket 01 相关补充默认已由 ADR-0005 采纳，Ticket 16 的 UTF-8 与相对路径默认已由 ADR-0008 采纳；Ticket 03 的无操作历史规则、create 撤销摘要、group 相对顺序和 front/back 绘制顺序已收口；Ticket 01–16 已实现，其中 Ticket 03 通过 PR #23、Ticket 04 通过 PR #25、Ticket 05 通过 PR #27、Ticket 06 通过 PR #29、Ticket 08 通过 PR #31 合入 `main`；Ticket 09–16 于 2026-10-25 完成本地验收。
+状态：设计决策已确认；Ticket 01 相关补充默认已由 ADR-0005 采纳，Ticket 16 的 UTF-8 与相对路径默认已由 ADR-0008 采纳；Ticket 03 的无操作历史规则、create 撤销摘要、group 相对顺序和 front/back 绘制顺序已收口；Ticket 01–19 已于 2026-10-25 完成实现与本地验收，其中 Ticket 03 通过 PR #23、Ticket 04 通过 PR #25、Ticket 05 通过 PR #27、Ticket 06 通过 PR #29、Ticket 08 通过 PR #31、Ticket 14 通过 PR #37、Ticket 16 通过 PR #38、Ticket 17 通过 PR #40、Ticket 18 通过 PR #41 合入 `main`。`final` 标签待课程截止时间与最终提交时点确认后处理。
 
 本文件是实现与验收的共同依据。课程原始要求见 [`phase_cli_1.md`](../phase_cli_1.md)，领域术语见 [`CONTEXT.md`](../CONTEXT.md)，模块与依赖方案见 [`README.md`](./README.md)，实现顺序见[纵向任务计划](./ticket-plan.md)。
 

@@ -1,5 +1,5 @@
 @startuml
-title 图形模型（当前已实现部分，截至 Ticket 18）
+title 图形模型（当前已实现部分，截至 Ticket 19）
 
 abstract class Shape {
   +get id(): string
@@ -190,7 +190,7 @@ SvgIdAllocator --> ShapeFactory : recognizes supported elements
 @enduml
 
 @startuml
-title 命令与历史（当前已实现部分，截至 Ticket 18）
+title 命令与历史（当前已实现部分，截至 Ticket 19）
 
 abstract class Command {
   +execute(context, args): CommandResult
