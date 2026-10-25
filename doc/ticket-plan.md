@@ -1,6 +1,6 @@
 # Phase 1 纵向任务计划
 
-状态：19 张票的粒度与阻塞关系已于 2026-10-23 获用户批准；Ticket 01–08 已实现并通过本地验收，其中 Ticket 06 通过 [PR #29](https://github.com/NQC233/svg-editor-lab1/pull/29)、Ticket 07 通过 [PR #30](https://github.com/NQC233/svg-editor-lab1/pull/30)、Ticket 08 通过 [PR #31](https://github.com/NQC233/svg-editor-lab1/pull/31) 交付 `main`；Ticket 10 和 Ticket 15 已于 2026-10-25 完成实现与验收。当前 67 个测试通过，其余 9 张票尚未开始；未决契约仍按下表保留。
+状态：19 张票的粒度与阻塞关系已于 2026-10-23 获用户批准；Ticket 01–08 已实现并通过本地验收，其中 Ticket 06 通过 [PR #29](https://github.com/NQC233/svg-editor-lab1/pull/29)、Ticket 07 通过 [PR #30](https://github.com/NQC233/svg-editor-lab1/pull/30)、Ticket 08 通过 [PR #31](https://github.com/NQC233/svg-editor-lab1/pull/31) 交付 `main`；Ticket 10 和 Ticket 15 已于 2026-10-25 完成实现与验收。当前 68 个测试通过，其余 9 张票尚未开始；未决契约仍按下表保留。
 
 依据：[规格](./spec.md)、[课程要求](../phase_cli_1.md)、[领域术语](../CONTEXT.md)和[架构方案](./README.md)。本计划取代原 [T1–T8](./tasks.md) 的执行顺序；旧内容仅作历史技术工作清单。下列编号为计划编号，GitHub 对应关系见发布索引。
 
@@ -157,7 +157,7 @@
 - 影响模块/接口：文档移除/恢复、删除命令、历史。
 - 风险与人工审核：保存的是完整子树和位置，不能漏恢复 id 索引；不依赖 move/scale/set。
 
-**实现状态（2026-10-25）：** 已完成本地实现与验收。`SvgDocument.removeShape` 成功移除整棵子树后返回封装原父级和索引的 `ShapePlacement`，同时释放全部子孙 id；`DeleteCommand` 保存该位置供一次 undo 原位恢复，redo 再次完整删除。命令测试覆盖叶子兄弟顺序、嵌套容器全部 id 释放/恢复、父级保持、参数与缺失目标失败，以及失败后 redo 不变；真实 CLI 回放覆盖成功、失败、undo/redo。67 个测试全部通过。
+**实现状态（2026-10-25）：** 已完成本地实现与验收。`SvgDocument.removeShape` 成功移除整棵子树后返回封装原父级和索引的 `ShapePlacement`，同时释放全部子孙 id；`DeleteCommand` 保存该位置供一次 undo 原位恢复，redo 再次完整删除。命令测试覆盖叶子兄弟顺序、嵌套容器全部 id 释放/恢复、父级保持、参数与缺失目标失败、失败后 redo 不变、成功删除清空 redo 及释放 id 可复用；真实 CLI 回放覆盖成功、失败、undo/redo。68 个测试全部通过。
 
 ### 11 移动图形归属
 

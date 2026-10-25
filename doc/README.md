@@ -1,6 +1,6 @@
 # Lab1 Phase 1：课程报告与过程记录
 
-状态：Ticket 01–08 已实现并通过本地验收，其中 Ticket 06 通过 [PR #29](https://github.com/NQC233/svg-editor-lab1/pull/29)、Ticket 07 通过 [PR #30](https://github.com/NQC233/svg-editor-lab1/pull/30)、Ticket 08 通过 [PR #31](https://github.com/NQC233/svg-editor-lab1/pull/31) 交付 `main`；Ticket 10 和 Ticket 15 已于 2026-10-25 完成实现与验收；测试累计 67 个。其余 9 张票仍是计划。本报告继续把“计划”和“已实现”分开记录。
+状态：Ticket 01–08 已实现并通过本地验收，其中 Ticket 06 通过 [PR #29](https://github.com/NQC233/svg-editor-lab1/pull/29)、Ticket 07 通过 [PR #30](https://github.com/NQC233/svg-editor-lab1/pull/30)、Ticket 08 通过 [PR #31](https://github.com/NQC233/svg-editor-lab1/pull/31) 交付 `main`；Ticket 10 和 Ticket 15 已于 2026-10-25 完成实现与验收；测试累计 68 个。其余 9 张票仍是计划。本报告继续把“计划”和“已实现”分开记录。
 
 需求依据：[课程原始要求](../phase_cli_1.md)。
 
@@ -420,8 +420,8 @@ package "shared" {
 - 按 TDD 依次在命令分发和真实 CLI 接缝增加四个纵向切片：叶子删除与兄弟位置、嵌套容器整棵子树、失败保留树和 redo、CLI 成功/失败回放。首个红灯为 `unknown command: delete`，随后补最小实现并逐步扩展断言。
 - 领域层新增 `ShapePlacement` 值对象，封装被移除子树的原父级与原索引；`SvgDocument.removeShape` 在成功移除后返回该位置，并继续通过现有注册/注销逻辑统一释放或恢复全部子孙 id。命令层新增 `DeleteCommand`：校验参数和目标后删除，undo 按原父级与索引插回整棵子树，redo 再次删除。
 - 删除对叶子和容器使用同一命令路径，不按图形类型分支；子树和兄弟顺序由 `SvgDocument` 维护，命令只保存一次成功删除的位置。失败在写入前完成，不改变文档或已有 redo；成功删除由既有执行器记录为一个撤销单元。
-- 新增测试覆盖根级叶子原位恢复、嵌套容器全部 id 释放/恢复、父级保持、重做完整删除、参数错误、缺失目标，以及真实 CLI 的容器成功链与失败链。帮助文案同步列出 `delete`。
-- 验证：`npm run check` 通过（类型、格式、67 个测试、构建）。`npm run cli` 与构建后的 `npm start` 使用同一删除脚本回放，输出一致且 stderr 为空。
+- 新增测试覆盖根级叶子原位恢复、嵌套容器全部 id 释放/恢复、父级保持、重做完整删除、成功删除清空 redo、释放 id 可复用、参数错误、缺失目标，以及真实 CLI 的容器成功链与失败链。帮助文案同步列出 `delete`。
+- 验证：`npm run check` 通过（类型、格式、68 个测试、构建）。`npm run cli` 与构建后的 `npm start` 使用同一删除脚本回放，输出一致且 stderr 为空。
 
 ## 一致性自查
 
@@ -469,8 +469,8 @@ package "shared" {
 - Ticket 08 的命令测试覆盖五类叶子的原点缩放、文本仅坐标、嵌套容器整树缩放、负数/浮点、因子 1/空容器无操作、重做栈、屏障、非法因子、缺失目标、参数错误、子树溢出和尺寸下溢回滚。
 - Ticket 08 的 `npm run check` 通过：类型检查、格式检查、63 个测试和构建全部成功。真实 CLI 回放从 `init 400 200` 构建 `scene → rect/text`，验证容器缩放和局部树、undo/redo、无操作、失败输出及失败后的历史保留。
 - Ticket 08 的开发入口与构建入口使用同一脚本回放：`init 400 200`、容器与 rect/text、`scale scene 2`、局部 tree、undo/redo、因子 1、缺失图形、非法数值、零/负因子和参数错误；`npm run cli` 与 `npm start` 输出一致，stderr 均为空。
-- Ticket 10 的命令测试覆盖叶子删除与兄弟位置、嵌套容器全部 id 释放/恢复、父级保持、redo 完整删除、参数错误和缺失目标；失败测试同时断言树和已有 redo 不变。
-- Ticket 10 的 `npm run check` 通过：类型检查、格式检查、67 个测试和构建全部成功。真实 CLI 回放从 `init 400 200` 构建 `scene → box/branch/label → after`，验证文本删除/恢复、容器删除与恢复、redo、失败输出和最终树。
+- Ticket 10 的命令测试覆盖叶子删除与兄弟位置、嵌套容器全部 id 释放/恢复、父级保持、redo 完整删除、成功删除清空 redo、释放 id 可复用、参数错误和缺失目标；失败测试同时断言树和已有 redo 不变。
+- Ticket 10 的 `npm run check` 通过：类型检查、格式检查、68 个测试和构建全部成功。真实 CLI 回放从 `init 400 200` 构建 `scene → box/branch/label → after`，验证文本删除/恢复、容器删除与恢复、redo、失败输出和最终树。
 - Ticket 10 的开发入口与构建入口使用同一脚本回放：`init 400 200`、嵌套容器与文本、递归删除/撤销/重做、缺失目标、参数错误、先删后恢复、删除整棵 `scene` 再恢复；`npm run cli` 与 `npm start` 输出一致，stderr 均为空。
 - 脚本回放测试通过 spawn 运行 `src/main.ts`，断言空白/注释、成功输出、错误前缀、颜色参数、失败前后树一致、无横幅/提示符和 EOF 正常退出；TTY 模式通过注入终端流验证横幅、`svg> ` 提示符、stdout 错误和结果。
 - 当前完成 Ticket 01–08、10 和 15 的功能实现。历史基础设施已接入六种内置类型创建、叶子/整棵子树删除、叶子/整棵子树移动/缩放及带参数 `canvas` 的屏障；IO 和其余编辑命令仍未实现。这些限制不能由这些票的测试通过覆盖。

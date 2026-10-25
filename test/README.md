@@ -1,6 +1,6 @@
 # 测试目录
 
-使用 Node.js 内置的 `node:test` 和 `node:assert/strict`，文件命名为 `*.test.ts`，通过 tsx 加载 TypeScript。当前 Ticket 01–08、10 和 15 已有 67 个测试，覆盖引号/转义/引号元数据、注释分词、数值边界、命令分发、失败原子性、脚本回放、TTY 输出、六种内置类型创建、嵌套容器与 `in` 后缀、文本 JSON 转义、局部 tree/show、兄弟列对齐、五类叶子与整棵容器的移动和缩放、叶子/子树删除与恢复、精确快照撤销，以及 redo 分支、`init` 和带参数 `canvas` 的历史屏障。
+使用 Node.js 内置的 `node:test` 和 `node:assert/strict`，文件命名为 `*.test.ts`，通过 tsx 加载 TypeScript。当前 Ticket 01–08、10 和 15 已有 68 个测试，覆盖引号/转义/引号元数据、注释分词、数值边界、命令分发、失败原子性、脚本回放、TTY 输出、六种内置类型创建、嵌套容器与 `in` 后缀、文本 JSON 转义、局部 tree/show、兄弟列对齐、五类叶子与整棵容器的移动和缩放、叶子/子树删除与恢复、精确快照撤销，以及 redo 分支、`init` 和带参数 `canvas` 的历史屏障。
 
 ## 当前布局
 
