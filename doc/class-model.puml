@@ -1,5 +1,5 @@
 @startuml
-title 图形模型（当前已实现部分，截至 Ticket 17）
+title 图形模型（当前已实现部分，截至 Ticket 18）
 
 abstract class Shape {
   +get id(): string
@@ -32,6 +32,9 @@ class Circle
 class Ellipse
 class Line
 class Text
+class UnmodeledAttributes {
+  +get entries(): readonly SvgAttribute[]
+}
 class GeometrySnapshot {
   +restore(): void
   +matchesCurrent(): boolean
@@ -139,7 +142,18 @@ class SvgReader {
 class SvgReadResult {
   +get document(): SvgDocument
   +get elementCount(): number
+  +get warnings(): readonly string[]
 }
+
+class SvgIdAllocator {
+  +allocate(root): SvgIdAllocation
+}
+
+class SvgIdAllocation {
+  +get warnings(): readonly string[]
+  +idFor(element): string
+}
+
 
 Shape <|-- LeafShape
 Shape <|-- Container
@@ -160,6 +174,7 @@ LeafShape ..> GeometrySnapshot : captures exact geometry
 LeafShape ..> Point : exposes movement anchor
 ShapeFactory ..> Shape : creates
 Shape ..> ShapeAttributeSnapshot : returns attribute memento
+Shape o-- UnmodeledAttributes : preserves ordered SVG attributes
 XmlNode <|-- XmlElement
 XmlNode <|-- XmlText
 XmlElement o-- XmlNode : children
@@ -168,11 +183,14 @@ XmlParser --> XmlDocument : builds
 XmlParser --> XmlNode : dispatches polymorphically
 SvgReader --> XmlParser : parses
 SvgReader --> ShapeFactory : creates shapes
+SvgReader --> SvgIdAllocator : assigns ids before construction
 SvgReader --> SvgReadResult : returns
+SvgIdAllocator --> SvgIdAllocation : returns ids and warnings
+SvgIdAllocator --> ShapeFactory : recognizes supported elements
 @enduml
 
 @startuml
-title 命令与历史（当前已实现部分，截至 Ticket 17）
+title 命令与历史（当前已实现部分，截至 Ticket 18）
 
 abstract class Command {
   +execute(context, args): CommandResult

@@ -1,6 +1,6 @@
 # 测试目录
 
-使用 Node.js 内置的 `node:test` 和 `node:assert/strict`，文件命名为 `*.test.ts`，通过 tsx 加载 TypeScript。当前 Ticket 01–17 已有 125 个测试，覆盖引号/转义/引号元数据、注释分词、数值边界、命令分发、失败原子性、脚本回放、TTY 输出、六种内置类型创建、嵌套容器与 `in` 后缀、文本 JSON 转义、公共样式与各类型属性更新、局部 tree/show、兄弟列对齐、五类叶子与整棵容器的移动和缩放、叶子/子树删除与恢复、嵌套容器解散与恢复、跨父级原文档顺序分组、跨父级和同父级归属移动、叶子与容器的 front/back 同级排序、SVG 写出与 XML 转义、显式 id 的 SVG 读取与 XML 结构错误、当前路径复用和覆盖写、精确结构/几何/属性快照撤销，以及 redo 分支、`init`、`read`、带参数 `canvas` 和成功 `save` 的历史屏障。
+使用 Node.js 内置的 `node:test` 和 `node:assert/strict`，文件命名为 `*.test.ts`，通过 tsx 加载 TypeScript。当前 Ticket 01–18 已有 129 个测试，覆盖引号/转义/引号元数据、注释分词、数值边界、命令分发、失败原子性、脚本回放、TTY 输出、六种内置类型创建、嵌套容器与 `in` 后缀、文本 JSON 转义、公共样式与各类型属性更新、局部 tree/show、兄弟列对齐、五类叶子与整棵容器的移动和缩放、叶子/子树删除与恢复、嵌套容器解散与恢复、跨父级原文档顺序分组、跨父级和同父级归属移动、叶子与容器的 front/back 同级排序、SVG 写出与 XML 转义、显式或自动补 id 的 SVG 读取、元数据忽略、未建模属性有序往返、当前路径复用和覆盖写、精确结构/几何/属性快照撤销，以及 redo 分支、`init`、`read`、带参数 `canvas` 和成功 `save` 的历史屏障。
 
 ## 当前布局
 
@@ -9,11 +9,11 @@ test/
 ├── cli/             # 分词、REPL、真实脚本回放
 ├── commands/        # help、init/read/canvas、create/delete、group/addto、front/back、move/scale/set/save、undo/redo、tree/show 和失败原子性
 ├── domain/          # 文档、容器结构不变量、几何/属性/分组快照、子树位置与移动/缩放/重挂事务
-├── io/              # XML 词法/结构解析、SVG 读取与失败原子性
+├── io/              # XML 解析、id 分配、SVG 读取/写出与失败原子性
 └── support/         # 共享的命令分发装配
 ```
 
-后续自动补 id、元数据忽略和属性往返按 [任务计划](../doc/ticket-plan.md) 在 Ticket 18 加入。
+Ticket 18 的自动补 id、元数据忽略和属性往返已加入；Ticket 19 继续承担跨票组合验收。
 
 ## 验收重点
 
