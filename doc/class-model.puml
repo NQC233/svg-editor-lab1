@@ -1,5 +1,5 @@
 @startuml
-title 图形模型（当前已实现部分，截至 Ticket 14）
+title 图形模型（当前已实现部分，截至 Ticket 16）
 
 abstract class Shape {
   +get id(): string
@@ -8,6 +8,8 @@ abstract class Shape {
   +get fill(): string | undefined
   +get stroke(): string | undefined
   +get strokeWidth(): number | undefined
+  +svgAttributes(): readonly SvgAttribute[]
+  +svgTextContent(): string | undefined
   +setAttribute(attribute, value): ShapeAttributeSnapshot
   +movementAnchor(): Point | undefined
   +treeAttributes(): string
@@ -124,7 +126,7 @@ Shape ..> ShapeAttributeSnapshot : returns attribute memento
 @enduml
 
 @startuml
-title 命令与历史（当前已实现部分，截至 Ticket 14）
+title 命令与历史（当前已实现部分，截至 Ticket 16）
 
 abstract class Command {
   +execute(context, args): CommandResult
@@ -163,11 +165,14 @@ class ScaleCommand
 class SetCommand
 class CanvasCommand
 class InitCommand
+class SaveCommand
 class TreeCommand
 class ShowCommand
 class HelpCommand
 class UndoCommand
 class RedoCommand
+class SvgWriter
+class XmlEscaper
 
 Command <|-- EditCommand
 Command <|-- DocumentCommand
@@ -184,11 +189,15 @@ EditCommand <|.. ScaleCommand
 EditCommand <|.. SetCommand
 DocumentCommand <|.. CanvasCommand
 DocumentCommand <|.. InitCommand
+DocumentCommand <|.. SaveCommand
 Command <|.. TreeCommand
 Command <|.. ShowCommand
 Command <|.. HelpCommand
 Command <|.. UndoCommand
 Command <|.. RedoCommand
+SvgWriter --> SvgDocument : writes
+SvgWriter --> Shape : reads polymorphic SVG attributes
+SvgWriter --> XmlEscaper : escapes XML values
 
 CommandInvoker --> CommandHistory
 CommandInvoker --> Command

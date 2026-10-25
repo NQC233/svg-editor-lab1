@@ -1,6 +1,6 @@
 # SVG 编辑器 Phase 1 需求规格
 
-状态：设计决策已确认；Ticket 01 相关补充默认已由 ADR-0005 采纳；Ticket 03 的无操作历史规则、create 撤销摘要、group 相对顺序和 front/back 绘制顺序已收口；Ticket 01–15 已实现，其中 Ticket 03 通过 PR #23、Ticket 04 通过 PR #25、Ticket 05 通过 PR #27、Ticket 06 通过 PR #29、Ticket 08 通过 PR #31 合入 `main`；Ticket 09–15 于 2026-10-25 完成本地验收。
+状态：设计决策已确认；Ticket 01 相关补充默认已由 ADR-0005 采纳，Ticket 16 的 UTF-8 与相对路径默认已由 ADR-0008 采纳；Ticket 03 的无操作历史规则、create 撤销摘要、group 相对顺序和 front/back 绘制顺序已收口；Ticket 01–16 已实现，其中 Ticket 03 通过 PR #23、Ticket 04 通过 PR #25、Ticket 05 通过 PR #27、Ticket 06 通过 PR #29、Ticket 08 通过 PR #31 合入 `main`；Ticket 09–16 于 2026-10-25 完成本地验收。
 
 本文件是实现与验收的共同依据。课程原始要求见 [`phase_cli_1.md`](../phase_cli_1.md)，领域术语见 [`CONTEXT.md`](../CONTEXT.md)，模块与依赖方案见 [`README.md`](./README.md)，实现顺序见[纵向任务计划](./ticket-plan.md)。
 
@@ -31,7 +31,7 @@
 - `text` 的 `font-size` 等属性属于未建模属性：读写往返保留，不参与 `scale`，不能用 `set` 修改，也不在 `tree`/`show` 中显示。
 - 无操作规则适用于所有编辑命令：`move 0 0`、`scale 1`、`set` 写入相同值、`addto` 已在末尾、边界上的 `front`/`back` 都成功返回、不进入历史、不清空 redo、不解除历史屏障。（已由 [ADR-0003](../docs/adr/0003-io-history-barrier.md) 采纳）
 - CLI 的提示符和启动横幅只在标准输入是 TTY 时输出；结果和错误都写标准输出，保持 transcript 顺序。（已由 [ADR-0005](../docs/adr/0005-ticket-01-cli-defaults.md) 采纳）
-- 文件按 UTF-8 读取和写出；相对路径相对于进程当前工作目录。
+- 文件按 UTF-8 读取和写出；相对路径相对于进程当前工作目录。（已由 [ADR-0008](../docs/adr/0008-ticket-16-save-path-defaults.md) 采纳）
 - `init` 直接丢弃当前文档，不询问确认。（已由 [ADR-0005](../docs/adr/0005-ticket-01-cli-defaults.md) 采纳）
 
 ## 3. 通用约定

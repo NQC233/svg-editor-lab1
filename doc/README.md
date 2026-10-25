@@ -1,6 +1,6 @@
 # Lab1 Phase 1：课程报告与过程记录
 
-状态：Ticket 01–15 已实现并通过本地验收，其中 Ticket 06 通过 [PR #29](https://github.com/NQC233/svg-editor-lab1/pull/29)、Ticket 07 通过 [PR #30](https://github.com/NQC233/svg-editor-lab1/pull/30)、Ticket 08 通过 [PR #31](https://github.com/NQC233/svg-editor-lab1/pull/31)、Ticket 14 通过 [PR #37](https://github.com/NQC233/svg-editor-lab1/pull/37) 交付；Ticket 09–15 已于 2026-10-25 完成实现与验收；测试累计 107 个。Ticket 16–19 仍是计划。本报告继续把“计划”和“已实现”分开记录。
+状态：Ticket 01–16 已实现并通过本地验收，其中 Ticket 06 通过 [PR #29](https://github.com/NQC233/svg-editor-lab1/pull/29)、Ticket 07 通过 [PR #30](https://github.com/NQC233/svg-editor-lab1/pull/30)、Ticket 08 通过 [PR #31](https://github.com/NQC233/svg-editor-lab1/pull/31)、Ticket 14 通过 [PR #37](https://github.com/NQC233/svg-editor-lab1/pull/37) 交付；Ticket 09–16 已于 2026-10-25 完成实现与验收；测试累计 114 个。Ticket 17–19 仍是计划。本报告继续把“计划”和“已实现”分开记录。
 
 需求依据：[课程原始要求](../phase_cli_1.md)。
 
@@ -10,7 +10,7 @@
 - [纵向任务计划](./ticket-plan.md)：已批准的 19 张任务、验收与阻塞关系。
 - [原 T1–T8](./tasks.md)：保留为历史技术工作清单，不再作为执行顺序。
 - [模块依赖图](./architecture.puml) 与 [类模型图](./class-model.puml)：PlantUML 源文件。
-- [领域词汇表](../CONTEXT.md) 与 [ADR](../docs/adr/)：已确认的术语和关键决策；Ticket 01 的 CLI 默认见 [ADR-0005](../docs/adr/0005-ticket-01-cli-defaults.md)。
+- [领域词汇表](../CONTEXT.md) 与 [ADR](../docs/adr/)：已确认的术语和关键决策；Ticket 01 的 CLI 默认见 [ADR-0005](../docs/adr/0005-ticket-01-cli-defaults.md)，Ticket 16 的路径与 `save` 提交语义见 [ADR-0008](../docs/adr/0008-ticket-16-save-path-defaults.md)。
 
 ## 架构方案
 
@@ -26,7 +26,7 @@
 | 交付   | `src/cli/`      | 分词、命令表、命令分发、REPL、终端输出        | `commands`、`shared`                |
 | 装配   | `src/main.ts`   | 组合根：创建并连接以上模块                    | 全部                                |
 
-目标目录结构（当前已实现部分：六种内置图形、公共属性更新、容器树、子树删除/恢复、批量分组、嵌套容器解散/恢复、图形归属移动、同级前后顺序、移动/缩放事务、命令参数封装与历史相关部分；截至 Ticket 14）：
+目标目录结构（当前已实现部分：六种内置图形、公共属性更新、容器树、子树删除/恢复、批量分组、嵌套容器解散/恢复、图形归属移动、同级前后顺序、移动/缩放事务、SVG 写出与 `save` 路径/历史提交；截至 Ticket 16）：
 
 ```text
 src/
@@ -37,14 +37,14 @@ src/
 │                    # GroupSnapshot、GroupedShapePlacement
 │                    # Point、ShapePlacement
 │                    # SvgDocument、ShapeFactory
-├── io/              # XmlParser、XmlElement、SvgReader、SvgWriter
+├── io/              # SvgWriter、XmlEscaper；XmlParser、XmlElement、SvgReader 规划中
 ├── display/         # TreeFormatter、ShowFormatter
 ├── commands/        # Command、EditCommand、DocumentCommand、CommandResult
 │                    # CommandToken、CommandArguments、CommandHistory、CommandInvoker
 │                    # CommandContext、DeleteCommand、GroupCommand
 │                    # UngroupCommand、AddToContainerCommand
 │                    # ZOrderCommand、FrontCommand、BackCommand
-│                    # MoveCommand、ScaleCommand、SetCommand 等具体命令
+│                    # MoveCommand、ScaleCommand、SetCommand、SaveCommand 等具体命令
 └── cli/             # LineTokenizer、CommandCatalog、CommandDispatcher
                      # CliApplication、ConsoleOutput
 ```
@@ -54,7 +54,7 @@ src/
 ```plantuml
 @startuml
 skinparam componentStyle rectangle
-title SVG 编辑器 Phase 1 模块依赖（当前已实现部分，截至 Ticket 14；其余规划）
+title SVG 编辑器 Phase 1 模块依赖（当前已实现部分，截至 Ticket 16；其余规划）
 
 package "cli" {
   [CliApplication]
@@ -83,6 +83,7 @@ package "io" {
   [SvgReader]
   [SvgWriter]
   [XmlParser]
+  [XmlEscaper]
 }
 
 package "display" {
@@ -125,6 +126,8 @@ package "shared" {
 [SvgReader] --> [SvgDocument]
 [SvgReader] --> [ShapeFactory]
 [SvgWriter] --> [SvgDocument]
+[SvgWriter] --> [Shape 层次]
+[SvgWriter] --> [XmlEscaper]
 [TreeFormatter] --> [Shape 层次]
 [ShowFormatter] --> [Shape 层次]
 [ShapeFactory] --> [Shape 层次]
@@ -139,7 +142,7 @@ package "shared" {
 关键职责：
 
 - **领域层**不依赖 I/O、终端或命令对象。`SvgDocument` 是聚合根，独占子节点数组并统一维护 id 索引、父子映射、结构变更、批量分组、嵌套容器解散/恢复、归属重挂、同级前后顺序和子树移动/缩放事务；`groupShapes` 在写入前完成重复、缺失、祖先/子孙冲突校验，按分组前文档先序排列子节点，并一次摘出全部目标；`moveToEnd` 只调整现有对象的父级与兄弟顺序，`moveToFront`/`moveToBack` 只把对象移到原父级末尾/开头，`restorePlacement` 用 `ShapePlacement` 精确恢复原位置。`UngroupSnapshot` 与 `GroupSnapshot` 分别封装解散或分组前的父级、索引和子图形，使恢复不依赖逆向拼接。`Shape` 统一封装公共样式与多态的 `setAttribute`，`ShapeAttributeSnapshot` 保存旧值或“未设置”状态供精确撤销；`LeafShape` 扩展几何设置契约。`Container` 标记容器语义，`Group` 提供 `g` 的显示行为，叶子各自由 `Rect`、`Circle`、`Ellipse`、`Line`、`Text` 负责几何、精确 `GeometrySnapshot`、属性文本和显示描述。
-- **持久化层**只处理文件、XML 结构和根元素；图形类型解析仍通过 `ShapeFactory`，不引入第二处类型名分派。
+- **持久化层**处理文件、XML 结构与转义。`SvgWriter` 从 `SvgDocument` 读取树结构，按图形多态提供的 SVG 属性和正文递归写出；`XmlEscaper` 只负责 XML 特殊字符，文件成功后才由命令更新会话路径。读取器仍按后续票规划，图形类型解析将继续通过 `ShapeFactory`，不引入第二处类型名分派。
 - **显示层**负责树形前缀与兄弟列对齐；图形只提供自己的标签和属性文本。
 - **应用层**接收命令对象并执行；执行器只在成功后提交历史影响，命令自己实现正向、撤销和重做。
 - **交付层**只做分词、命令名查找、REPL 和输出，不直接操作领域对象。分词器生成带引号来源的 `CommandToken`，由命令层 `CommandArguments` 读取，避免应用层反向依赖 CLI。
@@ -199,28 +202,29 @@ package "shared" {
 3. **SVG 兼容范围（`transform`、任意 `viewBox`、未知元素、`style`）**：变化点集中在 `io`。领域模型保持无变换、画布像素坐标；读取子集拒绝无法保真的结构，避免静默改变画面。现在不做变换支持，因为它会同时影响 `move`/`scale`/`ungroup` 和序列化，超出本阶段；`unsupported ...` 错误是明确的未来入口。
 4. **撤销粒度或历史策略**：集中在 `CommandHistory` 和命令的 `undo`/`redo`。IO 屏障、redo 清空、无操作不记录都在执行器和历史中，不散落在 CLI。现在不用事件溯源，因为不需要任意历史点。
 5. **显示格式**：`tree`/`show` 需要列对齐、排序或新字段时，先改 `TreeFormatter`/`ShowFormatter` 和图形自己的文本方法；如果格式数量显著增加，再考虑 Visitor。现在不为六种类型引入双分派。
-6. **持久化格式**：`SvgReader`/`SvgWriter` 隔离文件与 XML，但图形类提供自己的 SVG 片段。换成 JSON 等格式会触及图形类；这是“图形最了解自己几何”的代价。若出现第二种格式，再引入独立的序列化访问者。
+6. **持久化格式**：`SvgWriter` 已隔离文件、根元素、缩进与转义；图形类只多态提供有序 SVG 属性和文本正文。换成 JSON 等格式会触及图形类；这是“图形最了解自己几何”的代价。若出现第二种格式，再引入独立的序列化访问者。
 7. **数值精度与格式**：数值解析和格式化集中在 `shared`。现在用 JavaScript 双精度和最短往返十进制表示，不引入十进制库；课程坐标不需要任意精度。
 8. **未建模属性**：读取时保留、写出时原样输出、不参与命令。未来要把某个属性升级为建模属性时，需要迁移读取和显示逻辑，但不会破坏已有文件。
 
 ### 关键设计决策
 
-| #   | 决策                                                                       | 理由                                     | 记录                                                                                                    |
-| --- | -------------------------------------------------------------------------- | ---------------------------------------- | ------------------------------------------------------------------------------------------------------- |
-| 1   | 方案先行，需求澄清后再实现                                                 | 课程报告要求方案与自查；避免边写边改语义 | 本报告                                                                                                  |
-| 2   | 零运行时依赖，自写 XML 解析器和分词器                                      | 控制支持子集、错误和往返；课程重点在 OOP | [ADR-0001](../docs/adr/0001-zero-runtime-dependencies.md)                                               |
-| 3   | `Shape` 继承体系 + `LeafShape`/`Container`；画布不是图形                   | 多态、Composite、一类一文件；画布无 id   | 本报告                                                                                                  |
-| 4   | 校验先行 + 领域异常；失败不改变文档/历史                                   | 原子性最容易审计                         | 本报告                                                                                                  |
-| 5   | 命令自带反向操作；几何用 Memento                                           | 体现 Command；精确撤销；比快照省内存     | 本报告                                                                                                  |
-| 6   | 本阶段不做插件框架；`ShapeFactory` 是扩展缝                                | 只有一种实现，空接口是猜测               | 本报告                                                                                                  |
-| 7   | 读取只接受支持子集，拒绝 `transform`/`style`/未知视觉元素/不匹配 `viewBox` | 不静默改变画面；领域模型无变换           | [ADR-0002](../docs/adr/0002-supported-svg-subset.md)                                                    |
-| 8   | `group` 以第一个命令行目标为父级和位置锚点，子节点保持分组前文档顺序       | 满足课程“保持相对顺序”；跨父级语义唯一   | [ADR-0004](../docs/adr/0004-group-anchor-rule.md)、[ADR-0006](../docs/adr/0006-group-relative-order.md) |
-| 9   | 文档命令清空历史并锁定；下一次改变状态的编辑解锁                           | 不跨 IO 撤销；避免悬空命令引用           | [ADR-0003](../docs/adr/0003-io-history-barrier.md)                                                      |
-| 10  | 无操作命令成功但不进历史、不解锁                                           | 无状态变化不产生撤销单元                 | [spec.md](./spec.md) 2、9                                                                               |
-| 11  | 尺寸类 > 0，坐标可为负，`scale` 因子 > 0                                   | SVG 几何边界；避免不可见零尺寸图形       | [spec.md](./spec.md) 3、5                                                                               |
-| 12  | 根必须有宽高；`viewBox` 缺失或恰为 `0 0 w h`                               | 不引入未建模的坐标缩放                   | [spec.md](./spec.md) 7                                                                                  |
-| 13  | Ticket 01 采用 TTY 提示、stdout 输出和 `init` 直接替换默认                 | 先收口本票所需契约，不推定其余 C1 条目   | [ADR-0005](../docs/adr/0005-ticket-01-cli-defaults.md)                                                  |
-| 14  | `front` 对应同级末尾和最后绘制，`back` 对应索引 0 和最先绘制               | 与 SVG 文档顺序和可见覆盖关系一致        | [ADR-0007](../docs/adr/0007-z-order-semantics.md)                                                       |
+| #   | 决策                                                                         | 理由                                     | 记录                                                                                                    |
+| --- | ---------------------------------------------------------------------------- | ---------------------------------------- | ------------------------------------------------------------------------------------------------------- |
+| 1   | 方案先行，需求澄清后再实现                                                   | 课程报告要求方案与自查；避免边写边改语义 | 本报告                                                                                                  |
+| 2   | 零运行时依赖，自写 XML 解析器和分词器                                        | 控制支持子集、错误和往返；课程重点在 OOP | [ADR-0001](../docs/adr/0001-zero-runtime-dependencies.md)                                               |
+| 3   | `Shape` 继承体系 + `LeafShape`/`Container`；画布不是图形                     | 多态、Composite、一类一文件；画布无 id   | 本报告                                                                                                  |
+| 4   | 校验先行 + 领域异常；失败不改变文档/历史                                     | 原子性最容易审计                         | 本报告                                                                                                  |
+| 5   | 命令自带反向操作；几何用 Memento                                             | 体现 Command；精确撤销；比快照省内存     | 本报告                                                                                                  |
+| 6   | 本阶段不做插件框架；`ShapeFactory` 是扩展缝                                  | 只有一种实现，空接口是猜测               | 本报告                                                                                                  |
+| 7   | 读取只接受支持子集，拒绝 `transform`/`style`/未知视觉元素/不匹配 `viewBox`   | 不静默改变画面；领域模型无变换           | [ADR-0002](../docs/adr/0002-supported-svg-subset.md)                                                    |
+| 8   | `group` 以第一个命令行目标为父级和位置锚点，子节点保持分组前文档顺序         | 满足课程“保持相对顺序”；跨父级语义唯一   | [ADR-0004](../docs/adr/0004-group-anchor-rule.md)、[ADR-0006](../docs/adr/0006-group-relative-order.md) |
+| 9   | 文档命令清空历史并锁定；下一次改变状态的编辑解锁                             | 不跨 IO 撤销；避免悬空命令引用           | [ADR-0003](../docs/adr/0003-io-history-barrier.md)                                                      |
+| 10  | 无操作命令成功但不进历史、不解锁                                             | 无状态变化不产生撤销单元                 | [spec.md](./spec.md) 2、9                                                                               |
+| 11  | 尺寸类 > 0，坐标可为负，`scale` 因子 > 0                                     | SVG 几何边界；避免不可见零尺寸图形       | [spec.md](./spec.md) 3、5                                                                               |
+| 12  | 根必须有宽高；`viewBox` 缺失或恰为 `0 0 w h`                                 | 不引入未建模的坐标缩放                   | [spec.md](./spec.md) 7                                                                                  |
+| 13  | Ticket 01 采用 TTY 提示、stdout 输出和 `init` 直接替换默认                   | 先收口本票所需契约，不推定其余 C1 条目   | [ADR-0005](../docs/adr/0005-ticket-01-cli-defaults.md)                                                  |
+| 14  | `front` 对应同级末尾和最后绘制，`back` 对应索引 0 和最先绘制                 | 与 SVG 文档顺序和可见覆盖关系一致        | [ADR-0007](../docs/adr/0007-z-order-semantics.md)                                                       |
+| 15  | 文件按 UTF-8 写出，相对路径按进程工作目录解析；`save` 成功后才更新路径和屏障 | 失败不改变会话；路径保留用户输入形式     | [ADR-0008](../docs/adr/0008-ticket-16-save-path-defaults.md)                                            |
 
 ## 需求摘要
 
@@ -487,15 +491,25 @@ package "shared" {
 - 验证：`npm run check` 通过（类型检查、格式检查、107 个测试、构建）。真实 CLI 回放覆盖 `front`/`back` 成功排序、tree 索引、边界无操作、undo/redo、参数错误和缺失目标；开发入口与构建入口使用同一脚本，输出一致且 stderr 为空。
 - Ticket 14 通过 [PR #37](https://github.com/NQC233/svg-editor-lab1/pull/37) 提交，Issue #14 由 PR 关联关闭。
 
+### 2026-10-25：Ticket 16 保存 SVG 与当前路径
+
+- 开始前 fetch 远端并确认工作区干净，本地 `main` 与 `origin/main` 同为 `05f125a`，Ticket #16 的直接前置 #4、#5、#6 已关闭且原生未关闭阻塞数为 0。Issue 仍标记 `needs-info`，因此没有绕过内容门禁直接实现；用户确认 UTF-8 与相对路径按进程工作目录解析后，先在 Issue 记录决定、移除门禁并领取任务，再新建 `feat/ticket-16-save-svg`。
+- 将该决定写入 [ADR-0008](../docs/adr/0008-ticket-16-save-path-defaults.md)：相对路径不主动转为绝对路径，`save` 只在文件成功写出后更新当前路径，随后由文档命令协议建立历史屏障；失败不改变文档、路径或历史。
+- 按 TDD 先写真实文件接缝的矩形写出用例，红灯为 `unknown command: save`；再补全类型和嵌套容器用例，红灯显示圆/椭圆/直线/文本缺少几何属性与正文。随后以图形多态补齐有序 SVG 属性，而不是在 `SvgWriter` 中添加类型名 `switch`。
+- `SvgWriter` 负责 XML 声明、根尺寸/viewBox、两空格缩进、容器递归、空容器自闭合、文本正文、转义、尾换行和元素计数；`XmlEscaper` 只处理 `&`、`<`、`>`、`"`。`Shape.svgAttributes` 固定 `id`、几何、`fill`、`stroke`、`stroke-width` 的顺序，`Text` 多态提供正文，因此未来未建模属性可在样式之后接入而不改变写出器分派。
+- `CommandContext` 保存当前路径；`InitCommand` 通过 `setDocument` 清空路径；`SaveCommand` 选择显式或已保存路径，写入成功后才调用 `setCurrentPath`，由执行器看到的 `changed=true` 结果清空并锁定历史。参数错误、无路径和写失败都在提交前抛出。
+- 命令测试覆盖六种图形、嵌套与空容器、样式省略/顺序、中文与 XML 特殊字符、带空格路径、覆盖写、当前路径复用、`init` 清空路径、无路径/参数/写失败、失败保留当前路径和历史、成功屏障与后续编辑解锁。真实 CLI 回放同时断言标准输出和落盘内容。
+- 小步提交保留为 `05ab31a`（基本写出）、`3f0b42a`（全部图形与转义）、`c8a2c9c`（路径与失败原子性）、`e238b44`（历史屏障）和 `6148423`（帮助覆盖），随后单独更新 ADR 与报告。
+
 ## 一致性自查
 
-当前状态为“Ticket 01–15 已实现并通过本地验收；Ticket 16–19 仍为计划”。
+当前状态为“Ticket 01–16 已实现并通过本地验收；Ticket 17–19 仍为计划”。
 
-1. **模块划分**：已落地 `src/shared/`（错误与数值）、`src/domain/`（`Shape`、`LeafShape`、`Container`、`Group`、`Rect`、`Circle`、`Ellipse`、`Line`、`Text`、`GeometrySnapshot`、`ShapeAttributeSnapshot`、`UngroupSnapshot`、`GroupSnapshot`、`GroupedShapePlacement`、`Point`、`ShapePlacement`、`ShapeFactory`、`SvgDocument`）、`src/display/`（`TreeFormatter`、`ShowFormatter`、`DisplayWidth`）、`src/commands/`（命令、token/参数封装、结果、历史、上下文、执行器、create/delete/group/ungroup/addto/front/back/move/scale/set/canvas/tree/show/undo/redo）、`src/cli/`（分词、命令表、分发、REPL、输出）与 `src/main.ts`（组合根）。`io/` 和其余编辑命令仍为计划，与当前票边界一致。
-2. **依赖方向**：抽查 import 后，`domain` 只依赖 `shared`；`display` 依赖 `domain` 和 `shared`；`commands` 依赖 `domain`、`display` 和 `shared`；`cli` 依赖 `commands` 和 `shared`；`main` 装配全部模块。`commands` 不 import `cli`，`cli` 不直接 import `domain`/`display`，未发现循环依赖。
+1. **模块划分**：已落地 `src/shared/`（错误与数值）、`src/domain/`（`Shape`、`LeafShape`、`Container`、`Group`、`Rect`、`Circle`、`Ellipse`、`Line`、`Text`、`GeometrySnapshot`、`ShapeAttributeSnapshot`、`UngroupSnapshot`、`GroupSnapshot`、`GroupedShapePlacement`、`Point`、`ShapePlacement`、`ShapeFactory`、`SvgDocument`）、`src/io/`（`SvgWriter`、`XmlEscaper`）、`src/display/`（`TreeFormatter`、`ShowFormatter`、`DisplayWidth`）、`src/commands/`（命令、token/参数封装、结果、历史、上下文、执行器、create/delete/group/ungroup/addto/front/back/move/scale/set/save/canvas/tree/show/undo/redo）、`src/cli/`（分词、命令表、分发、REPL、输出）与 `src/main.ts`（组合根）。`io/` 的另一半读取器和其他编辑命令仍为计划，与当前票边界一致。
+2. **依赖方向**：抽查 import 后，`domain` 只依赖 `shared`；`io` 只依赖 `domain` 和 `shared`；`display` 依赖 `domain` 和 `shared`；`commands` 通过 `CommandContext` 注入 `SvgWriter`，依赖 `domain`、`io`、`display` 和 `shared`；`cli` 依赖 `commands` 和 `shared`；`main` 装配全部模块。`commands` 不 import `cli`，`cli` 不直接 import `domain`/`io`/`display`，未发现循环依赖。
 3. **名字分派**：当前只有两处名字分派，符合课程约束：`CommandCatalog` 做命令名到命令工厂的分派，`ShapeFactory` 做图形类型名到类实例的分派。命令和格式化器中没有第二套类型 `switch`。
-4. **规格一致**：Ticket 01 按规格 3.1、3.3、4.1–4.3、6.11、6.14、6.17 实现；Ticket 02 按规格 3.1–3.3、5.1–5.2、5.5–5.6、6.1、6.15–6.16 实现；Ticket 03 按规格 3.3、6.10–6.11、9 实现；Ticket 04 按规格 3.1、3.3、5.1–5.2、5.5–5.6、6.1、6.10 实现；Ticket 05 按规格 3.1、4.2、5.2、5.5–5.6、6.1、6.10、9 实现；Ticket 06 按规格 3.2–3.3、4.2、5.2、5.5–5.6、6.1、6.10、9 实现；Ticket 07 按规格 3.1、5.4、6.3、6.10、9 实现；Ticket 08 按规格 2、3.3、5.4、6.4、6.10、9 实现；Ticket 09 按规格 2、3.1、3.3、5.1–5.3、6.5、6.10、9 实现；Ticket 10 按规格 3.3、5.2、6.2、9 实现；Ticket 11 按规格 2、3.3、5.2、6.8、6.10、9 实现；Ticket 12 按规格 3.3、5.2、6.6、6.10、9 与 ADR-0006 实现；Ticket 13 按规格 3.3、5.2、6.7、6.10、9 实现；Ticket 14 按规格 2、3.3、6.9、6.10、9 与 ADR-0007 实现；Ticket 15 按规格 3.3–3.4、6.10、6.14 实现。测试名称引用对应章节；当前 undo/redo 覆盖六种内置类型创建、属性更新、叶子/容器移动和缩放、子树删除、容器分组/解散、图形归属移动及 `front`/`back` 同级排序，其他编辑命令仍需各自交付历史。
-5. **文档一致**：`CONTEXT.md`、`doc/spec.md`、`doc/ticket-plan.md`、ADR-0003、ADR-0005、ADR-0006、ADR-0007 与本报告一致；未实现的 IO、其余几何/结构编辑和显示细节没有写成已完成。
+4. **规格一致**：Ticket 01 按规格 3.1、3.3、4.1–4.3、6.11、6.14、6.17 实现；Ticket 02 按规格 3.1–3.3、5.1–5.2、5.5–5.6、6.1、6.15–6.16 实现；Ticket 03 按规格 3.3、6.10–6.11、9 实现；Ticket 04 按规格 3.1、3.3、5.1–5.2、5.5–5.6、6.1、6.10 实现；Ticket 05 按规格 3.1、4.2、5.2、5.5–5.6、6.1、6.10、9 实现；Ticket 06 按规格 3.2–3.3、4.2、5.2、5.5–5.6、6.1、6.10、9 实现；Ticket 07 按规格 3.1、5.4、6.3、6.10、9 实现；Ticket 08 按规格 2、3.3、5.4、6.4、6.10、9 实现；Ticket 09 按规格 2、3.1、3.3、5.1–5.3、6.5、6.10、9 实现；Ticket 10 按规格 3.3、5.2、6.2、9 实现；Ticket 11 按规格 2、3.3、5.2、6.8、6.10、9 实现；Ticket 12 按规格 3.3、5.2、6.6、6.10、9 与 ADR-0006 实现；Ticket 13 按规格 3.3、5.2、6.7、6.10、9 实现；Ticket 14 按规格 2、3.3、6.9、6.10、9 与 ADR-0007 实现；Ticket 15 按规格 3.3–3.4、6.10、6.14 实现；Ticket 16 按规格 2、3.3、6.10、6.13、7.6–8、9 与 ADR-0008 实现。测试名称引用对应章节；当前 undo/redo 覆盖六种内置类型创建、属性更新、叶子/容器移动和缩放、子树删除、容器分组/解散、图形归属移动及 `front`/`back` 同级排序，其他编辑命令仍需各自交付历史。
+5. **文档一致**：`CONTEXT.md`、`doc/spec.md`、`doc/ticket-plan.md`、ADR-0003、ADR-0005、ADR-0006、ADR-0007、ADR-0008 与本报告一致；已实现的 SVG 写出与 `save` 没有和尚未实现的 SVG 读取、未建模属性往返或其它命令混写。
 
 ## 质量保证手段
 
@@ -547,5 +561,9 @@ package "shared" {
 - Ticket 12 的 `npm run check` 通过：类型检查、格式检查、101 个测试和构建全部成功。`npm run cli` 与构建后的 `npm start` 使用同一 group 成功/失败脚本，输出一致且 stderr 均为空。
 - Ticket 14 的命令测试覆盖叶子与容器的 front/back 索引映射、容器子树内部顺序保持、精确原位 undo/redo、边界无操作保留 redo 与 IO 屏障、参数/缺失目标失败原子性、成功编辑清空 redo 与屏障解锁；真实 CLI 回放覆盖成功排序、tree、无操作、undo/redo 和失败链。
 - Ticket 14 的 `npm run check` 通过：类型检查、格式检查、107 个测试和构建全部成功。`npm run cli` 与构建后的 `npm start` 使用同一 front/back 脚本，输出一致且 stderr 均为空。
+- Ticket 16 的命令测试覆盖六种内置图形的有序 SVG 属性、文本正文、嵌套/空容器、XML 属性/文本转义、元素计数、样式省略与顺序、带空格路径、覆盖写、当前路径复用，以及无路径/参数/写失败和成功/失败时的历史边界；真实 CLI 回放同时检查标准输出与 UTF-8 文件内容。
+- Ticket 16 的 `npm run check` 通过：类型检查、格式检查、114 个测试和构建全部成功。写出测试使用独立临时目录并在结束后清理，没有把生成文件提交到仓库。
+- Ticket 16 的 `npm run cli` 与构建后的 `npm start` 使用同一嵌套图形/中文/路径脚本，stdout 逐字节一致、stderr 均为空；两种入口都成功写出 301 字节 SVG，并在 `init` 后正确报告无当前路径。
+- Ticket 16 用 Chrome 打开 CLI 实际写出的 320×200 示例 SVG，检查嵌套 `g`、矩形、中文/特殊字符文本、圆和连线均正确显示；示例文件位于临时目录，未作为构建产物提交。
 - 脚本回放测试通过 spawn 运行 `src/main.ts`，断言空白/注释、成功输出、错误前缀、颜色参数、失败前后树一致、无横幅/提示符和 EOF 正常退出；TTY 模式通过注入终端流验证横幅、`svg> ` 提示符、stdout 错误和结果。
-- 当前完成 Ticket 01–15 的功能实现。历史基础设施已接入六种内置类型创建、属性更新、叶子/整棵子树删除、批量分组、嵌套容器解散、图形归属移动、front/back 同级排序、叶子/整棵子树移动/缩放及带参数 `canvas` 的屏障；IO 和其余编辑命令仍未实现。这些限制不能由这些票的测试通过覆盖。
+- 当前完成 Ticket 01–16 的功能实现。历史基础设施已接入六种内置类型创建、属性更新、叶子/整棵子树删除、批量分组、嵌套容器解散、图形归属移动、front/back 同级排序、叶子/整棵子树移动/缩放、带参数 `canvas` 和成功 `save` 的屏障；SVG 读取、未建模属性往返和其余编辑命令仍未实现。这些限制不能由这些票的测试通过覆盖。
