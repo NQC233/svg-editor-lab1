@@ -262,4 +262,18 @@ test('[spec 3.3, 6.6] rejects inconsistent group placements before changing the 
   assert.equal(document.find('combined'), combined);
   assert.deepEqual(document.childrenOf(source), [combined]);
   assert.deepEqual(document.childrenOf(combined), [a, b]);
+
+  const selfParented = new GroupSnapshot(combined, source, 0, [
+    new GroupedShapePlacement(a, new ShapePlacement(combined, 0)),
+    new GroupedShapePlacement(b, new ShapePlacement(source, 1)),
+  ]);
+  assert.throws(
+    () => document.restoreGrouped(selfParented),
+    new DomainError('cannot restore grouped container: combined'),
+  );
+  assert.equal(document.find('combined'), combined);
+  assert.deepEqual(document.childrenOf(source), [combined]);
+  assert.deepEqual(document.childrenOf(combined), [a, b]);
+  assert.equal(document.parentLabelOf(a), 'g#combined');
+  assert.equal(document.parentLabelOf(b), 'g#combined');
 });

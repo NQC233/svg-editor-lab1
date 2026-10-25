@@ -480,16 +480,18 @@ export class SvgDocument {
   ): ReadonlyMap<Container | undefined, readonly GroupedShapePlacement[]> {
     const byParent = new Map<Container | undefined, GroupedShapePlacement[]>();
     for (const entry of entries) {
+      const placementParent = entry.placement.parent;
       if (
         this.parents.get(entry.shape) !== groupedInto ||
-        this.shapesById.get(entry.shape.id) !== entry.shape
+        this.shapesById.get(entry.shape.id) !== entry.shape ||
+        (placementParent !== undefined && this.isWithinSubtree(placementParent, groupedInto))
       ) {
         throw new DomainError(`cannot restore grouped container: ${groupedInto.id}`);
       }
 
-      const parentEntries = byParent.get(entry.placement.parent) ?? [];
+      const parentEntries = byParent.get(placementParent) ?? [];
       parentEntries.push(entry);
-      byParent.set(entry.placement.parent, parentEntries);
+      byParent.set(placementParent, parentEntries);
     }
 
     for (const [parent, parentEntries] of byParent) {
