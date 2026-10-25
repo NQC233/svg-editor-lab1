@@ -4,6 +4,8 @@ import { NumberParser } from '../shared/NumberParser.js';
 import type { Point } from './Point.js';
 import { ShapeAttributeSnapshot } from './ShapeAttributeSnapshot.js';
 
+export type SvgAttribute = readonly [name: string, value: string];
+
 export abstract class Shape {
   private readonly shapeId: string;
   private fillValue: string | undefined;
@@ -44,6 +46,22 @@ export abstract class Shape {
 
   public abstract get type(): string;
 
+  public svgAttributes(): readonly SvgAttribute[] {
+    return [
+      ['id', this.id],
+      ...this.svgGeometryAttributes(),
+      ...(this.fill === undefined ? [] : [['fill', this.fill] as const]),
+      ...(this.stroke === undefined ? [] : [['stroke', this.stroke] as const]),
+      ...(this.strokeWidth === undefined
+        ? []
+        : [['stroke-width', NumberFormatter.format(this.strokeWidth)] as const]),
+    ];
+  }
+
+  public svgTextContent(): string | undefined {
+    return undefined;
+  }
+
   public setAttribute(attribute: string, value: string): ShapeAttributeSnapshot {
     switch (attribute) {
       case 'fill':
@@ -70,6 +88,10 @@ export abstract class Shape {
   public abstract detailLines(): readonly string[];
 
   protected abstract setOwnAttribute(attribute: string, value: string): ShapeAttributeSnapshot;
+
+  protected svgGeometryAttributes(): readonly SvgAttribute[] {
+    return [];
+  }
 
   protected styleLines(): readonly string[] {
     const attributes: string[] = [];

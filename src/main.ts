@@ -16,6 +16,7 @@ import { HelpCommand } from './commands/HelpCommand.js';
 import { InitCommand } from './commands/InitCommand.js';
 import { MoveCommand } from './commands/MoveCommand.js';
 import { RedoCommand } from './commands/RedoCommand.js';
+import { SaveCommand } from './commands/SaveCommand.js';
 import { ScaleCommand } from './commands/ScaleCommand.js';
 import { SetCommand } from './commands/SetCommand.js';
 import { ShowCommand } from './commands/ShowCommand.js';
@@ -26,12 +27,14 @@ import { FrontCommand } from './commands/FrontCommand.js';
 import { ShowFormatter } from './display/ShowFormatter.js';
 import { TreeFormatter } from './display/TreeFormatter.js';
 import { ShapeFactory } from './domain/ShapeFactory.js';
+import { SvgWriter } from './io/SvgWriter.js';
 
 const history = new CommandHistory();
 const context = new CommandContext({
   history,
   shapeFactory: new ShapeFactory(),
   showFormatter: new ShowFormatter(),
+  svgWriter: new SvgWriter(),
   treeFormatter: new TreeFormatter(),
 });
 const catalog = new CommandCatalog([
@@ -47,6 +50,7 @@ const catalog = new CommandCatalog([
   ['move', () => new MoveCommand()],
   ['scale', () => new ScaleCommand()],
   ['set', () => new SetCommand()],
+  ['save', () => new SaveCommand()],
   ['tree', () => new TreeCommand()],
   ['show', () => new ShowCommand()],
   ['help', () => new HelpCommand()],

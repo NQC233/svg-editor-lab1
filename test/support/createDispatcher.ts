@@ -13,6 +13,7 @@ import { HelpCommand } from '../../src/commands/HelpCommand.js';
 import { InitCommand } from '../../src/commands/InitCommand.js';
 import { MoveCommand } from '../../src/commands/MoveCommand.js';
 import { RedoCommand } from '../../src/commands/RedoCommand.js';
+import { SaveCommand } from '../../src/commands/SaveCommand.js';
 import { ScaleCommand } from '../../src/commands/ScaleCommand.js';
 import { SetCommand } from '../../src/commands/SetCommand.js';
 import { ShowCommand } from '../../src/commands/ShowCommand.js';
@@ -23,6 +24,7 @@ import { FrontCommand } from '../../src/commands/FrontCommand.js';
 import { ShowFormatter } from '../../src/display/ShowFormatter.js';
 import { TreeFormatter } from '../../src/display/TreeFormatter.js';
 import { ShapeFactory } from '../../src/domain/ShapeFactory.js';
+import { SvgWriter } from '../../src/io/SvgWriter.js';
 
 export function createDispatcher(): CommandDispatcher {
   const history = new CommandHistory();
@@ -30,6 +32,7 @@ export function createDispatcher(): CommandDispatcher {
     history,
     shapeFactory: new ShapeFactory(),
     showFormatter: new ShowFormatter(),
+    svgWriter: new SvgWriter(),
     treeFormatter: new TreeFormatter(),
   });
   const catalog = new CommandCatalog([
@@ -45,6 +48,7 @@ export function createDispatcher(): CommandDispatcher {
     ['move', () => new MoveCommand()],
     ['scale', () => new ScaleCommand()],
     ['set', () => new SetCommand()],
+    ['save', () => new SaveCommand()],
     ['tree', () => new TreeCommand()],
     ['show', () => new ShowCommand()],
     ['help', () => new HelpCommand()],
