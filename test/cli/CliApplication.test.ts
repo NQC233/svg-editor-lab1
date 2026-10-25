@@ -415,3 +415,72 @@ test('[spec 4.2, 5.2, 5.5, 5.6, 6.1, 6.10] replays quoted text creation, display
     ].join('\n'),
   );
 });
+
+test('[spec 5.5, 5.6, 6.1, 6.10] replays nested container creation, display, history, and failures', async () => {
+  const result = await runCli(
+    [
+      'init 800 600',
+      'create g flowchart',
+      'create g node1 in flowchart',
+      'create rect r1 10 20 30 40 red in node1',
+      'create text label 15 25 "开始" in node1',
+      'tree',
+      'tree node1',
+      'show r1',
+      'undo',
+      'tree node1',
+      'redo',
+      'tree node1',
+      'create rect missing 0 0 1 1 in absent',
+      'create rect wrong 0 0 1 1 in r1',
+      'create g node1 in flowchart',
+      'create g nested "in" flowchart',
+      'create g incomplete in',
+      'create rect bare-in 0 0 1 1 in',
+      'tree',
+    ].join('\n'),
+  );
+
+  assert.equal(result.code, 0);
+  assert.equal(result.stderr, '');
+  assert.equal(
+    result.stdout,
+    [
+      'canvas 800x600 created',
+      'g#flowchart created',
+      'g#node1 created in g#flowchart',
+      'rect#r1 created in g#node1',
+      'text#label created in g#node1',
+      'svg (800x600)',
+      '└── g#flowchart',
+      '    └── g#node1',
+      '        ├── rect#r1     x=10 y=20 w=30 h=40 fill=red',
+      '        └── text#label  (15,25) "开始"',
+      'g#node1',
+      '├── rect#r1     x=10 y=20 w=30 h=40 fill=red',
+      '└── text#label  (15,25) "开始"',
+      'rect#r1  parent=g#node1',
+      '  x=10 y=20 width=30 height=40',
+      '  fill=red',
+      'text#label removed',
+      'g#node1',
+      '└── rect#r1  x=10 y=20 w=30 h=40 fill=red',
+      'text#label created in g#node1',
+      'g#node1',
+      '├── rect#r1     x=10 y=20 w=30 h=40 fill=red',
+      '└── text#label  (15,25) "开始"',
+      'error: no such container: absent',
+      'error: not a container: r1',
+      'error: id already exists: node1',
+      'error: usage: create g <id>',
+      'error: usage: create <type> <id> [params...] [in <containerId>]',
+      'error: usage: create <type> <id> [params...] [in <containerId>]',
+      'svg (800x600)',
+      '└── g#flowchart',
+      '    └── g#node1',
+      '        ├── rect#r1     x=10 y=20 w=30 h=40 fill=red',
+      '        └── text#label  (15,25) "开始"',
+      '',
+    ].join('\n'),
+  );
+});

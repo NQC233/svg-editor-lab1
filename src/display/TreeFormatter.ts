@@ -8,15 +8,22 @@ export class TreeFormatter {
     const lines = [
       `svg (${NumberFormatter.format(document.width)}x${NumberFormatter.format(document.height)})`,
     ];
-    this.appendRootShapes(lines, document.rootShapes);
+    this.appendChildren(document, lines, document.rootShapes, '');
     return lines;
   }
 
-  public formatShape(shape: Shape): readonly string[] {
-    return [this.formatShapeLine(shape, '', DisplayWidth.measure(shape.label))];
+  public formatShape(document: SvgDocument, shape: Shape): readonly string[] {
+    const lines = [this.formatShapeLine(shape, '', DisplayWidth.measure(shape.label))];
+    this.appendChildren(document, lines, document.childrenOf(shape), '');
+    return lines;
   }
 
-  private appendRootShapes(lines: string[], shapes: readonly Shape[]): void {
+  private appendChildren(
+    document: SvgDocument,
+    lines: string[],
+    shapes: readonly Shape[],
+    prefix: string,
+  ): void {
     const labelWidth = shapes.reduce(
       (width, shape) => Math.max(width, DisplayWidth.measure(shape.label)),
       0,
@@ -24,7 +31,9 @@ export class TreeFormatter {
 
     shapes.forEach((shape, index) => {
       const branch = index === shapes.length - 1 ? '└── ' : '├── ';
-      lines.push(this.formatShapeLine(shape, branch, labelWidth));
+      lines.push(this.formatShapeLine(shape, `${prefix}${branch}`, labelWidth));
+      const childPrefix = `${prefix}${index === shapes.length - 1 ? '    ' : '│   '}`;
+      this.appendChildren(document, lines, document.childrenOf(shape), childPrefix);
     });
   }
 

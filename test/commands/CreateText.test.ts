@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 
+import { CommandToken } from '../../src/commands/CommandToken.js';
 import { DomainError } from '../../src/shared/DomainError.js';
 import { createDispatcher } from '../support/createDispatcher.js';
 
@@ -37,7 +38,14 @@ test('[spec 3.1, 4.2, 5.2, 5.5, 5.6, 6.1] preserves Chinese, empty, and keyword-
   dispatcher.dispatch(['init', '400', '200']);
   dispatcher.dispatch(['create', 'text', 'label', '-1.5', '2.25', '开始']);
   dispatcher.dispatch(['create', 'text', 'empty', '0', '0', '']);
-  dispatcher.dispatch(['create', 'text', 'keyword', '1', '2', 'in']);
+  dispatcher.dispatchTokens([
+    new CommandToken('create'),
+    new CommandToken('text'),
+    new CommandToken('keyword'),
+    new CommandToken('1'),
+    new CommandToken('2'),
+    new CommandToken('in', true),
+  ]);
 
   assert.deepEqual(dispatcher.dispatch(['show', 'label']), [
     'text#label  parent=svg',
