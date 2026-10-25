@@ -1,4 +1,5 @@
 import { DomainError } from '../shared/DomainError.js';
+import type { Point } from './Point.js';
 
 export abstract class Shape {
   private readonly shapeId: string;
@@ -20,6 +21,10 @@ export abstract class Shape {
   }
 
   public abstract get type(): string;
+
+  public movementAnchor(): Point | undefined {
+    return undefined;
+  }
 
   public abstract treeAttributes(): string;
 

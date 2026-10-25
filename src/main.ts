@@ -10,6 +10,7 @@ import { CommandInvoker } from './commands/CommandInvoker.js';
 import { CreateCommand } from './commands/CreateCommand.js';
 import { HelpCommand } from './commands/HelpCommand.js';
 import { InitCommand } from './commands/InitCommand.js';
+import { MoveCommand } from './commands/MoveCommand.js';
 import { RedoCommand } from './commands/RedoCommand.js';
 import { ShowCommand } from './commands/ShowCommand.js';
 import { TreeCommand } from './commands/TreeCommand.js';
@@ -29,6 +30,7 @@ const catalog = new CommandCatalog([
   ['init', () => new InitCommand()],
   ['canvas', () => new CanvasCommand()],
   ['create', () => new CreateCommand()],
+  ['move', () => new MoveCommand()],
   ['tree', () => new TreeCommand()],
   ['show', () => new ShowCommand()],
   ['help', () => new HelpCommand()],

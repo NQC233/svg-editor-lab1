@@ -1,6 +1,6 @@
 # SVG 编辑器 Phase 1 需求规格
 
-状态：设计决策已确认；Ticket 01 相关补充默认已由 ADR-0005 采纳；Ticket 03 的无操作历史规则和 create 撤销摘要已收口；Ticket 01–05 和 Ticket 15 已实现，其中 Ticket 03 通过 PR #23、Ticket 04 通过 PR #25、Ticket 05 通过 PR #27 合入 `main`。
+状态：设计决策已确认；Ticket 01 相关补充默认已由 ADR-0005 采纳；Ticket 03 的无操作历史规则和 create 撤销摘要已收口；Ticket 01–07 和 Ticket 15 已实现，其中 Ticket 03 通过 PR #23、Ticket 04 通过 PR #25、Ticket 05 通过 PR #27、Ticket 06 通过 PR #29 合入 `main`。
 
 本文件是实现与验收的共同依据。课程原始要求见 [`phase_cli_1.md`](../phase_cli_1.md)，领域术语见 [`CONTEXT.md`](../CONTEXT.md)，模块与依赖方案见 [`README.md`](./README.md)，实现顺序见[纵向任务计划](./ticket-plan.md)。
 
@@ -212,6 +212,7 @@ create <type> <id> [params…] [in <containerId>]
   - 容器：`g#<id> moved by (<dx>,<dy>)`。
 - 撤销：精确恢复移动前的几何；叶子输出 `<type>#<id> moved back to (<x>,<y>)`，容器输出 `g#<id> moved back by (<-dx>,<-dy>)`。
 - `dx = dy = 0` 是无操作：输出 `<type>#<id> unchanged`，不进入历史。
+- 容器子树没有可移动叶子（例如空 `g`）时，非零增量同样是无操作：输出 `g#<id> unchanged`，不进入历史。容器只修改子孙叶子的建模坐标，自身没有独立几何。
 
 ### 6.4 scale
 

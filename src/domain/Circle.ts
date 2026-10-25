@@ -1,11 +1,13 @@
 import { DomainError } from '../shared/DomainError.js';
 import { NumberFormatter } from '../shared/NumberFormatter.js';
+import { GeometrySnapshot } from './GeometrySnapshot.js';
 import { LeafShape } from './LeafShape.js';
+import { Point } from './Point.js';
 
 export class Circle extends LeafShape {
-  private readonly centerXValue: number;
-  private readonly centerYValue: number;
-  private readonly radiusValue: number;
+  private centerXValue: number;
+  private centerYValue: number;
+  private radiusValue: number;
 
   public constructor(id: string, centerX: number, centerY: number, radius: number, fill?: string) {
     super(id, fill);
@@ -36,6 +38,36 @@ export class Circle extends LeafShape {
 
   public get radius(): number {
     return this.radiusValue;
+  }
+
+  public override moveOwnGeometry(dx: number, dy: number): void {
+    const centerX = this.centerXValue + dx;
+    const centerY = this.centerYValue + dy;
+    LeafShape.assertFinite(centerX);
+    LeafShape.assertFinite(centerY);
+    this.centerXValue = centerX;
+    this.centerYValue = centerY;
+  }
+
+  public override snapshotGeometry(): GeometrySnapshot {
+    const centerX = this.centerXValue;
+    const centerY = this.centerYValue;
+    const radius = this.radiusValue;
+    return new GeometrySnapshot(
+      () => {
+        this.centerXValue = centerX;
+        this.centerYValue = centerY;
+        this.radiusValue = radius;
+      },
+      () =>
+        this.centerXValue === centerX &&
+        this.centerYValue === centerY &&
+        this.radiusValue === radius,
+    );
+  }
+
+  public override movementAnchor(): Point {
+    return new Point(this.centerX, this.centerY);
   }
 
   public override treeAttributes(): string {

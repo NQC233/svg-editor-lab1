@@ -7,6 +7,7 @@ import { CommandInvoker } from '../../src/commands/CommandInvoker.js';
 import { CreateCommand } from '../../src/commands/CreateCommand.js';
 import { HelpCommand } from '../../src/commands/HelpCommand.js';
 import { InitCommand } from '../../src/commands/InitCommand.js';
+import { MoveCommand } from '../../src/commands/MoveCommand.js';
 import { RedoCommand } from '../../src/commands/RedoCommand.js';
 import { ShowCommand } from '../../src/commands/ShowCommand.js';
 import { TreeCommand } from '../../src/commands/TreeCommand.js';
@@ -27,6 +28,7 @@ export function createDispatcher(): CommandDispatcher {
     ['init', () => new InitCommand()],
     ['canvas', () => new CanvasCommand()],
     ['create', () => new CreateCommand()],
+    ['move', () => new MoveCommand()],
     ['tree', () => new TreeCommand()],
     ['show', () => new ShowCommand()],
     ['help', () => new HelpCommand()],
