@@ -1,6 +1,6 @@
 # Lab1 Phase 1：课程报告与过程记录
 
-状态：Ticket 01–02 已实现，当前 16 个业务测试通过；其余 17 张票仍是计划。本报告继续把“计划”和“已实现”分开记录。
+状态：Ticket 01–02 已合入 `main`，当前 16 个业务测试通过；Ticket 03 契约已收口、实现待开始，其余 16 张票仍是计划。本报告继续把“计划”和“已实现”分开记录。
 
 需求依据：[课程原始要求](../phase_cli_1.md)。
 
@@ -323,9 +323,17 @@ package "shared" {
 - Ticket 01 通过 PR #20（merge commit `311409e`）进入 `main` 后，Ticket 02 已 rebase 到最新主线；与 Ticket 01 的组合根和 11 个既有测试合并后，当前测试基线为 16 个。
 - 验证：`npm run check` 通过（类型、格式、16 个测试、构建）；`npm run cli` 和构建后的 `npm start` 回放见下方质量证据。
 
+### 2026-10-25：PR 集成与 Ticket 03 契约收口
+
+- Ticket 01 经 [PR #20](https://github.com/NQC233/svg-editor-lab1/pull/20) 合入 `main`（`311409e`）；Ticket 02 经 rebase 后由 [PR #21](https://github.com/NQC233/svg-editor-lab1/pull/21) 合入（`e5c71b5`）。两条主线的分步提交历史均保留。
+- 集成复审补齐了 Ticket 01 的唯一组合根、引号/转义/注释与数值边界测试；Ticket 02 复审补齐了数值首尾空白处理，并把 `create` 命令名从领域 usage 文案移回命令层。
+- Ticket 03 C1 收口：无操作编辑成功返回，但不记录历史、不清空 redo、不解除历史屏障，采用已接受的 [ADR-0003](../docs/adr/0003-io-history-barrier.md)。
+- Ticket 03 C2 收口：`create` 的撤销摘要统一为 `<type>#<id> removed`；`deleted` 只用于 `delete` 命令。规格 11.5 示例已同步，Trackers 将 Ticket 03 标记为 `ready-for-agent`。
+- 本轮只收口契约和集成状态，未实现 undo/redo；Ticket 03 的业务代码应在下一步从最新 `main` 新建 `feat/` 分支。
+
 ## 一致性自查
 
-当前状态为“Ticket 01–02 已按方案实现并验证；其余能力仍为计划”。
+当前状态为“Ticket 01–02 已合入 `main` 并验证；Ticket 03 契约已收口、实现待开始；其余能力仍为计划”。
 
 1. **模块划分**：已落地 `src/shared/`（错误与数值）、`src/domain/`（`Shape`、`Rect`、`ShapeFactory`、`SvgDocument`）、`src/display/`（`TreeFormatter`、`ShowFormatter`、`DisplayWidth`）、`src/commands/`（命令、上下文、执行器、create/tree/show）、`src/cli/`（分词、命令表、分发、REPL、输出）与 `src/main.ts`（组合根）。`io/`、其余五种图形、容器和历史仍为计划，与当前票边界一致。
 2. **依赖方向**：抽查 import 后，`domain` 只依赖 `shared`；`display` 依赖 `domain` 和 `shared`；`commands` 依赖 `domain`、`display` 和 `shared`；`cli` 依赖 `commands` 和 `shared`；`main` 装配全部模块。`commands` 不 import `cli`，`cli` 不直接 import `domain`/`display`，未发现循环依赖。

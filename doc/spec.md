@@ -1,6 +1,6 @@
 # SVG 编辑器 Phase 1 需求规格
 
-状态：设计决策已确认；Ticket 01 相关补充默认已由 ADR-0005 采纳，其余补充默认待对应票收口；Ticket 01–02 已实现。
+状态：设计决策已确认；Ticket 01 相关补充默认已由 ADR-0005 采纳；Ticket 03 的无操作历史规则和 create 撤销摘要已收口；Ticket 01–02 已实现，Ticket 03 实现待开始。
 
 本文件是实现与验收的共同依据。课程原始要求见 [`phase_cli_1.md`](../phase_cli_1.md)，领域术语见 [`CONTEXT.md`](../CONTEXT.md)，模块与依赖方案见 [`README.md`](./README.md)，实现顺序见[纵向任务计划](./ticket-plan.md)。
 
@@ -29,7 +29,7 @@
 - `read` 遇到重复 id：拒绝整份文件，报 `id already exists: <id>`。
 - `read` 中缺失的位置属性取 SVG 默认值 `0`；缺失的尺寸属性（rect 的宽高、circle 的 r、ellipse 的 rx/ry）报错。
 - `text` 的 `font-size` 等属性属于未建模属性：读写往返保留，不参与 `scale`，不能用 `set` 修改，也不在 `tree`/`show` 中显示。
-- 无操作规则适用于所有编辑命令：`move 0 0`、`scale 1`、`set` 写入相同值、`addto` 已在末尾、边界上的 `front`/`back` 都成功返回、不进入历史、不解除历史屏障。
+- 无操作规则适用于所有编辑命令：`move 0 0`、`scale 1`、`set` 写入相同值、`addto` 已在末尾、边界上的 `front`/`back` 都成功返回、不进入历史、不清空 redo、不解除历史屏障。（已由 [ADR-0003](../docs/adr/0003-io-history-barrier.md) 采纳）
 - CLI 的提示符和启动横幅只在标准输入是 TTY 时输出；结果和错误都写标准输出，保持 transcript 顺序。（已由 [ADR-0005](../docs/adr/0005-ticket-01-cli-defaults.md) 采纳）
 - 文件按 UTF-8 读取和写出；相对路径相对于进程当前工作目录。
 - `init` 直接丢弃当前文档，不询问确认。（已由 [ADR-0005](../docs/adr/0005-ticket-01-cli-defaults.md) 采纳）
@@ -434,6 +434,7 @@ XML 声明以外的处理指令拒绝，报 `invalid SVG: processing instruction
 - 显示命令不改变历史。
 - `group`、`ungroup`、`delete`、`create` 等结构操作整体是一个撤销单元。
 - `undo`/`redo` 的摘要来自被撤销/重做命令自己的消息。
+- `create` 的撤销摘要固定为 `<type>#<id> removed`；`deleted` 只用于 `delete` 命令的删除摘要。
 
 撤销/重做输出：
 
@@ -570,7 +571,7 @@ error: undo not allowed after io command
 svg> create rect r2 10 10 10 10 blue
 rect#r2 created
 svg> undo
-rect#r2 deleted
+rect#r2 removed
 svg> undo
 error: nothing to undo
 ```
