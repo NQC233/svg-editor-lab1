@@ -73,18 +73,21 @@ ShapeFactory ..> Shape : creates
 @enduml
 
 @startuml
-title 命令与历史（规划）
+title 命令与历史（Ticket 03 已落地部分；其余命令为规划）
 
-interface Command {
-  +kind: CommandKind
+abstract class Command {
   +execute(context): CommandResult
 }
 
-interface EditCommand {
+abstract class DocumentCommand
+
+abstract class EditCommand {
   +undo(context): CommandResult
   +redo(context): CommandResult
 }
 
+class CommandResult
+class CommandCatalog
 class CommandInvoker
 class CommandHistory
 class CommandContext
@@ -110,6 +113,7 @@ class "UndoCommand" as Undo
 class "RedoCommand" as Redo
 
 Command <|-- EditCommand
+Command <|-- DocumentCommand
 EditCommand <|.. Create
 EditCommand <|.. Delete
 EditCommand <|.. Move
@@ -120,9 +124,9 @@ EditCommand <|.. Ungroup
 EditCommand <|.. AddTo
 EditCommand <|.. Front
 EditCommand <|.. Back
-Command <|.. Init
-Command <|.. Read
-Command <|.. Save
+DocumentCommand <|.. Init
+DocumentCommand <|.. Read
+DocumentCommand <|.. Save
 Command <|.. Canvas
 Command <|.. Tree
 Command <|.. Show
@@ -132,6 +136,10 @@ Command <|.. Redo
 
 CommandInvoker --> CommandHistory
 CommandInvoker --> Command
+CommandInvoker --> CommandResult
+CommandCatalog --> Command : creates via factory
 CommandHistory o-- EditCommand
+CommandHistory --> CommandResult
 Command --> CommandContext
+Command --> CommandResult
 @enduml

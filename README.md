@@ -2,7 +2,7 @@
 
 高级软件开发技术课程作业：使用 TypeScript 和面向对象方式开发 SVG 命令行编辑器。
 
-**当前状态：Ticket 01–02 已通过 PR 合入 `main`；Ticket 03 的 C1/C2 契约已收口。** CLI 已支持 REPL、注释、引号参数、`help`、`init`、无参数 `canvas`、根级 `create rect`、`tree` 和 `show`；撤销重做实现仍待下一阶段，其他图形、SVG 读写和带参数 `canvas` 仍待后续票。实现顺序和验收标准见[纵向任务计划](doc/ticket-plan.md)。
+**当前状态：Ticket 01–03 已实现；Ticket 03 正在 PR 验收与合并流程中。** CLI 已支持 REPL、注释、引号参数、`help`、`init`、无参数 `canvas`、根级 `create rect`、`tree`、`show`、`undo` 和 `redo`；其他图形、SVG 读写和带参数 `canvas` 仍待后续票。实现顺序和验收标准见[纵向任务计划](doc/ticket-plan.md)。
 
 ## 项目资料
 
@@ -35,7 +35,7 @@ npm run cli
 | `npm run typecheck`    | 严格检查源代码和测试代码的类型              |
 | `npm run build`        | 编译源代码到 `dist/`                        |
 | `npm start`            | 运行已编译的入口；需先构建                  |
-| `npm test`             | 使用 Node.js 测试运行器执行测试，当前 16 个 |
+| `npm test`             | 使用 Node.js 测试运行器执行测试，当前 21 个 |
 | `npm run format`       | 格式化工程文件，排除课程原始要求            |
 | `npm run format:check` | 检查文件格式                                |
 | `npm run check`        | 依次执行类型检查、格式检查、测试和构建      |
@@ -60,20 +60,21 @@ npm run cli
 ├── src/
 │   ├── main.ts             # 组合根与启动入口
 │   ├── cli/                # 分词、命令表、分发、REPL、输出
-│   ├── commands/           # Command、上下文、执行器和当前命令
+│   ├── commands/           # Command、历史、上下文、执行器和当前命令
 │   ├── domain/             # Shape、Rect、ShapeFactory、SvgDocument
 │   ├── display/            # tree/show 格式化与显示宽度
 │   └── shared/             # 领域错误、数值解析与格式化
 ├── test/
 │   ├── cli/                # 分词与 CLI 回放
-│   └── commands/           # 命令分发、create rect、tree/show 和失败原子性
+│   ├── commands/           # 命令分发、create rect、undo/redo、tree/show 和失败原子性
+│   └── support/            # 共享的命令分发装配
 ├── package.json
 ├── package-lock.json       # 依赖版本锁定
 ├── tsconfig.json           # 源代码与测试的类型检查配置
 └── tsconfig.build.json     # 仅构建 src/ 的配置
 ```
 
-当前已落地 `shared/`、`domain/`、`display/`、`commands/` 和 `cli/`。图形层次目前只实现 `Shape` → `Rect`，其余五种图形、容器、`io/` 和历史仍按 [doc/README.md](doc/README.md) 的模块划分在后续票中实现。
+当前已落地 `shared/`、`domain/`、`display/`、`commands/` 和 `cli/`。图形层次目前只实现 `Shape` → `Rect`；命令历史已支持矩形创建的撤销、重做、redo 分支清空和 `init` 屏障。其余五种图形、容器、`io/` 和其余编辑命令仍按 [doc/README.md](doc/README.md) 的模块划分在后续票中实现。
 
 生产运行依赖为空；开发工具包括 TypeScript、tsx、Node.js 类型声明和 Prettier。
 

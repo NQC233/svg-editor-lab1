@@ -1,9 +1,10 @@
 import { DomainError } from '../shared/DomainError.js';
 import { Command } from './Command.js';
 import type { CommandContext } from './CommandContext.js';
+import { CommandResult } from './CommandResult.js';
 
 export class ShowCommand extends Command {
-  public execute(context: CommandContext, args: readonly string[]): readonly string[] {
+  public execute(context: CommandContext, args: readonly string[]): CommandResult {
     const document = context.requireDocument();
     if (args.length !== 1) {
       throw new DomainError('usage: show <id>');
@@ -15,6 +16,9 @@ export class ShowCommand extends Command {
     }
 
     const shape = document.require(id);
-    return context.showFormatter.format(shape, document.parentLabelOf(shape));
+    return new CommandResult(
+      context.showFormatter.format(shape, document.parentLabelOf(shape)),
+      false,
+    );
   }
 }

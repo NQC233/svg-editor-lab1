@@ -5,21 +5,9 @@ import { fileURLToPath } from 'node:url';
 import test from 'node:test';
 
 import { CliApplication } from '../../src/cli/CliApplication.js';
-import { CommandCatalog } from '../../src/cli/CommandCatalog.js';
-import { CommandDispatcher } from '../../src/cli/CommandDispatcher.js';
 import { ConsoleOutput } from '../../src/cli/ConsoleOutput.js';
 import { LineTokenizer } from '../../src/cli/LineTokenizer.js';
-import { CanvasCommand } from '../../src/commands/CanvasCommand.js';
-import { CommandContext } from '../../src/commands/CommandContext.js';
-import { CommandInvoker } from '../../src/commands/CommandInvoker.js';
-import { CreateCommand } from '../../src/commands/CreateCommand.js';
-import { HelpCommand } from '../../src/commands/HelpCommand.js';
-import { InitCommand } from '../../src/commands/InitCommand.js';
-import { ShowCommand } from '../../src/commands/ShowCommand.js';
-import { TreeCommand } from '../../src/commands/TreeCommand.js';
-import { ShowFormatter } from '../../src/display/ShowFormatter.js';
-import { TreeFormatter } from '../../src/display/TreeFormatter.js';
-import { ShapeFactory } from '../../src/domain/ShapeFactory.js';
+import { createDispatcher } from '../support/createDispatcher.js';
 
 const projectRoot = fileURLToPath(new URL('../..', import.meta.url));
 
@@ -54,23 +42,6 @@ async function runCli(input: string): Promise<RunResult> {
   });
 
   return { code, stderr, stdout };
-}
-
-function createDispatcher(): CommandDispatcher {
-  const context = new CommandContext({
-    shapeFactory: new ShapeFactory(),
-    showFormatter: new ShowFormatter(),
-    treeFormatter: new TreeFormatter(),
-  });
-  const catalog = new CommandCatalog([
-    ['init', new InitCommand()],
-    ['canvas', new CanvasCommand()],
-    ['create', new CreateCommand()],
-    ['tree', new TreeCommand()],
-    ['show', new ShowCommand()],
-    ['help', new HelpCommand()],
-  ]);
-  return new CommandDispatcher(catalog, new CommandInvoker(context));
 }
 
 test('[spec 4.1-4.3, 6.11, 6.14, 6.17] runs a scripted empty-canvas session through EOF', async () => {
@@ -200,6 +171,67 @@ test('[spec 4.2, 5.5, 5.6, 6.1] replays rectangle creation, display, and failure
       'error: no such shape: missing',
       'svg (320x240)',
       '└── rect#r1  x=10 y=20 w=40 h=30 fill=#4a90d9',
+      '',
+    ].join('\n'),
+  );
+});
+
+test('[spec 6.10, 6.11, 9] replays create, undo, redo, failures, and the init barrier', async () => {
+  const result = await runCli(
+    [
+      'undo',
+      'init 800 600',
+      'undo',
+      'create rect a 0 0 10 10 red',
+      'create rect b 10 10 20 20 #4a90d9',
+      'undo',
+      'tree',
+      'show b',
+      'redo',
+      'show b',
+      'undo',
+      'undo',
+      'undo',
+      'create rect c 5 5 5 5',
+      'redo',
+      'init 320 240',
+      'undo',
+      'create rect d 0 0 1 1',
+      'undo',
+      'undo',
+      'redo',
+    ].join('\n'),
+  );
+
+  assert.equal(result.code, 0);
+  assert.equal(result.stderr, '');
+  assert.equal(
+    result.stdout,
+    [
+      "error: no document. use 'init' or 'read' first",
+      'canvas 800x600 created',
+      'error: undo not allowed after io command',
+      'rect#a created',
+      'rect#b created',
+      'rect#b removed',
+      'svg (800x600)',
+      '└── rect#a  x=0 y=0 w=10 h=10 fill=red',
+      'error: no such shape: b',
+      'rect#b created',
+      'rect#b  parent=svg',
+      '  x=10 y=10 width=20 height=20',
+      '  fill=#4a90d9',
+      'rect#b removed',
+      'rect#a removed',
+      'error: nothing to undo',
+      'rect#c created',
+      'error: nothing to redo',
+      'canvas 320x240 created',
+      'error: undo not allowed after io command',
+      'rect#d created',
+      'rect#d removed',
+      'error: nothing to undo',
+      'rect#d created',
       '',
     ].join('\n'),
   );

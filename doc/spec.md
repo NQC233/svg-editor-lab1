@@ -1,6 +1,6 @@
 # SVG 编辑器 Phase 1 需求规格
 
-状态：设计决策已确认；Ticket 01 相关补充默认已由 ADR-0005 采纳；Ticket 03 的无操作历史规则和 create 撤销摘要已收口；Ticket 01–02 已实现，Ticket 03 实现待开始。
+状态：设计决策已确认；Ticket 01 相关补充默认已由 ADR-0005 采纳；Ticket 03 的无操作历史规则和 create 撤销摘要已收口；Ticket 01–03 已实现，Ticket 03 正在 PR 验收与合并流程中。
 
 本文件是实现与验收的共同依据。课程原始要求见 [`phase_cli_1.md`](../phase_cli_1.md)，领域术语见 [`CONTEXT.md`](../CONTEXT.md)，模块与依赖方案见 [`README.md`](./README.md)，实现顺序见[纵向任务计划](./ticket-plan.md)。
 

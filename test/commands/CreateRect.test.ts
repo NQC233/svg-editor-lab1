@@ -1,37 +1,8 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 
-import { CommandContext } from '../../src/commands/CommandContext.js';
-import { CommandInvoker } from '../../src/commands/CommandInvoker.js';
-import { CanvasCommand } from '../../src/commands/CanvasCommand.js';
-import { CreateCommand } from '../../src/commands/CreateCommand.js';
-import { HelpCommand } from '../../src/commands/HelpCommand.js';
-import { InitCommand } from '../../src/commands/InitCommand.js';
-import { ShowCommand } from '../../src/commands/ShowCommand.js';
-import { TreeCommand } from '../../src/commands/TreeCommand.js';
-import { CommandCatalog } from '../../src/cli/CommandCatalog.js';
-import { CommandDispatcher } from '../../src/cli/CommandDispatcher.js';
-import { ShowFormatter } from '../../src/display/ShowFormatter.js';
-import { TreeFormatter } from '../../src/display/TreeFormatter.js';
-import { ShapeFactory } from '../../src/domain/ShapeFactory.js';
 import { DomainError } from '../../src/shared/DomainError.js';
-
-function createDispatcher(): CommandDispatcher {
-  const context = new CommandContext({
-    shapeFactory: new ShapeFactory(),
-    showFormatter: new ShowFormatter(),
-    treeFormatter: new TreeFormatter(),
-  });
-  const catalog = new CommandCatalog([
-    ['init', new InitCommand()],
-    ['canvas', new CanvasCommand()],
-    ['create', new CreateCommand()],
-    ['tree', new TreeCommand()],
-    ['show', new ShowCommand()],
-    ['help', new HelpCommand()],
-  ]);
-  return new CommandDispatcher(catalog, new CommandInvoker(context));
-}
+import { createDispatcher } from '../support/createDispatcher.js';
 
 test('[spec 5.5, 5.6, 6.1, 6.15, 6.16] creates a rectangle and displays its properties and tree', () => {
   const dispatcher = createDispatcher();
