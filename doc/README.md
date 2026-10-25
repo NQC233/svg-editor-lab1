@@ -48,7 +48,7 @@ src/
 ```plantuml
 @startuml
 skinparam componentStyle rectangle
-title SVG 编辑器 Phase 1 模块依赖（Ticket 04 已落地部分；其余规划）
+title SVG 编辑器 Phase 1 模块依赖（Ticket 05 已落地部分；其余规划）
 
 package "cli" {
   [CliApplication]
