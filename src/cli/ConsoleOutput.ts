@@ -1,7 +1,11 @@
 export class ConsoleOutput {
-  public constructor(private readonly stream: NodeJS.WritableStream) {}
+  public constructor(private readonly streamValue: NodeJS.WritableStream) {}
+
+  public get stream(): NodeJS.WritableStream {
+    return this.streamValue;
+  }
 
   public writeLine(line: string): void {
-    this.stream.write(`${line}\n`);
+    this.streamValue.write(`${line}\n`);
   }
 }

@@ -1,15 +1,14 @@
-import { CanvasCommand } from '../commands/CanvasCommand.js';
 import type { Command } from '../commands/Command.js';
-import { HelpCommand } from '../commands/HelpCommand.js';
-import { InitCommand } from '../commands/InitCommand.js';
+
+export type CommandRegistration = readonly [name: string, command: Command];
 
 export class CommandCatalog {
   private readonly commands = new Map<string, Command>();
 
-  public constructor() {
-    this.register('init', new InitCommand());
-    this.register('canvas', new CanvasCommand());
-    this.register('help', new HelpCommand());
+  public constructor(registrations: readonly CommandRegistration[]) {
+    for (const [name, command] of registrations) {
+      this.register(name, command);
+    }
   }
 
   public find(name: string): Command | undefined {

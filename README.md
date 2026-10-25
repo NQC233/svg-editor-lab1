@@ -29,16 +29,16 @@ npm run cli
 
 ## 开发命令
 
-| 命令                   | 用途                                       |
-| ---------------------- | ------------------------------------------ |
-| `npm run cli`          | 使用 tsx 运行 TypeScript 入口              |
-| `npm run typecheck`    | 严格检查源代码和测试代码的类型             |
-| `npm run build`        | 编译源代码到 `dist/`                       |
-| `npm start`            | 运行已编译的入口；需先构建                 |
-| `npm test`             | 使用 Node.js 测试运行器执行测试，当前 7 个 |
-| `npm run format`       | 格式化工程文件，排除课程原始要求           |
-| `npm run format:check` | 检查文件格式                               |
-| `npm run check`        | 依次执行类型检查、格式检查、测试和构建     |
+| 命令                   | 用途                                        |
+| ---------------------- | ------------------------------------------- |
+| `npm run cli`          | 使用 tsx 运行 TypeScript 入口               |
+| `npm run typecheck`    | 严格检查源代码和测试代码的类型              |
+| `npm run build`        | 编译源代码到 `dist/`                        |
+| `npm start`            | 运行已编译的入口；需先构建                  |
+| `npm test`             | 使用 Node.js 测试运行器执行测试，当前 11 个 |
+| `npm run format`       | 格式化工程文件，排除课程原始要求            |
+| `npm run format:check` | 检查文件格式                                |
+| `npm run check`        | 依次执行类型检查、格式检查、测试和构建      |
 
 ## 当前目录
 

@@ -1,6 +1,6 @@
 # 测试目录
 
-使用 Node.js 内置的 `node:test` 和 `node:assert/strict`，文件命名为 `*.test.ts`，通过 tsx 加载 TypeScript。当前 Ticket 01 已有 7 个测试，覆盖分词、命令分发、失败原子性、脚本回放和 TTY 输出。
+使用 Node.js 内置的 `node:test` 和 `node:assert/strict`，文件命名为 `*.test.ts`，通过 tsx 加载 TypeScript。当前 Ticket 01 已有 11 个测试，覆盖引号/转义/注释分词、数值边界、命令分发、失败原子性、脚本回放和 TTY 输出。
 
 ## 当前布局
 

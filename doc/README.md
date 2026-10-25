@@ -1,6 +1,6 @@
 # Lab1 Phase 1：课程报告与过程记录
 
-状态：Ticket 01“空画布命令会话”已实现，当前 7 个业务测试通过；其余 18 张票仍是计划。本报告继续把“计划”和“已实现”分开记录。
+状态：Ticket 01“空画布命令会话”已实现，当前 11 个业务测试通过；其余 18 张票仍是计划。本报告继续把“计划”和“已实现”分开记录。
 
 需求依据：[课程原始要求](../phase_cli_1.md)。
 
@@ -304,10 +304,11 @@ package "shared" {
 ### 2026-10-25：Ticket 01 空画布命令会话
 
 - 用户要求实现 Ticket 01。该实现指令被记录为本票所需 C1 默认的采纳决定：横幅与提示符仅 TTY 输出、结果/警告/错误统一 stdout、`init` 直接替换文档；其余 C1 条目仍不由本票推定。决定写入 ADR-0005。
-- 按 TDD 依次在分词、命令分发和真实 CLI 接缝写失败测试，再补最小实现。当前有 7 个测试，覆盖引号/注释/未闭合引号、`help` 完整目标语法、`init` 默认与显式尺寸、失败原子性、无文档错误、TTY 横幅/提示符以及脚本 EOF。
+- 按 TDD 依次在分词、命令分发和真实 CLI 接缝写失败测试，再补最小实现。当前有 11 个测试，覆盖引号/转义/注释/未闭合引号、数值边界、`help` 完整目标语法、`init` 默认与显式尺寸、失败原子性、无文档错误、TTY 横幅/提示符、空白脚本以及 EOF。
 - 实现采用 `Command` → `CommandInvoker` → `CommandContext` → `SvgDocument` 的命令链；`CommandCatalog` 是当前唯一的命令名分派点，`main.ts` 是唯一组合根。终端只负责分词、分发和输出，不直接修改领域对象。
 - 双轴审查发现初版把带参数 `canvas` 的尺寸修改提前带入了 Ticket 01，且 `CliApplication` 自行装配依赖。修正后带参数 `canvas` 明确报 `canvas resizing is not available yet` 并保持状态不变，留给 Ticket 15；组合根移到 `main.ts`。
-- 验证：`npm run check` 通过（类型、格式、7 个测试、构建）；`npm run cli` 回放 `help`、`init 320 240`、`canvas` 得到完整帮助和 `canvas 320x240`；构建后的 `npm start` 回放 `init`、`canvas` 得到 `canvas 800x600`。
+- PR 集成复审进一步收口组合根：`main.ts` 现在显式创建命令、命令表、分词器和输出适配器并注入 `CliApplication`；同时补齐引号/反斜杠、注释、空白脚本和数值边界验收。
+- 验证：`npm run check` 通过（类型、格式、11 个测试、构建）；`npm run cli` 回放 `help`、`init 320 240`、`canvas` 得到完整帮助和 `canvas 320x240`；构建后的 `npm start` 回放 `init`、`canvas` 得到 `canvas 800x600`。
 - 当前范围仍只是 Ticket 01，不包含图形创建、SVG 读写、撤销重做或带参数 `canvas`；因此不能据此宣称 Phase 1 完成。
 
 ## 一致性自查
@@ -336,7 +337,7 @@ package "shared" {
 
 ### 当前证据与限制
 
-- Ticket 01 的 `npm run check` 通过：类型检查、格式检查、7 个测试和构建全部成功；测试由 Node.js 测试运行器实际发现，不是“零测试绿灯”。
+- Ticket 01 的 `npm run check` 通过：类型检查、格式检查、11 个测试和构建全部成功；测试由 Node.js 测试运行器实际发现，不是“零测试绿灯”。
 - 真实开发入口 `npm run cli` 已回放 `help`、`init 320 240`、`canvas`；构建入口 `npm start` 已回放 `init`、`canvas`，均无 stderr 输出。
 - 脚本模式测试通过 spawn 运行 `src/main.ts` 并断言无横幅/提示符、EOF 正常退出；TTY 模式通过注入终端流验证横幅、`svg> ` 提示符、stdout 错误和结果。
 - 当前只完成 Ticket 01。图形模型、IO、显示、历史和其余命令仍未实现；带参数 `canvas` 在 Ticket 15 前不可用。这些限制不能由本票测试通过覆盖。

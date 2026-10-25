@@ -7,8 +7,13 @@ import test from 'node:test';
 import { CliApplication } from '../../src/cli/CliApplication.js';
 import { CommandCatalog } from '../../src/cli/CommandCatalog.js';
 import { CommandDispatcher } from '../../src/cli/CommandDispatcher.js';
+import { ConsoleOutput } from '../../src/cli/ConsoleOutput.js';
+import { LineTokenizer } from '../../src/cli/LineTokenizer.js';
+import { CanvasCommand } from '../../src/commands/CanvasCommand.js';
 import { CommandContext } from '../../src/commands/CommandContext.js';
 import { CommandInvoker } from '../../src/commands/CommandInvoker.js';
+import { HelpCommand } from '../../src/commands/HelpCommand.js';
+import { InitCommand } from '../../src/commands/InitCommand.js';
 
 const projectRoot = fileURLToPath(new URL('../..', import.meta.url));
 
@@ -47,7 +52,12 @@ async function runCli(input: string): Promise<RunResult> {
 
 function createDispatcher(): CommandDispatcher {
   const context = new CommandContext();
-  return new CommandDispatcher(new CommandCatalog(), new CommandInvoker(context));
+  const catalog = new CommandCatalog([
+    ['init', new InitCommand()],
+    ['canvas', new CanvasCommand()],
+    ['help', new HelpCommand()],
+  ]);
+  return new CommandDispatcher(catalog, new CommandInvoker(context));
 }
 
 test('[spec 4.1-4.3, 6.11, 6.14, 6.17] runs a scripted empty-canvas session through EOF', async () => {
@@ -107,7 +117,8 @@ test('[spec 4.1, 4.3] interactive mode prints the banner, prompt, results, and e
     dispatcher: createDispatcher(),
     input,
     interactive: true,
-    output,
+    output: new ConsoleOutput(output),
+    tokenizer: new LineTokenizer(),
   });
   const run = application.run();
 
@@ -121,4 +132,12 @@ test('[spec 4.1, 4.3] interactive mode prints the banner, prompt, results, and e
   assert.match(stdout, /svg> /);
   assert.match(stdout, /error: no document\. use 'init' or 'read' first/);
   assert.match(stdout, /canvas 320x240 created/);
+});
+
+test('[spec 4.1, 4.2] blank and comment-only scripts produce no output', async () => {
+  const result = await runCli(['', '  # ignored', '\t# also ignored'].join('\n'));
+
+  assert.equal(result.code, 0);
+  assert.equal(result.stderr, '');
+  assert.equal(result.stdout, '');
 });

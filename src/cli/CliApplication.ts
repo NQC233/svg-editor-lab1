@@ -2,14 +2,15 @@ import { createInterface } from 'node:readline';
 
 import { DomainError } from '../shared/DomainError.js';
 import type { CommandDispatcher } from './CommandDispatcher.js';
-import { ConsoleOutput } from './ConsoleOutput.js';
-import { LineTokenizer } from './LineTokenizer.js';
+import type { ConsoleOutput } from './ConsoleOutput.js';
+import type { LineTokenizer } from './LineTokenizer.js';
 
 interface CliApplicationOptions {
   readonly dispatcher: CommandDispatcher;
-  readonly input?: NodeJS.ReadableStream & { readonly isTTY?: boolean };
+  readonly input: NodeJS.ReadableStream & { readonly isTTY?: boolean };
   readonly interactive?: boolean;
-  readonly output?: NodeJS.WritableStream;
+  readonly output: ConsoleOutput;
+  readonly tokenizer: LineTokenizer;
 }
 
 export class CliApplication {
@@ -17,28 +18,28 @@ export class CliApplication {
 
   private readonly input: NodeJS.ReadableStream & { readonly isTTY?: boolean };
   private readonly interactive: boolean;
-  private readonly output: NodeJS.WritableStream;
-  private readonly tokenizer = new LineTokenizer();
+  private readonly output: ConsoleOutput;
+  private readonly tokenizer: LineTokenizer;
   private readonly dispatcher: CommandDispatcher;
 
   public constructor(options: CliApplicationOptions) {
     this.dispatcher = options.dispatcher;
-    this.input = options.input ?? process.stdin;
-    this.output = options.output ?? process.stdout;
+    this.input = options.input;
+    this.output = options.output;
+    this.tokenizer = options.tokenizer;
     this.interactive = options.interactive ?? this.input.isTTY === true;
   }
 
   public async run(): Promise<void> {
-    const output = new ConsoleOutput(this.output);
     const readline = createInterface({
       input: this.input,
-      output: this.output,
+      output: this.output.stream,
       terminal: this.interactive,
     });
     readline.setPrompt('svg> ');
 
     if (this.interactive) {
-      output.writeLine(CliApplication.BANNER);
+      this.output.writeLine(CliApplication.BANNER);
       readline.prompt();
     }
 
@@ -47,7 +48,7 @@ export class CliApplication {
         const tokens = this.tokenizer.tokenize(line);
         if (tokens !== null && tokens.length > 0) {
           for (const result of this.dispatcher.dispatch(tokens)) {
-            output.writeLine(result);
+            this.output.writeLine(result);
           }
         }
       } catch (error) {
@@ -55,7 +56,7 @@ export class CliApplication {
           throw error;
         }
 
-        output.writeLine(`error: ${error.message}`);
+        this.output.writeLine(`error: ${error.message}`);
       }
 
       if (this.interactive) {
