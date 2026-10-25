@@ -1,5 +1,5 @@
 import { DomainError } from '../shared/DomainError.js';
-import { Container } from './Container.js';
+import { Container, containerMutationKey } from './Container.js';
 import type { Shape } from './Shape.js';
 
 export class SvgDocument {
@@ -60,7 +60,7 @@ export class SvgDocument {
     if (container === undefined) {
       this.rootShapesValue.splice(insertionIndex, 0, shape);
     } else {
-      container.insertChild(shape, insertionIndex);
+      container.insertChild(shape, insertionIndex, containerMutationKey);
     }
 
     this.registerSubtree(shape, container);
@@ -75,7 +75,7 @@ export class SvgDocument {
     if (parent === undefined) {
       this.rootShapesValue.splice(this.rootShapesValue.indexOf(shape), 1);
     } else {
-      parent.removeChild(shape);
+      parent.removeChild(shape, containerMutationKey);
     }
 
     this.unregisterSubtree(shape);

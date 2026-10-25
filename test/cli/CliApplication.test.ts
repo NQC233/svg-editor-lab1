@@ -436,6 +436,7 @@ test('[spec 5.5, 5.6, 6.1, 6.10] replays nested container creation, display, his
       'create g node1 in flowchart',
       'create g nested "in" flowchart',
       'create g incomplete in',
+      'create rect bare-in 0 0 1 1 in',
       'tree',
     ].join('\n'),
   );
@@ -472,7 +473,8 @@ test('[spec 5.5, 5.6, 6.1, 6.10] replays nested container creation, display, his
       'error: not a container: r1',
       'error: id already exists: node1',
       'error: usage: create g <id>',
-      'error: usage: create g <id>',
+      'error: usage: create <type> <id> [params...] [in <containerId>]',
+      'error: usage: create <type> <id> [params...] [in <containerId>]',
       'svg (800x600)',
       '└── g#flowchart',
       '    └── g#node1',

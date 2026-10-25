@@ -8,7 +8,7 @@ export class TreeFormatter {
     const lines = [
       `svg (${NumberFormatter.format(document.width)}x${NumberFormatter.format(document.height)})`,
     ];
-    this.appendRootShapes(lines, document.rootShapes);
+    this.appendChildren(lines, document.rootShapes, '');
     return lines;
   }
 
@@ -16,10 +16,6 @@ export class TreeFormatter {
     const lines = [this.formatShapeLine(shape, '', DisplayWidth.measure(shape.label))];
     this.appendChildren(lines, shape.childShapes(), '');
     return lines;
-  }
-
-  private appendRootShapes(lines: string[], shapes: readonly Shape[]): void {
-    this.appendChildren(lines, shapes, '');
   }
 
   private appendChildren(lines: string[], shapes: readonly Shape[], prefix: string): void {

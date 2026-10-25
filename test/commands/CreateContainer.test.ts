@@ -151,7 +151,11 @@ test('[spec 3.3, 5.5, 6.1, 6.10] rejects container suffix failures without chang
   );
   assert.throws(
     () => dispatcher.dispatch(['create', 'g', 'incomplete', 'in']),
-    new DomainError('usage: create g <id>'),
+    new DomainError('usage: create <type> <id> [params...] [in <containerId>]'),
+  );
+  assert.throws(
+    () => dispatcher.dispatch(['create', 'rect', 'bare-in', '0', '0', '1', '1', 'in']),
+    new DomainError('usage: create <type> <id> [params...] [in <containerId>]'),
   );
 
   assert.deepEqual(dispatcher.dispatch(['tree']), [

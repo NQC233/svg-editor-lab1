@@ -7,12 +7,16 @@ import type { CommandContext } from './CommandContext.js';
 import { CommandResult } from './CommandResult.js';
 import { EditCommand } from './EditCommand.js';
 
+interface CreatedShape {
+  readonly shape: Shape;
+  readonly insertionIndex: number;
+  readonly container: Container | undefined;
+  readonly message: string;
+}
+
 export class CreateCommand extends EditCommand {
   private static readonly USAGE = 'usage: create <type> <id> [params...] [in <containerId>]';
-  private createdShape: Shape | undefined;
-  private insertionIndex: number | undefined;
-  private insertionContainer: Container | undefined;
-  private creationMessage: string | undefined;
+  private created: CreatedShape | undefined;
 
   public execute(context: CommandContext, args: CommandArguments): CommandResult {
     const document = context.requireDocument();
@@ -26,8 +30,21 @@ export class CreateCommand extends EditCommand {
       throw new DomainError(CreateCommand.USAGE);
     }
 
-    const inToken = args.get(args.length - 2);
-    const hasContainerSuffix = inToken?.value === 'in' && !inToken.quoted;
+    const unquotedInIndexes: number[] = [];
+    for (let index = 2; index < args.length; index += 1) {
+      const token = args.get(index);
+      if (token?.value === 'in' && !token.quoted) {
+        unquotedInIndexes.push(index);
+      }
+    }
+
+    const suffixStart = args.length - 2;
+    const hasContainerSuffix =
+      unquotedInIndexes.length === 1 && unquotedInIndexes[0] === suffixStart;
+    if (unquotedInIndexes.length > 0 && !hasContainerSuffix) {
+      throw new DomainError(CreateCommand.USAGE);
+    }
+
     const containerId = hasContainerSuffix ? args.value(args.length - 1) : undefined;
     const container =
       containerId === undefined ? undefined : document.requireContainer(containerId);
@@ -44,39 +61,38 @@ export class CreateCommand extends EditCommand {
       throw error;
     }
 
-    this.insertionIndex = document.appendShape(shape, container);
-    this.insertionContainer = container;
-    this.createdShape = shape;
-    this.creationMessage =
+    const message =
       container === undefined
         ? `${shape.label} created`
         : `${shape.label} created in ${container.label}`;
-    return new CommandResult([this.creationMessage]);
+    this.created = {
+      shape,
+      insertionIndex: document.appendShape(shape, container),
+      container,
+      message,
+    };
+    return new CommandResult([message]);
   }
 
   public undo(context: CommandContext): CommandResult {
     const document = context.requireDocument();
-    const [shape] = this.requireCreatedShape();
+    const { shape } = this.requireCreated();
     document.removeShape(shape);
     return new CommandResult([`${shape.label} removed`]);
   }
 
   public redo(context: CommandContext): CommandResult {
     const document = context.requireDocument();
-    const [shape, insertionIndex, container, creationMessage] = this.requireCreatedShape();
+    const { shape, insertionIndex, container, message } = this.requireCreated();
     document.insertShape(shape, insertionIndex, container);
-    return new CommandResult([creationMessage]);
+    return new CommandResult([message]);
   }
 
-  private requireCreatedShape(): readonly [Shape, number, Container | undefined, string] {
-    if (
-      this.createdShape === undefined ||
-      this.insertionIndex === undefined ||
-      this.creationMessage === undefined
-    ) {
+  private requireCreated(): CreatedShape {
+    if (this.created === undefined) {
       throw new DomainError('create command has not executed');
     }
 
-    return [this.createdShape, this.insertionIndex, this.insertionContainer, this.creationMessage];
+    return this.created;
   }
 }
