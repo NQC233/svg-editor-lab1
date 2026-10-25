@@ -5,6 +5,7 @@ import { CommandContext } from '../../src/commands/CommandContext.js';
 import { CommandHistory } from '../../src/commands/CommandHistory.js';
 import { CommandInvoker } from '../../src/commands/CommandInvoker.js';
 import { CreateCommand } from '../../src/commands/CreateCommand.js';
+import { DeleteCommand } from '../../src/commands/DeleteCommand.js';
 import { HelpCommand } from '../../src/commands/HelpCommand.js';
 import { InitCommand } from '../../src/commands/InitCommand.js';
 import { MoveCommand } from '../../src/commands/MoveCommand.js';
@@ -29,6 +30,7 @@ export function createDispatcher(): CommandDispatcher {
     ['init', () => new InitCommand()],
     ['canvas', () => new CanvasCommand()],
     ['create', () => new CreateCommand()],
+    ['delete', () => new DeleteCommand()],
     ['move', () => new MoveCommand()],
     ['scale', () => new ScaleCommand()],
     ['tree', () => new TreeCommand()],

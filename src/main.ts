@@ -8,6 +8,7 @@ import { CommandContext } from './commands/CommandContext.js';
 import { CommandHistory } from './commands/CommandHistory.js';
 import { CommandInvoker } from './commands/CommandInvoker.js';
 import { CreateCommand } from './commands/CreateCommand.js';
+import { DeleteCommand } from './commands/DeleteCommand.js';
 import { HelpCommand } from './commands/HelpCommand.js';
 import { InitCommand } from './commands/InitCommand.js';
 import { MoveCommand } from './commands/MoveCommand.js';
@@ -31,6 +32,7 @@ const catalog = new CommandCatalog([
   ['init', () => new InitCommand()],
   ['canvas', () => new CanvasCommand()],
   ['create', () => new CreateCommand()],
+  ['delete', () => new DeleteCommand()],
   ['move', () => new MoveCommand()],
   ['scale', () => new ScaleCommand()],
   ['tree', () => new TreeCommand()],
