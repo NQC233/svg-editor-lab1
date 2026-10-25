@@ -7,7 +7,8 @@
 ```text
 test/
 ├── cli/             # 分词、REPL、真实脚本回放
-└── commands/        # help、init、canvas、create rect、undo/redo、tree/show 和失败原子性
+├── commands/        # help、init、canvas、create rect、undo/redo、tree/show 和失败原子性
+└── support/         # 共享的命令分发装配
 ```
 
 后续图形、历史、IO 和 fixture 测试按 [任务计划](../doc/ticket-plan.md) 逐步加入。

@@ -1,6 +1,6 @@
 # Lab1 Phase 1：课程报告与过程记录
 
-状态：Ticket 01–02 已合入 `main`，当前 16 个业务测试通过；Ticket 03 契约已收口、实现待开始，其余 16 张票仍是计划。本报告继续把“计划”和“已实现”分开记录。
+状态：Ticket 01–02 已合入 `main`，Ticket 03 已实现并完成 21 个业务测试，正在 PR 验收与合并流程中；其余 16 张票仍是计划。本报告继续把“计划”和“已实现”分开记录。
 
 需求依据：[课程原始要求](../phase_cli_1.md)。
 
@@ -26,7 +26,7 @@
 | 交付   | `src/cli/`      | 分词、命令表、命令分发、REPL、终端输出        | `commands`、`shared`                |
 | 装配   | `src/main.ts`   | 组合根：创建并连接以上模块                    | 全部                                |
 
-规划的目录结构：
+目标目录结构（Ticket 03 已落地命令历史相关部分）：
 
 ```text
 src/
@@ -36,8 +36,8 @@ src/
 │                    # SvgDocument、ShapeCollection、ShapeFactory
 ├── io/              # XmlParser、XmlElement、SvgReader、SvgWriter
 ├── display/         # TreeFormatter、ShowFormatter
-├── commands/        # Command、EditCommand、CommandHistory、CommandInvoker
-│                    # CommandContext、各具体命令
+├── commands/        # Command、EditCommand、DocumentCommand、CommandResult
+│                    # CommandHistory、CommandInvoker、CommandContext、各具体命令
 └── cli/             # LineTokenizer、CommandCatalog、CommandDispatcher
                      # CliApplication、ConsoleOutput
 ```
@@ -47,7 +47,7 @@ src/
 ```plantuml
 @startuml
 skinparam componentStyle rectangle
-title SVG 编辑器 Phase 1 模块依赖（规划）
+title SVG 编辑器 Phase 1 模块依赖（Ticket 03 已落地部分；其余规划）
 
 package "cli" {
   [CliApplication]
@@ -134,17 +134,17 @@ package "shared" {
 - **领域层**不依赖 I/O、终端或命令对象。`SvgDocument` 是聚合根，统一维护 id 索引和结构变更；`Shape` 层次负责自己的几何、属性、SVG 片段和文本描述。
 - **持久化层**只处理文件、XML 结构和根元素；图形类型解析仍通过 `ShapeFactory`，不引入第二处类型名分派。
 - **显示层**负责树形前缀与兄弟列对齐；图形只提供自己的标签和属性文本。
-- **应用层**接收命令对象并执行；执行器决定是否记录历史，命令自己实现正向、撤销和重做。
+- **应用层**接收命令对象并执行；执行器只在成功后提交历史影响，命令自己实现正向、撤销和重做。
 - **交付层**只做分词、命令名查找、REPL 和输出，不直接操作领域对象。
 - **组合根**在 `main.ts` 创建并注入所有依赖，便于测试时替换 I/O 和输出。
 
 ### 设计模式的选择
 
-课程强制要求 **Command 模式**，并要求容器与叶子统一操作。方案中的落地位置如下（实现后补代码引用）：
+课程强制要求 **Command 模式**，并要求容器与叶子统一操作。当前落地位置如下：
 
 | 模式            | 落地                                                                    | 作用                                                                     |
 | --------------- | ----------------------------------------------------------------------- | ------------------------------------------------------------------------ |
-| Command         | `Command`/`EditCommand`、具体命令类、`CommandInvoker`、`CommandHistory` | 一次命令是一个对象，包含执行、撤销、重做；历史只负责按顺序调用           |
+| Command         | `Command`/`EditCommand`、具体命令类、`CommandInvoker`、`CommandHistory` | 每次分发创建独立命令对象；编辑命令包含撤销/重做，历史只负责调用          |
 | Composite       | `Shape` → `LeafShape`/`Container`，`Group` 继承 `Container`             | `move`/`scale`/`set`/`delete`/`front`/`back` 对 `g` 和叶子一致；容器递归 |
 | Factory         | `ShapeFactory`                                                          | 唯一的“类型名 → 类”创建入口；`read` 和 `create` 共用                     |
 | Template Method | `Shape.setAttribute` 处理公共属性，子类扩展几何属性                     | 公共样式规则只写一次，子类只负责自己的白名单                             |
@@ -152,7 +152,7 @@ package "shared" {
 
 **按名字分派只有两处**：
 
-1. `CommandCatalog`：命令名 → 命令对象，属于命令分发。
+1. `CommandCatalog`：命令名 → 命令工厂，属于命令分发；每次分发创建独立命令对象，避免历史共享可变执行状态。
 2. `ShapeFactory`：图形类型名 → 类，属于图形工厂。
 
 两处都在报告中标注为未来重构点。`set` 不维护全局属性分派表：每个图形类自己维护可设置属性白名单，`set` 命令调用多态的 `setAttribute`。`tree`/`show` 也不需要 `switch(tag)`，由图形类提供自己的文本。
@@ -331,14 +331,25 @@ package "shared" {
 - Ticket 03 C2 收口：`create` 的撤销摘要统一为 `<type>#<id> removed`；`deleted` 只用于 `delete` 命令。规格 11.5 示例已同步，Issue #3 已标记为 `ready-for-agent`。
 - 本轮只收口契约和集成状态，未实现 undo/redo；Ticket 03 的业务代码应在下一步从最新 `main` 新建 `feat/` 分支。
 
+### 2026-10-25：Ticket 03 撤销与重做矩形创建
+
+- 开始前确认本地与远端 `main` 同为 `6599311`，Ticket #2 已合入并关闭，Ticket #3 带 `ready-for-agent`。随后从最新 `main` 新建 `feat/ticket-03-undo-redo`，没有在 `main` 上修改业务代码。
+- 按 TDD 先在命令分发与真实 CLI 两个接缝写失败用例，再补最小实现。新增测试覆盖矩形创建的一次撤销/重做、undo 后 id 不存在、redo 恢复属性与根级顺序、redo 分支被新编辑清空、无文档、空栈、`init` 成功屏障、`init` 失败保留历史，以及显示和失败编辑不破坏 redo。
+- 命令协议增加 `DocumentCommand` 和 `CommandResult`：`DocumentCommand` 以类层次表达建立屏障的文档命令，`CommandResult` 显式携带输出与“是否改变状态”。`CommandInvoker` 只在成功返回后提交历史影响；文档命令成功后清空并锁定历史，编辑命令改变状态后记录并解锁，显示和历史命令不修改历史。
+- `CommandCatalog` 从保存命令实例改为保存命令工厂，每次分发创建独立命令对象。这样 `CreateCommand` 可以封装自己的创建位置与图形引用，连续创建不会因为共享实例而覆盖历史状态；命令名分派仍是唯一分派点。
+- `CreateCommand` 继承 `EditCommand`，撤销输出 `<type>#<id> removed`，重做输出原创建摘要；`SvgDocument.insertShape`/`removeShape` 负责索引和 id 索引的一致提交，redo 按原索引插回。
+- `CommandHistory` 维护 undo/redo 栈和屏障状态。undo/redo 只有在文档存在后检查、锁定时统一报 `undo not allowed after io command`，空栈分别报 `nothing to undo`/`nothing to redo`；新编辑清空 redo。
+- 真实 CLI 回放覆盖撤销后树与 `show`、redo 恢复、双次 undo、`init` 前后屏障和失败命令保留 redo。21 个测试全部通过；入口和构建验证见质量证据。
+- 双轴审查发现初版执行器同时依赖 `CommandKind` 和 `instanceof EditCommand`，分类来源不一致时可能漏记历史。已删除 `CommandKind`，新增 `DocumentCommand` 基类，只由命令类层次决定历史提交；测试装配提取到 `test/support/`，并让 `npm test` 显式匹配 `test/**/*.test.ts`，避免辅助文件被计为测试。
+
 ## 一致性自查
 
-当前状态为“Ticket 01–02 已合入 `main` 并验证；Ticket 03 契约已收口、实现待开始；其余能力仍为计划”。
+当前状态为“Ticket 01–02 已合入 `main` 并验证；Ticket 03 已实现并通过本地验证、等待 PR 合并；其余能力仍为计划”。
 
-1. **模块划分**：已落地 `src/shared/`（错误与数值）、`src/domain/`（`Shape`、`Rect`、`ShapeFactory`、`SvgDocument`）、`src/display/`（`TreeFormatter`、`ShowFormatter`、`DisplayWidth`）、`src/commands/`（命令、上下文、执行器、create/tree/show）、`src/cli/`（分词、命令表、分发、REPL、输出）与 `src/main.ts`（组合根）。`io/`、其余五种图形、容器和历史仍为计划，与当前票边界一致。
+1. **模块划分**：已落地 `src/shared/`（错误与数值）、`src/domain/`（`Shape`、`Rect`、`ShapeFactory`、`SvgDocument`）、`src/display/`（`TreeFormatter`、`ShowFormatter`、`DisplayWidth`）、`src/commands/`（命令、结果、历史、上下文、执行器、create/tree/show/undo/redo）、`src/cli/`（分词、命令表、分发、REPL、输出）与 `src/main.ts`（组合根）。`io/`、其余五种图形和容器仍为计划，与当前票边界一致。
 2. **依赖方向**：抽查 import 后，`domain` 只依赖 `shared`；`display` 依赖 `domain` 和 `shared`；`commands` 依赖 `domain`、`display` 和 `shared`；`cli` 依赖 `commands` 和 `shared`；`main` 装配全部模块。`commands` 不 import `cli`，`cli` 不直接 import `domain`/`display`，未发现循环依赖。
-3. **名字分派**：当前只有两处名字分派，符合课程约束：`CommandCatalog` 做命令名到命令对象的分派，`ShapeFactory` 做图形类型名到类实例的分派。命令和格式化器中没有第二套类型 `switch`。
-4. **规格一致**：Ticket 01 按规格 3.1、3.3、4.1–4.3、6.11、6.14、6.17 实现；Ticket 02 按规格 3.1–3.3、5.1–5.2、5.5–5.6、6.1、6.15–6.16 实现。测试名称引用对应章节；Ticket 02 明确不提供撤销与容器能力。
+3. **名字分派**：当前只有两处名字分派，符合课程约束：`CommandCatalog` 做命令名到命令工厂的分派，`ShapeFactory` 做图形类型名到类实例的分派。命令和格式化器中没有第二套类型 `switch`。
+4. **规格一致**：Ticket 01 按规格 3.1、3.3、4.1–4.3、6.11、6.14、6.17 实现；Ticket 02 按规格 3.1–3.3、5.1–5.2、5.5–5.6、6.1、6.15–6.16 实现；Ticket 03 按规格 3.3、6.10–6.11、9 实现。测试名称引用对应章节；Ticket 03 只为当前矩形创建提供历史，其他编辑命令仍需各自交付撤销/重做。
 5. **文档一致**：`CONTEXT.md`、`doc/spec.md`、`doc/ticket-plan.md`、ADR-0005 与本报告一致；未实现的图形、IO、历史、容器和其他显示细节没有写成已完成。
 
 ## 质量保证手段
@@ -359,6 +370,8 @@ package "shared" {
 
 - Ticket 01 通过 PR #20 合入 `main`：类型检查、格式检查、11 个测试和构建全部成功。
 - Ticket 02 rebase 到该主线后，`npm run check` 通过：类型检查、格式检查、16 个测试和构建全部成功；测试由 Node.js 测试运行器实际发现，不是“零测试绿灯”。
+- Ticket 03 当前分支 `npm run check` 通过：类型检查、格式检查、21 个测试和构建全部成功。真实 CLI 回放覆盖 `create rect → undo → redo`、屏障、空栈和失败原子性；构建入口另行验证。
+- Ticket 03 的真实开发入口和构建入口回放同一脚本：`init 320 240`、`create rect r1 10 20 30 40 #4a90d9`、`undo`、`tree`、`redo`、`show r1`、失败的 `init 0 1`、`undo`；两者输出一致，失败初始化后仍可撤销 `r1`。
 - 真实开发入口 `npm run cli` 已回放 `init 320 240`、`create rect r1 10 20 40 30 #4a90d9`、`show r1`、`tree`；构建入口 `npm start` 已回放相同创建与显示链路，均无 stderr 输出。
 - 脚本回放测试通过 spawn 运行 `src/main.ts`，断言空白/注释、成功输出、错误前缀、颜色参数、失败前后树一致、无横幅/提示符和 EOF 正常退出；TTY 模式通过注入终端流验证横幅、`svg> ` 提示符、stdout 错误和结果。
-- 当前只完成 Ticket 01–02。其余五种图形、容器、IO、历史和其余编辑命令仍未实现；带参数 `canvas` 在 Ticket 15 前不可用。这些限制不能由本票测试通过覆盖。
+- 当前完成 Ticket 01–03。历史基础设施已落地，但目前只有矩形创建接入；其余五种图形、容器、IO 和其余编辑命令仍未实现；带参数 `canvas` 在 Ticket 15 前不可用。这些限制不能由本票测试通过覆盖。
