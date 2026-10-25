@@ -1,6 +1,6 @@
 # Lab1 Phase 1：课程报告与过程记录
 
-状态：Ticket 01–08 已实现并通过本地验收，其中 Ticket 06 通过 [PR #29](https://github.com/NQC233/svg-editor-lab1/pull/29)、Ticket 07 通过 [PR #30](https://github.com/NQC233/svg-editor-lab1/pull/30)、Ticket 08 通过 [PR #31](https://github.com/NQC233/svg-editor-lab1/pull/31) 交付 `main`；Ticket 10 和 Ticket 15 已于 2026-10-25 完成实现与验收；测试累计 68 个。其余 9 张票仍是计划。本报告继续把“计划”和“已实现”分开记录。
+状态：Ticket 01–08 已实现并通过本地验收，其中 Ticket 06 通过 [PR #29](https://github.com/NQC233/svg-editor-lab1/pull/29)、Ticket 07 通过 [PR #30](https://github.com/NQC233/svg-editor-lab1/pull/30)、Ticket 08 通过 [PR #31](https://github.com/NQC233/svg-editor-lab1/pull/31) 交付 `main`；Ticket 10、13 和 15 已于 2026-10-25 完成实现与验收；测试累计 76 个。其余 8 张票仍是计划。本报告继续把“计划”和“已实现”分开记录。
 
 需求依据：[课程原始要求](../phase_cli_1.md)。
 
@@ -26,19 +26,21 @@
 | 交付   | `src/cli/`      | 分词、命令表、命令分发、REPL、终端输出        | `commands`、`shared`                |
 | 装配   | `src/main.ts`   | 组合根：创建并连接以上模块                    | 全部                                |
 
-目标目录结构（Ticket 10 已落地六种内置图形、容器树、子树删除/恢复、移动/缩放事务、命令参数封装与历史相关部分）：
+目标目录结构（Ticket 13 已落地六种内置图形、容器树、子树删除/恢复、嵌套容器解散/恢复、移动/缩放事务、命令参数封装与历史相关部分）：
 
 ```text
 src/
 ├── main.ts
 ├── shared/          # DomainError、错误码、数值工具
 ├── domain/          # Shape/LeafShape/Container/Group/五种叶子
-│                    # GeometrySnapshot、Point、ShapePlacement、SvgDocument、ShapeFactory
+│                    # GeometrySnapshot、UngroupSnapshot、Point、ShapePlacement
+│                    # SvgDocument、ShapeFactory
 ├── io/              # XmlParser、XmlElement、SvgReader、SvgWriter
 ├── display/         # TreeFormatter、ShowFormatter
 ├── commands/        # Command、EditCommand、DocumentCommand、CommandResult
 │                    # CommandToken、CommandArguments、CommandHistory、CommandInvoker
-│                    # CommandContext、DeleteCommand、MoveCommand、ScaleCommand 等具体命令
+│                    # CommandContext、DeleteCommand、UngroupCommand
+│                    # MoveCommand、ScaleCommand 等具体命令
 └── cli/             # LineTokenizer、CommandCatalog、CommandDispatcher
                      # CliApplication、ConsoleOutput
 ```
@@ -48,7 +50,7 @@ src/
 ```plantuml
 @startuml
 skinparam componentStyle rectangle
-title SVG 编辑器 Phase 1 模块依赖（Ticket 10 已落地部分；其余规划）
+title SVG 编辑器 Phase 1 模块依赖（Ticket 13 已落地部分；其余规划）
 
 package "cli" {
   [CliApplication]
@@ -132,7 +134,7 @@ package "shared" {
 
 关键职责：
 
-- **领域层**不依赖 I/O、终端或命令对象。`SvgDocument` 是聚合根，独占子节点数组并统一维护 id 索引、父子映射、结构变更和子树移动/缩放事务；`Container` 标记容器语义，`Group` 提供 `g` 的显示行为，叶子各自由 `Rect`、`Circle`、`Ellipse`、`Line`、`Text` 负责几何、精确 `GeometrySnapshot`、属性文本和显示描述。
+- **领域层**不依赖 I/O、终端或命令对象。`SvgDocument` 是聚合根，独占子节点数组并统一维护 id 索引、父子映射、结构变更、嵌套容器解散/恢复和子树移动/缩放事务；`UngroupSnapshot` 封装解散前的父级、索引与直接子图形，使恢复不依赖逆向拼接。`Container` 标记容器语义，`Group` 提供 `g` 的显示行为，叶子各自由 `Rect`、`Circle`、`Ellipse`、`Line`、`Text` 负责几何、精确 `GeometrySnapshot`、属性文本和显示描述。
 - **持久化层**只处理文件、XML 结构和根元素；图形类型解析仍通过 `ShapeFactory`，不引入第二处类型名分派。
 - **显示层**负责树形前缀与兄弟列对齐；图形只提供自己的标签和属性文本。
 - **应用层**接收命令对象并执行；执行器只在成功后提交历史影响，命令自己实现正向、撤销和重做。
@@ -149,7 +151,7 @@ package "shared" {
 | Composite       | `Shape` → `LeafShape`/`Container`，`Group` 继承 `Container`             | `move` 递归作用于叶子与整棵子树；后续编辑命令复用同一层次       |
 | Factory         | `ShapeFactory`                                                          | 唯一的“类型名 → 类”创建入口；`read` 和 `create` 共用            |
 | Template Method | `Shape.setAttribute` 处理公共属性，子类扩展几何属性                     | 公共样式规则只写一次，子类只负责自己的白名单                    |
-| Memento         | `GeometrySnapshot`                                                      | `move`/`scale` 的撤销保存精确几何，不依赖浮点逆运算             |
+| Memento         | `GeometrySnapshot`、`UngroupSnapshot`                                   | 保存精确几何或结构位置，不依赖浮点逆运算或逆向拼接              |
 
 **按名字分派只有两处**：
 
@@ -188,7 +190,7 @@ package "shared" {
 
 ### 变化点假设
 
-1. **新增图形类型或插件（`box`）**：最可能变化。留的是 `ShapeFactory` 和 `Shape` 多态；命令只调用 `shape.move()` 等，不按类型分支。`box` 作为 `Container` 子类时，`move`/`delete`/`group` 无需修改。现在不定义 `ShapeProvider`，因为只有一种实现，接口形态是猜的；等真实插件需求出现再把工厂内部换成注册表。
+1. **新增图形类型或插件（`box`）**：最可能变化。留的是 `ShapeFactory` 和 `Shape` 多态；命令只调用 `shape.move()` 等，不按类型分支。`box` 作为 `Container` 子类时，`move`/`delete`/`group` 无需修改；但 `ungroup` 必须通过容器多态区分“可解散容器”和“插件所有的复合图形”，并返回规格要求的 `cannot ungroup composite shape`。现在不定义 `ShapeProvider`，因为只有一种实现，接口形态是猜的；等真实插件需求出现再把工厂内部换成注册表。
 2. **新的交互通道（鼠标、agent）**：留的是命令对象和 `CommandCatalog`。CLI 只负责把一行文本变成命令；另一个通道可以构造同样的命令并交给 `CommandInvoker`。现在不做通道抽象，因为只有一个通道。
 3. **SVG 兼容范围（`transform`、任意 `viewBox`、未知元素、`style`）**：变化点集中在 `io`。领域模型保持无变换、画布像素坐标；读取子集拒绝无法保真的结构，避免静默改变画面。现在不做变换支持，因为它会同时影响 `move`/`scale`/`ungroup` 和序列化，超出本阶段；`unsupported ...` 错误是明确的未来入口。
 4. **撤销粒度或历史策略**：集中在 `CommandHistory` 和命令的 `undo`/`redo`。IO 屏障、redo 清空、无操作不记录都在执行器和历史中，不散落在 CLI。现在不用事件溯源，因为不需要任意历史点。
@@ -423,14 +425,24 @@ package "shared" {
 - 新增测试覆盖根级叶子原位恢复、嵌套容器全部 id 释放/恢复、父级保持、重做完整删除、成功删除清空 redo、释放 id 可复用、参数错误、缺失目标，以及真实 CLI 的容器成功链与失败链。帮助文案同步列出 `delete`。
 - 验证：`npm run check` 通过（类型、格式、68 个测试、构建）。`npm run cli` 与构建后的 `npm start` 使用同一删除脚本回放，输出一致且 stderr 为空。
 
+### 2026-10-25：Ticket 13 解散嵌套容器
+
+- 开始前确认工作区干净，本地 `main` 与 `origin/main` 同为 `54acbfc`；Ticket #13 的直接前置 #6 已关闭，原生阻塞数为 0，Issue 无 `needs-info` 内容门禁。从最新 `main` 新建 `feat/ticket-13-ungroup`，并领取 Issue #13。
+- 按 TDD 先在领域文档接缝和命令分发接缝写失败用例，再补最小实现。红灯覆盖 `document.ungroup is not a function` 与 `unknown command: ungroup`；随后逐个转绿，并补真实 CLI 回放。
+- `SvgDocument.ungroup` 在一次经过预校验的批量结构操作中删除目标容器、按原顺序把直接子图形提升到原位置，并更新父级索引；`UngroupSnapshot` 保存容器、原父级、索引和子图形，`restoreUngrouped` 用一次原位替换恢复容器和内部顺序。子图形对象及其子树不复制，避免重复挂接。
+- `UngroupCommand` 校验 `ungroup <gid>` 参数、容器类型与根级限制，复用 `EditCommand` 协议；成功时输出 `g#<gid> ungrouped: <n> children`，undo 输出 `g#<gid> restored with <n> children`，redo 重新解散。空容器作为一个正常撤销单元删除并可恢复，根级容器、叶子和失败参数不改变树或历史。
+- 双轴审查确认六种内置类型范围内功能与规格一致；根据审查修正了屏障测试只由先前 `create` 解锁、失败测试未验证 undo 栈的问题。现在 `canvas` 后第一条编辑命令直接执行 `ungroup`，失败链之后分别验证已有 redo 和 undo 仍可用。
+- 文档同步新增 `UngroupSnapshot`、`UngroupCommand` 与任务状态；未来 `box` 作为复合容器接入时，需要在多态容器语义中拒绝解散并返回 `cannot ungroup composite shape`，不能把当前“所有 `Container` 可解散”的假设沿用。
+- 验证：`npm run check` 通过（类型、格式、76 个测试、构建）。真实 CLI 回放覆盖嵌套容器解散、局部树/show、undo/redo、根级/叶子/缺失目标/参数失败，以及失败后 redo 仍可执行。
+
 ## 一致性自查
 
-当前状态为“Ticket 01–08、10 和 15 已实现并通过本地验收；其余能力仍为计划”。
+当前状态为“Ticket 01–08、10、13 和 15 已实现并通过本地验收；其余能力仍为计划”。
 
-1. **模块划分**：已落地 `src/shared/`（错误与数值）、`src/domain/`（`Shape`、`LeafShape`、`Container`、`Group`、`Rect`、`Circle`、`Ellipse`、`Line`、`Text`、`GeometrySnapshot`、`Point`、`ShapePlacement`、`ShapeFactory`、`SvgDocument`）、`src/display/`（`TreeFormatter`、`ShowFormatter`、`DisplayWidth`）、`src/commands/`（命令、token/参数封装、结果、历史、上下文、执行器、create/delete/move/scale/canvas/tree/show/undo/redo）、`src/cli/`（分词、命令表、分发、REPL、输出）与 `src/main.ts`（组合根）。`io/` 和其余编辑命令仍为计划，与当前票边界一致。
+1. **模块划分**：已落地 `src/shared/`（错误与数值）、`src/domain/`（`Shape`、`LeafShape`、`Container`、`Group`、`Rect`、`Circle`、`Ellipse`、`Line`、`Text`、`GeometrySnapshot`、`UngroupSnapshot`、`Point`、`ShapePlacement`、`ShapeFactory`、`SvgDocument`）、`src/display/`（`TreeFormatter`、`ShowFormatter`、`DisplayWidth`）、`src/commands/`（命令、token/参数封装、结果、历史、上下文、执行器、create/delete/ungroup/move/scale/canvas/tree/show/undo/redo）、`src/cli/`（分词、命令表、分发、REPL、输出）与 `src/main.ts`（组合根）。`io/` 和其余编辑命令仍为计划，与当前票边界一致。
 2. **依赖方向**：抽查 import 后，`domain` 只依赖 `shared`；`display` 依赖 `domain` 和 `shared`；`commands` 依赖 `domain`、`display` 和 `shared`；`cli` 依赖 `commands` 和 `shared`；`main` 装配全部模块。`commands` 不 import `cli`，`cli` 不直接 import `domain`/`display`，未发现循环依赖。
 3. **名字分派**：当前只有两处名字分派，符合课程约束：`CommandCatalog` 做命令名到命令工厂的分派，`ShapeFactory` 做图形类型名到类实例的分派。命令和格式化器中没有第二套类型 `switch`。
-4. **规格一致**：Ticket 01 按规格 3.1、3.3、4.1–4.3、6.11、6.14、6.17 实现；Ticket 02 按规格 3.1–3.3、5.1–5.2、5.5–5.6、6.1、6.15–6.16 实现；Ticket 03 按规格 3.3、6.10–6.11、9 实现；Ticket 04 按规格 3.1、3.3、5.1–5.2、5.5–5.6、6.1、6.10 实现；Ticket 05 按规格 3.1、4.2、5.2、5.5–5.6、6.1、6.10、9 实现；Ticket 06 按规格 3.2–3.3、4.2、5.2、5.5–5.6、6.1、6.10、9 实现；Ticket 07 按规格 3.1、5.4、6.3、6.10、9 实现；Ticket 08 按规格 2、3.3、5.4、6.4、6.10、9 实现；Ticket 10 按规格 3.3、5.2、6.2、9 实现；Ticket 15 按规格 3.3–3.4、6.10、6.14 实现。测试名称引用对应章节；当前 undo/redo 覆盖六种内置类型创建、叶子/容器移动和缩放及子树删除，其他编辑命令仍需各自交付历史。
+4. **规格一致**：Ticket 01 按规格 3.1、3.3、4.1–4.3、6.11、6.14、6.17 实现；Ticket 02 按规格 3.1–3.3、5.1–5.2、5.5–5.6、6.1、6.15–6.16 实现；Ticket 03 按规格 3.3、6.10–6.11、9 实现；Ticket 04 按规格 3.1、3.3、5.1–5.2、5.5–5.6、6.1、6.10 实现；Ticket 05 按规格 3.1、4.2、5.2、5.5–5.6、6.1、6.10、9 实现；Ticket 06 按规格 3.2–3.3、4.2、5.2、5.5–5.6、6.1、6.10、9 实现；Ticket 07 按规格 3.1、5.4、6.3、6.10、9 实现；Ticket 08 按规格 2、3.3、5.4、6.4、6.10、9 实现；Ticket 10 按规格 3.3、5.2、6.2、9 实现；Ticket 13 按规格 3.3、5.2、6.7、6.10、9 实现；Ticket 15 按规格 3.3–3.4、6.10、6.14 实现。测试名称引用对应章节；当前 undo/redo 覆盖六种内置类型创建、叶子/容器移动和缩放、子树删除及容器解散，其他编辑命令仍需各自交付历史。
 5. **文档一致**：`CONTEXT.md`、`doc/spec.md`、`doc/ticket-plan.md`、ADR-0003、ADR-0005 与本报告一致；未实现的 IO、其余几何/结构编辑和显示细节没有写成已完成。
 
 ## 质量保证手段
@@ -472,5 +484,8 @@ package "shared" {
 - Ticket 10 的命令测试覆盖叶子删除与兄弟位置、嵌套容器全部 id 释放/恢复、父级保持、redo 完整删除、成功删除清空 redo、释放 id 可复用、参数错误和缺失目标；失败测试同时断言树和已有 redo 不变。
 - Ticket 10 的 `npm run check` 通过：类型检查、格式检查、68 个测试和构建全部成功。真实 CLI 回放从 `init 400 200` 构建 `scene → box/branch/label → after`，验证文本删除/恢复、容器删除与恢复、redo、失败输出和最终树。
 - Ticket 10 的开发入口与构建入口使用同一脚本回放：`init 400 200`、嵌套容器与文本、递归删除/撤销/重做、缺失目标、参数错误、先删后恢复、删除整棵 `scene` 再恢复；`npm run cli` 与 `npm start` 输出一致，stderr 均为空。
+- Ticket 13 的领域测试覆盖嵌套容器原位提升、直接子图形顺序、内层子树保持、空容器以及根级拒绝；命令测试覆盖一次 undo/redo、失败保留树与 undo/redo、成功清空 redo、`canvas` 屏障解锁和参数/叶子的错误消息。
+- Ticket 13 的 `npm run check` 通过：类型检查、格式检查、76 个测试和构建全部成功。真实 CLI 回放从 `init 800 600` 构建 `outer → n → m/x` 多层树，验证解散后的完整/局部树、show、undo/redo、根级/叶子/缺失目标/参数失败及失败后的 redo。
+- Ticket 13 的开发入口与构建入口使用同一脚本回放：`init 800 600`、嵌套容器 `outer → n → m/x`、`ungroup n`、tree、undo/redo、根级 `ungroup` 失败；去掉 npm 启动横幅后，`npm run cli` 与 `npm start` 的应用输出一致，两者 stderr 均为空。
 - 脚本回放测试通过 spawn 运行 `src/main.ts`，断言空白/注释、成功输出、错误前缀、颜色参数、失败前后树一致、无横幅/提示符和 EOF 正常退出；TTY 模式通过注入终端流验证横幅、`svg> ` 提示符、stdout 错误和结果。
-- 当前完成 Ticket 01–08、10 和 15 的功能实现。历史基础设施已接入六种内置类型创建、叶子/整棵子树删除、叶子/整棵子树移动/缩放及带参数 `canvas` 的屏障；IO 和其余编辑命令仍未实现。这些限制不能由这些票的测试通过覆盖。
+- 当前完成 Ticket 01–08、10、13 和 15 的功能实现。历史基础设施已接入六种内置类型创建、叶子/整棵子树删除、嵌套容器解散、叶子/整棵子树移动/缩放及带参数 `canvas` 的屏障；IO 和其余编辑命令仍未实现。这些限制不能由这些票的测试通过覆盖。
