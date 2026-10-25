@@ -17,8 +17,8 @@ abstract class LeafShape {
 
 abstract class Container {
   +get children(): readonly Shape[]
-  +insertChild(shape, index): void
-  +removeChild(shape): void
+  +insertChild(shape, index, capability): void
+  +removeChild(shape, capability): void
 }
 
 class Group
@@ -57,4 +57,54 @@ SvgDocument o-- Shape : roots and id/parent index
 SvgDocument --> Container : validated structure changes
 Container o-- Shape : children
 ShapeFactory ..> Shape : creates
+@enduml
+
+@startuml
+title 命令与历史（Ticket 06 已落地部分）
+
+abstract class Command {
+  +execute(context, args): CommandResult
+}
+
+abstract class DocumentCommand
+
+abstract class EditCommand {
+  +undo(context): CommandResult
+  +redo(context): CommandResult
+}
+
+class CommandResult
+class CommandCatalog
+class CommandInvoker
+class CommandHistory
+class CommandContext
+
+class CreateCommand
+class CanvasCommand
+class InitCommand
+class TreeCommand
+class ShowCommand
+class HelpCommand
+class UndoCommand
+class RedoCommand
+
+Command <|-- EditCommand
+Command <|-- DocumentCommand
+EditCommand <|.. CreateCommand
+DocumentCommand <|.. CanvasCommand
+DocumentCommand <|.. InitCommand
+Command <|.. TreeCommand
+Command <|.. ShowCommand
+Command <|.. HelpCommand
+Command <|.. UndoCommand
+Command <|.. RedoCommand
+
+CommandInvoker --> CommandHistory
+CommandInvoker --> Command
+CommandInvoker --> CommandResult
+CommandCatalog --> Command : creates via factory
+CommandHistory o-- EditCommand
+CommandHistory --> CommandResult
+Command --> CommandContext
+Command --> CommandResult
 @enduml

@@ -1,6 +1,6 @@
 # Lab1 Phase 1：课程报告与过程记录
 
-状态：Ticket 01–06 已实现并通过本地验收，Ticket 15 已于 2026-10-25 完成实现与验收；测试累计 43 个。其余 12 张票仍是计划。Ticket 06 的远端 PR 与合并结果在完成后补充。本报告继续把“计划”和“已实现”分开记录。
+状态：Ticket 01–06 已实现并通过本地验收，Ticket 15 已于 2026-10-25 完成实现与验收；测试累计 44 个。其余 12 张票仍是计划。Ticket 06 的远端 PR 与合并结果在完成后补充。本报告继续把“计划”和“已实现”分开记录。
 
 需求依据：[课程原始要求](../phase_cli_1.md)。
 
@@ -381,11 +381,11 @@ package "shared" {
 
 - 开始前 fetch 远端并确认本地 `main` 与 `origin/main` 同为 `1599ae5`，Ticket #3 已关闭且 Ticket #6 无待确认内容门禁；从最新 `main` 新建 `feat/ticket-06-container-create`，将 #6 标记为 `ready-for-agent` 后领取。
 - 按 TDD 分成四个纵向切片：空 `g` 创建与显示；`create … in` 的归属、索引和 undo/redo；六种内置类型的多层树及失败原子性；真实 CLI 成功/失败回放。先写接缝测试，再补最小实现。
-- 领域层新增 `Container` 与 `Group`，`Shape` 通过多态 `childShapes()` 统一表达“可能有子树”；`SvgDocument` 维护父子映射、根级/容器内插入、完整子树的 id 注册与移除，并集中返回 `no such container` / `not a container`。父子关系由文档结构操作提交，不在命令中直接改 `g` 的子数组。
-- `ShapeFactory` 仍是唯一的图形类型名分派点，新增 `g` 构造；`CreateCommand` 解析末尾未加引号的 `in <containerId>`，保存父容器与原索引供 undo/redo 精确恢复，并保留 `CommandToken.quoted` 以区分文本内容 `"in"` 和语法后缀。
+- 领域层新增 `Container` 与 `Group`，`Shape` 通过多态 `childShapes()` 统一表达“可能有子树”；`SvgDocument` 维护父子映射、根级/容器内插入、完整子树的 id 注册与移除，并集中返回 `no such container` / `not a container`。子节点变更需要文档持有的内部能力键，直接改 `g` 会被拒绝；领域测试验证该不变量。
+- `ShapeFactory` 仍是唯一的图形类型名分派点，新增 `g` 构造；`CreateCommand` 解析末尾未加引号的 `in <containerId>`，保存父容器与原索引供 undo/redo 精确恢复，并保留 `CommandToken.quoted` 以区分文本内容 `"in"` 和语法后缀。未加引号的 `in` 若未完整构成后缀则报 usage，不能被当作 fill/stroke 或文本内容。
 - `TreeFormatter` 使用图形自己的 `childShapes()` 递归，按每组兄弟的最长标签宽度加两空格对齐；`tree <id>` 以目标图形为根显示局部子树，`show` 通过文档父子映射显示 `parent=svg` 或 `parent=g#id`。
-- 命令测试覆盖空容器、嵌套容器、六种类型后缀、局部 tree/show、兄弟对齐、撤销重做后的父级与索引、缺容器、非容器、重复 id、非法后缀、被引号保护的 `in`，并断言失败后树和已有 redo 不变。真实 CLI 回放独立验证相同成功链与失败链。
-- 验证：`npm run check` 通过（类型、格式、43 个测试、构建）；`npm run cli` 与构建后的 `npm start` 使用同一容器脚本回放成功创建、局部 tree/show、undo/redo、非容器与重复 id 失败，两个入口输出一致且 stderr 为空。
+- 命令测试覆盖空容器、嵌套容器、六种类型后缀、局部 tree/show、兄弟对齐、撤销重做后的父级与索引、缺容器、非容器、重复 id、非法后缀、裸 `in` 占用参数槽、被引号保护的 `in`，并断言失败后树和已有 redo 不变。真实 CLI 回放独立验证相同成功链与失败链。
+- 验证：`npm run check` 通过（类型、格式、44 个测试、构建）；`npm run cli` 与构建后的 `npm start` 使用同一容器脚本回放成功创建、局部 tree/show、undo/redo、非容器、重复 id 与非法 `in` 失败，两个入口输出一致且 stderr 为空。
 - 本票未实现 move/scale/set/delete/group/ungroup/addto/front/back、SVG IO 或完整 Phase 1 验收；`Container` 的子节点变更接口目前只由 `SvgDocument` 调用。
 
 ## 一致性自查
@@ -426,7 +426,7 @@ package "shared" {
 - Ticket 15 的 `npm run check` 通过：类型检查、格式检查、38 个测试和构建全部成功。新增测试覆盖画布缩放保留图形、无参数查询不破坏 redo、成功缩放建立屏障、下一次编辑解锁、屏障前历史不可恢复、屏障后失败仍保留 redo、非有限数/非法尺寸/参数不改画布或历史。
 - Ticket 15 的开发入口回放 `init 320 240`、创建 `r1`、`undo`/`redo`、`canvas 640 480`、屏障错误、创建/撤销 `r2`、非法零尺寸和 `tree`；构建入口另回放圆形、成功缩放、屏障错误、后续文本创建/撤销、非法数值和 `tree`。两者均保持图形不动并输出 `svg (640x480)`。
 - Ticket 06 的命令级测试覆盖空 `g`、多层容器、六种类型 `in` 后缀、局部 tree/show、兄弟列对齐、父级与索引的 undo/redo，以及缺容器、非容器、重复 id、非法后缀和被引号保护的 `in`；失败测试同时断言树与 redo 不变。
-- Ticket 06 的 `npm run check` 通过：类型检查、格式检查、43 个测试和构建全部成功。真实 CLI 回放从 `init 800 600` 构建 `flowchart → node1 → rect/text`，验证完整树、局部树、show、undo/redo 和失败错误。
+- Ticket 06 的 `npm run check` 通过：类型检查、格式检查、44 个测试和构建全部成功。真实 CLI 回放从 `init 800 600` 构建 `flowchart → node1 → rect/text`，验证完整树、局部树、show、undo/redo 和失败错误。
 - Ticket 06 的开发入口与构建入口使用同一脚本回放：`init 800 600`、创建嵌套容器与 rect/text、`tree`、`show`、`undo`/`redo`、非容器后缀和重复 id 失败、再次 `tree`；`npm run cli` 与 `npm start` 输出一致，stderr 均为空。
 - 脚本回放测试通过 spawn 运行 `src/main.ts`，断言空白/注释、成功输出、错误前缀、颜色参数、失败前后树一致、无横幅/提示符和 EOF 正常退出；TTY 模式通过注入终端流验证横幅、`svg> ` 提示符、stdout 错误和结果。
 - 当前完成 Ticket 01–06 和 Ticket 15 的功能实现。历史基础设施已接入六种内置类型的创建及带参数 `canvas` 的屏障；IO 和其余编辑命令仍未实现。这些限制不能由这些票的测试通过覆盖。
