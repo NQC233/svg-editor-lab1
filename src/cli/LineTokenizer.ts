@@ -1,15 +1,17 @@
 import { DomainError } from '../shared/DomainError.js';
+import { CommandToken } from '../commands/CommandToken.js';
 
 export class LineTokenizer {
-  public tokenize(line: string): string[] | null {
+  public tokenize(line: string): CommandToken[] | null {
     if (line.trimStart().startsWith('#')) {
       return null;
     }
 
-    const tokens: string[] = [];
+    const tokens: CommandToken[] = [];
     let token = '';
     let inQuotes = false;
     let tokenStarted = false;
+    let tokenQuoted = false;
 
     for (let index = 0; index < line.length; index += 1) {
       const character = line.charAt(index);
@@ -27,14 +29,16 @@ export class LineTokenizer {
       if (character === '"') {
         inQuotes = !inQuotes;
         tokenStarted = true;
+        tokenQuoted = true;
         continue;
       }
 
       if (!inQuotes && /\s/.test(character)) {
         if (tokenStarted) {
-          tokens.push(token);
+          tokens.push(new CommandToken(token, tokenQuoted));
           token = '';
           tokenStarted = false;
+          tokenQuoted = false;
         }
         continue;
       }
@@ -48,7 +52,7 @@ export class LineTokenizer {
     }
 
     if (tokenStarted) {
-      tokens.push(token);
+      tokens.push(new CommandToken(token, tokenQuoted));
     }
 
     return tokens;

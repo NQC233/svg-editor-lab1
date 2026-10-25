@@ -1,11 +1,12 @@
 import { DomainError } from '../shared/DomainError.js';
 import { NumberFormatter } from '../shared/NumberFormatter.js';
 import { Command } from './Command.js';
+import type { CommandArguments } from './CommandArguments.js';
 import type { CommandContext } from './CommandContext.js';
 import { CommandResult } from './CommandResult.js';
 
 export class CanvasCommand extends Command {
-  public execute(context: CommandContext, args: readonly string[]): CommandResult {
+  public execute(context: CommandContext, args: CommandArguments): CommandResult {
     const document = context.requireDocument();
 
     if (args.length === 0) {

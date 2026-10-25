@@ -1,6 +1,7 @@
 import type { Shape } from '../domain/Shape.js';
 import { ShapeUsageError } from '../domain/ShapeUsageError.js';
 import { DomainError } from '../shared/DomainError.js';
+import type { CommandArguments } from './CommandArguments.js';
 import type { CommandContext } from './CommandContext.js';
 import { CommandResult } from './CommandResult.js';
 import { EditCommand } from './EditCommand.js';
@@ -10,21 +11,21 @@ export class CreateCommand extends EditCommand {
   private createdShape: Shape | undefined;
   private insertionIndex: number | undefined;
 
-  public execute(context: CommandContext, args: readonly string[]): CommandResult {
+  public execute(context: CommandContext, args: CommandArguments): CommandResult {
     const document = context.requireDocument();
     if (args.length < 2) {
       throw new DomainError(CreateCommand.USAGE);
     }
 
-    const type = args[0];
-    const id = args[1];
+    const type = args.value(0);
+    const id = args.value(1);
     if (type === undefined || id === undefined) {
       throw new DomainError(CreateCommand.USAGE);
     }
 
     let shape: Shape;
     try {
-      shape = context.shapeFactory.create(type, id, args.slice(2));
+      shape = context.shapeFactory.create(type, id, args.slice(2).values());
     } catch (error) {
       if (error instanceof ShapeUsageError) {
         throw new DomainError(`usage: create ${error.syntax}`);
