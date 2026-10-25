@@ -1,6 +1,6 @@
 # Lab1 Phase 1：课程报告与过程记录
 
-状态：Ticket 01–15 已实现并通过本地验收，其中 Ticket 06 通过 [PR #29](https://github.com/NQC233/svg-editor-lab1/pull/29)、Ticket 07 通过 [PR #30](https://github.com/NQC233/svg-editor-lab1/pull/30)、Ticket 08 通过 [PR #31](https://github.com/NQC233/svg-editor-lab1/pull/31) 交付 `main`；Ticket 09–15 已于 2026-10-25 完成实现与验收；测试累计 107 个。Ticket 16–19 仍是计划。本报告继续把“计划”和“已实现”分开记录。
+状态：Ticket 01–15 已实现并通过本地验收，其中 Ticket 06 通过 [PR #29](https://github.com/NQC233/svg-editor-lab1/pull/29)、Ticket 07 通过 [PR #30](https://github.com/NQC233/svg-editor-lab1/pull/30)、Ticket 08 通过 [PR #31](https://github.com/NQC233/svg-editor-lab1/pull/31)、Ticket 14 通过 [PR #37](https://github.com/NQC233/svg-editor-lab1/pull/37) 交付；Ticket 09–15 已于 2026-10-25 完成实现与验收；测试累计 107 个。Ticket 16–19 仍是计划。本报告继续把“计划”和“已实现”分开记录。
 
 需求依据：[课程原始要求](../phase_cli_1.md)。
 
@@ -483,7 +483,9 @@ package "shared" {
 - 按 TDD 先写 5 个命令测试和 1 个真实 CLI 回放，红灯为 `unknown command: front` / `back`；随后补最小实现转绿。测试覆盖叶子与容器的索引映射、容器内部顺序保持、原位置 undo/redo、边界无操作保留 redo 与 IO 屏障、参数/缺失目标失败原子性，以及成功编辑清空 redo 和解锁屏障。
 - `SvgDocument.moveToFront` / `moveToBack` 在定位原父级后只移动目标对象，不改变父级或容器子树；方法返回 `ShapePlacement` 作为精确原位 Memento，边界返回 `undefined`。`ZOrderCommand` 用 Template Method 统一参数、输出、无操作和历史协议，`FrontCommand` / `BackCommand` 只多态选择领域操作与文案，没有新增按图形类型分支。
 - 帮助、组合根、测试装配、类模型、任务索引、README 和本报告同步加入 `front`/`back`；历史仍由执行器在成功且 `changed=true` 后记录，失败或无操作不会改动文档、redo 栈或屏障。
+- 双轴审查的规格轴未发现问题；标准轴提出命令状态名 `change` 过泛，已改为 `lastMove` 并重跑检查。生产与测试装配重复登记命令属于既有跨票结构，本票不夹带无关重构。
 - 验证：`npm run check` 通过（类型检查、格式检查、107 个测试、构建）。真实 CLI 回放覆盖 `front`/`back` 成功排序、tree 索引、边界无操作、undo/redo、参数错误和缺失目标；开发入口与构建入口使用同一脚本，输出一致且 stderr 为空。
+- Ticket 14 通过 [PR #37](https://github.com/NQC233/svg-editor-lab1/pull/37) 提交，Issue #14 由 PR 关联关闭。
 
 ## 一致性自查
 
