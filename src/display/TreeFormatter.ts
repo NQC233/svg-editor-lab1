@@ -13,10 +13,16 @@ export class TreeFormatter {
   }
 
   public formatShape(shape: Shape): readonly string[] {
-    return [this.formatShapeLine(shape, '', DisplayWidth.measure(shape.label))];
+    const lines = [this.formatShapeLine(shape, '', DisplayWidth.measure(shape.label))];
+    this.appendChildren(lines, shape.childShapes(), '');
+    return lines;
   }
 
   private appendRootShapes(lines: string[], shapes: readonly Shape[]): void {
+    this.appendChildren(lines, shapes, '');
+  }
+
+  private appendChildren(lines: string[], shapes: readonly Shape[], prefix: string): void {
     const labelWidth = shapes.reduce(
       (width, shape) => Math.max(width, DisplayWidth.measure(shape.label)),
       0,
@@ -24,7 +30,9 @@ export class TreeFormatter {
 
     shapes.forEach((shape, index) => {
       const branch = index === shapes.length - 1 ? '└── ' : '├── ';
-      lines.push(this.formatShapeLine(shape, branch, labelWidth));
+      lines.push(this.formatShapeLine(shape, `${prefix}${branch}`, labelWidth));
+      const childPrefix = `${prefix}${index === shapes.length - 1 ? '    ' : '│   '}`;
+      this.appendChildren(lines, shape.childShapes(), childPrefix);
     });
   }
 

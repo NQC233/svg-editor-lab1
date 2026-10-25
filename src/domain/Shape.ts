@@ -21,6 +21,10 @@ export abstract class Shape {
 
   public abstract get type(): string;
 
+  public childShapes(): readonly Shape[] {
+    return [];
+  }
+
   public abstract treeAttributes(): string;
 
   public abstract detailLines(): readonly string[];
