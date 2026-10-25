@@ -61,9 +61,9 @@ npm run cli
 │   ├── main.ts             # 组合根与启动入口
 │   ├── cli/                # 分词、命令表、分发、REPL、输出
 │   ├── commands/           # Command、历史、上下文、执行器和当前命令
-│   ├── domain/             # Shape 层次、几何/属性快照、未建模属性、ShapeFactory、SvgDocument
+│   ├── domain/             # Shape 层次、几何/属性快照、未建模属性、图形/元数据识别、SvgDocument
 │   ├── display/            # tree/show 格式化与显示宽度
-│   ├── io/                 # XML 解析、id 分配、元数据策略、SvgReader、SvgWriter、XmlEscaper
+│   ├── io/                 # XML 解析、id 分配、SvgReader、SvgWriter、XmlEscaper
 │   └── shared/             # 领域错误、数值解析与格式化
 ├── test/
 │   ├── cli/                # 分词与 CLI 回放
