@@ -544,3 +544,61 @@ test('[spec 5.4, 6.3, 6.10, 9] replays leaf and nested-container movement throug
     ].join('\n'),
   );
 });
+
+test('[spec 5.4, 6.4, 6.10, 9] replays scaling, failures, and history through the CLI', async () => {
+  const result = await runCli(
+    [
+      'init 400 200',
+      'create g scene',
+      'create rect box 10 20 30 40 red in scene',
+      'create text label 15 25 "开始" in scene',
+      'scale scene 2',
+      'tree scene',
+      'undo',
+      'tree scene',
+      'redo',
+      'scale box 1',
+      'scale missing 2',
+      'scale box nope',
+      'scale box 0',
+      'scale box -0.5',
+      'scale box 2 3',
+      'undo',
+      'redo',
+      'tree scene',
+    ].join('\n'),
+  );
+
+  assert.equal(result.code, 0);
+  assert.equal(result.stderr, '');
+  assert.equal(
+    result.stdout,
+    [
+      'canvas 400x200 created',
+      'g#scene created',
+      'rect#box created in g#scene',
+      'text#label created in g#scene',
+      'g#scene scaled by 2',
+      'g#scene',
+      '├── rect#box    x=20 y=40 w=60 h=80 fill=red',
+      '└── text#label  (30,50) "开始"',
+      'g#scene scale restored',
+      'g#scene',
+      '├── rect#box    x=10 y=20 w=30 h=40 fill=red',
+      '└── text#label  (15,25) "开始"',
+      'g#scene scaled by 2',
+      'rect#box unchanged',
+      'error: no such shape: missing',
+      'error: invalid number: nope',
+      'error: scale factor must be positive',
+      'error: scale factor must be positive',
+      'error: usage: scale <id> <factor>',
+      'g#scene scale restored',
+      'g#scene scaled by 2',
+      'g#scene',
+      '├── rect#box    x=20 y=40 w=60 h=80 fill=red',
+      '└── text#label  (30,50) "开始"',
+      '',
+    ].join('\n'),
+  );
+});
