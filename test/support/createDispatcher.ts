@@ -1,6 +1,7 @@
 import { CommandCatalog } from '../../src/cli/CommandCatalog.js';
 import { CommandDispatcher } from '../../src/cli/CommandDispatcher.js';
 import { AddToContainerCommand } from '../../src/commands/AddToContainerCommand.js';
+import { BackCommand } from '../../src/commands/BackCommand.js';
 import { CanvasCommand } from '../../src/commands/CanvasCommand.js';
 import { CommandContext } from '../../src/commands/CommandContext.js';
 import { CommandHistory } from '../../src/commands/CommandHistory.js';
@@ -18,6 +19,7 @@ import { ShowCommand } from '../../src/commands/ShowCommand.js';
 import { TreeCommand } from '../../src/commands/TreeCommand.js';
 import { UndoCommand } from '../../src/commands/UndoCommand.js';
 import { UngroupCommand } from '../../src/commands/UngroupCommand.js';
+import { FrontCommand } from '../../src/commands/FrontCommand.js';
 import { ShowFormatter } from '../../src/display/ShowFormatter.js';
 import { TreeFormatter } from '../../src/display/TreeFormatter.js';
 import { ShapeFactory } from '../../src/domain/ShapeFactory.js';
@@ -38,6 +40,8 @@ export function createDispatcher(): CommandDispatcher {
     ['group', () => new GroupCommand()],
     ['ungroup', () => new UngroupCommand()],
     ['addto', () => new AddToContainerCommand()],
+    ['front', () => new FrontCommand()],
+    ['back', () => new BackCommand()],
     ['move', () => new MoveCommand()],
     ['scale', () => new ScaleCommand()],
     ['set', () => new SetCommand()],

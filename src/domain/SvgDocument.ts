@@ -180,6 +180,14 @@ export class SvgDocument {
     return new ShapePlacement(original.parent, original.index);
   }
 
+  public moveToFront(shape: Shape): ShapePlacement | undefined {
+    return this.moveWithinSiblings(shape, false);
+  }
+
+  public moveToBack(shape: Shape): ShapePlacement | undefined {
+    return this.moveWithinSiblings(shape, true);
+  }
+
   public restorePlacement(shape: Shape, placement: ShapePlacement): void {
     this.assertContainer(placement.parent);
     const current = this.locateShape(shape);
@@ -429,6 +437,18 @@ export class SvgDocument {
     }
 
     return false;
+  }
+
+  private moveWithinSiblings(shape: Shape, toBack: boolean): ShapePlacement | undefined {
+    const original = this.locateShape(shape);
+    const destinationIndex = toBack ? 0 : original.siblings.length - 1;
+    if (original.index === destinationIndex) {
+      return undefined;
+    }
+
+    original.siblings.splice(original.index, 1);
+    original.siblings.splice(destinationIndex, 0, shape);
+    return new ShapePlacement(original.parent, original.index);
   }
 
   private documentOrderRanks(): ReadonlyMap<Shape, number> {

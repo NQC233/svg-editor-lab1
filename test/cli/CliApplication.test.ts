@@ -296,6 +296,63 @@ test('[spec 3.3, 6.10, 6.14] replays canvas resize history, failures, and unlock
   );
 });
 
+test('[spec 6.9, 6.10, 9] replays z-order changes, no-ops, undo, and redo through the CLI', async () => {
+  const result = await runCli(
+    [
+      'init 800 600',
+      'create rect back 0 0 10 10',
+      'create rect middle 20 20 10 10',
+      'create rect front 40 40 10 10',
+      'front back',
+      'tree',
+      'back back',
+      'tree',
+      'front front',
+      'back back',
+      'undo',
+      'undo',
+      'redo',
+      'front',
+      'back missing',
+      'tree',
+    ].join('\n'),
+  );
+
+  assert.equal(result.code, 0);
+  assert.equal(result.stderr, '');
+  assert.equal(
+    result.stdout,
+    [
+      'canvas 800x600 created',
+      'rect#back created',
+      'rect#middle created',
+      'rect#front created',
+      'rect#back moved to front',
+      'svg (800x600)',
+      '├── rect#middle  x=20 y=20 w=10 h=10',
+      '├── rect#front   x=40 y=40 w=10 h=10',
+      '└── rect#back    x=0 y=0 w=10 h=10',
+      'rect#back moved to back',
+      'svg (800x600)',
+      '├── rect#back    x=0 y=0 w=10 h=10',
+      '├── rect#middle  x=20 y=20 w=10 h=10',
+      '└── rect#front   x=40 y=40 w=10 h=10',
+      'rect#front is already at front',
+      'rect#back is already at back',
+      'rect#back moved back',
+      'rect#back moved back',
+      'rect#back moved to front',
+      'error: usage: front <id>',
+      'error: no such shape: missing',
+      'svg (800x600)',
+      '├── rect#middle  x=20 y=20 w=10 h=10',
+      '├── rect#front   x=40 y=40 w=10 h=10',
+      '└── rect#back    x=0 y=0 w=10 h=10',
+      '',
+    ].join('\n'),
+  );
+});
+
 test('[spec 3.3, 5.1, 5.2, 5.5, 5.6, 6.1, 6.10] replays geometry shape creation, display, history, and failures', async () => {
   const result = await runCli(
     [

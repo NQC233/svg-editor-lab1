@@ -4,6 +4,7 @@ import { CommandDispatcher } from './cli/CommandDispatcher.js';
 import { ConsoleOutput } from './cli/ConsoleOutput.js';
 import { LineTokenizer } from './cli/LineTokenizer.js';
 import { AddToContainerCommand } from './commands/AddToContainerCommand.js';
+import { BackCommand } from './commands/BackCommand.js';
 import { CanvasCommand } from './commands/CanvasCommand.js';
 import { CommandContext } from './commands/CommandContext.js';
 import { CommandHistory } from './commands/CommandHistory.js';
@@ -21,6 +22,7 @@ import { ShowCommand } from './commands/ShowCommand.js';
 import { TreeCommand } from './commands/TreeCommand.js';
 import { UndoCommand } from './commands/UndoCommand.js';
 import { UngroupCommand } from './commands/UngroupCommand.js';
+import { FrontCommand } from './commands/FrontCommand.js';
 import { ShowFormatter } from './display/ShowFormatter.js';
 import { TreeFormatter } from './display/TreeFormatter.js';
 import { ShapeFactory } from './domain/ShapeFactory.js';
@@ -40,6 +42,8 @@ const catalog = new CommandCatalog([
   ['group', () => new GroupCommand()],
   ['ungroup', () => new UngroupCommand()],
   ['addto', () => new AddToContainerCommand()],
+  ['front', () => new FrontCommand()],
+  ['back', () => new BackCommand()],
   ['move', () => new MoveCommand()],
   ['scale', () => new ScaleCommand()],
   ['set', () => new SetCommand()],

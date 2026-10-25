@@ -1,6 +1,6 @@
 # SVG 编辑器 Phase 1 需求规格
 
-状态：设计决策已确认；Ticket 01 相关补充默认已由 ADR-0005 采纳；Ticket 03 的无操作历史规则和 create 撤销摘要已收口；Ticket 01–11、13 和 15 已实现，其中 Ticket 03 通过 PR #23、Ticket 04 通过 PR #25、Ticket 05 通过 PR #27、Ticket 06 通过 PR #29、Ticket 08 通过 PR #31 合入 `main`；Ticket 09、10、11、13 和 15 于 2026-10-25 完成本地验收。
+状态：设计决策已确认；Ticket 01 相关补充默认已由 ADR-0005 采纳；Ticket 03 的无操作历史规则、create 撤销摘要、group 相对顺序和 front/back 绘制顺序已收口；Ticket 01–15 已实现，其中 Ticket 03 通过 PR #23、Ticket 04 通过 PR #25、Ticket 05 通过 PR #27、Ticket 06 通过 PR #29、Ticket 08 通过 PR #31 合入 `main`；Ticket 09–15 于 2026-10-25 完成本地验收。
 
 本文件是实现与验收的共同依据。课程原始要求见 [`phase_cli_1.md`](../phase_cli_1.md)，领域术语见 [`CONTEXT.md`](../CONTEXT.md)，模块与依赖方案见 [`README.md`](./README.md)，实现顺序见[纵向任务计划](./ticket-plan.md)。
 
@@ -279,6 +279,8 @@ create <type> <id> [params…] [in <containerId>]
 语法：`front <id>` / `back <id>`。
 
 - 在同一父级内移动；容器连同整棵子树移动，子树内部顺序不变。
+- 父级子节点数组索引 `0` 对应最先绘制，即 `back`；末尾索引对应最后绘制，即 `front`。`tree` 顺序与绘制顺序一致。
+- `front` 移到同级末尾，`back` 移到同级开头。
 - 已在最前/最后时是无操作：输出 `<type>#<id> is already at front` 或 `... is already at back`，不进入历史。
 - 输出：`<type>#<id> moved to front` 或 `... moved to back`。
 - 撤销：移回原索引，输出 `<type>#<id> moved back`。
