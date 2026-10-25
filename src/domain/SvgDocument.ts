@@ -7,6 +7,12 @@ import type { Shape } from './Shape.js';
 import { ShapePlacement } from './ShapePlacement.js';
 import { UngroupSnapshot } from './UngroupSnapshot.js';
 
+interface ShapeLocation {
+  readonly parent: Container | undefined;
+  readonly siblings: Shape[];
+  readonly index: number;
+}
+
 export class SvgDocument {
   private widthValue: number;
   private heightValue: number;
@@ -81,37 +87,17 @@ export class SvgDocument {
   }
 
   public removeShape(shape: Shape): ShapePlacement {
-    if (!this.parents.has(shape) || this.shapesById.get(shape.id) !== shape) {
-      throw new DomainError(`no such shape: ${shape.id}`);
-    }
-
-    const parent = this.parents.get(shape);
-    const siblings = parent === undefined ? this.rootShapesValue : this.mutableChildrenOf(parent);
-    const insertionIndex = siblings.indexOf(shape);
-    if (insertionIndex < 0) {
-      throw new DomainError(`no such shape: ${shape.id}`);
-    }
-
-    siblings.splice(insertionIndex, 1);
+    const { parent, siblings, index } = this.locateShape(shape);
+    siblings.splice(index, 1);
 
     this.unregisterSubtree(shape);
-    return new ShapePlacement(parent, insertionIndex);
+    return new ShapePlacement(parent, index);
   }
 
   public ungroup(container: Container): UngroupSnapshot {
-    if (!this.parents.has(container) || this.shapesById.get(container.id) !== container) {
-      throw new DomainError(`no such shape: ${container.id}`);
-    }
-
-    const parent = this.parents.get(container);
+    const { parent, siblings, index } = this.locateShape(container);
     if (parent === undefined) {
       throw new DomainError(`cannot ungroup top-level container: ${container.id}`);
-    }
-
-    const siblings = this.mutableChildrenOf(parent);
-    const index = siblings.indexOf(container);
-    if (index < 0) {
-      throw new DomainError(`no such shape: ${container.id}`);
     }
 
     const children = this.mutableChildrenOf(container);
@@ -175,46 +161,31 @@ export class SvgDocument {
   }
 
   public moveToEnd(shape: Shape, container: Container): ShapePlacement | undefined {
-    this.assertRegisteredShape(shape);
     this.assertContainer(container);
+    const original = this.locateShape(shape);
     if (this.isWithinSubtree(container, shape)) {
       throw new DomainError(`cannot move a container into its own descendant: ${shape.id}`);
     }
 
-    const originalParent = this.parents.get(shape);
-    const originalSiblings = this.siblingsOf(originalParent);
-    const originalIndex = originalSiblings.indexOf(shape);
-    if (originalIndex < 0) {
-      throw new DomainError(`no such shape: ${shape.id}`);
-    }
-
-    if (originalParent === container && originalIndex === originalSiblings.length - 1) {
+    if (original.parent === container && original.index === original.siblings.length - 1) {
       return undefined;
     }
 
-    originalSiblings.splice(originalIndex, 1);
+    original.siblings.splice(original.index, 1);
     this.mutableChildrenOf(container).push(shape);
     this.parents.set(shape, container);
-    return new ShapePlacement(originalParent, originalIndex);
+    return new ShapePlacement(original.parent, original.index);
   }
 
   public restorePlacement(shape: Shape, placement: ShapePlacement): void {
-    this.assertRegisteredShape(shape);
     this.assertContainer(placement.parent);
-
-    const currentParent = this.parents.get(shape);
-    const currentSiblings = this.siblingsOf(currentParent);
-    const currentIndex = currentSiblings.indexOf(shape);
-    if (currentIndex < 0) {
-      throw new DomainError(`no such shape: ${shape.id}`);
-    }
-
+    const current = this.locateShape(shape);
     const destinationSiblings = this.siblingsOf(placement.parent);
     const lengthAfterRemoval =
-      destinationSiblings.length - (currentParent === placement.parent ? 1 : 0);
+      destinationSiblings.length - (current.parent === placement.parent ? 1 : 0);
     this.assertInsertionIndex(placement.index, lengthAfterRemoval);
 
-    currentSiblings.splice(currentIndex, 1);
+    current.siblings.splice(current.index, 1);
     destinationSiblings.splice(placement.index, 0, shape);
     this.parents.set(shape, placement.parent);
   }
@@ -267,10 +238,19 @@ export class SvgDocument {
     }
   }
 
-  private assertRegisteredShape(shape: Shape): void {
+  private locateShape(shape: Shape): ShapeLocation {
     if (!this.parents.has(shape) || this.shapesById.get(shape.id) !== shape) {
       throw new DomainError(`no such shape: ${shape.id}`);
     }
+
+    const parent = this.parents.get(shape);
+    const siblings = this.siblingsOf(parent);
+    const index = siblings.indexOf(shape);
+    if (index < 0) {
+      throw new DomainError(`no such shape: ${shape.id}`);
+    }
+
+    return { parent, siblings, index };
   }
 
   private assertInsertionIndex(insertionIndex: number, siblingCount: number): void {
