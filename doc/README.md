@@ -132,7 +132,7 @@ package "shared" {
 
 关键职责：
 
-- **领域层**不依赖 I/O、终端或命令对象。`SvgDocument` 是聚合根，统一维护 id 索引、父子映射和结构变更；`Group` 通过 `Container` 封装子节点，叶子各自由 `Rect`、`Circle`、`Ellipse`、`Line`、`Text` 负责几何、属性文本和显示描述。
+- **领域层**不依赖 I/O、终端或命令对象。`SvgDocument` 是聚合根，独占子节点数组并统一维护 id 索引、父子映射和结构变更；`Container` 标记容器语义，`Group` 提供 `g` 的显示行为，叶子各自由 `Rect`、`Circle`、`Ellipse`、`Line`、`Text` 负责几何、属性文本和显示描述。
 - **持久化层**只处理文件、XML 结构和根元素；图形类型解析仍通过 `ShapeFactory`，不引入第二处类型名分派。
 - **显示层**负责树形前缀与兄弟列对齐；图形只提供自己的标签和属性文本。
 - **应用层**接收命令对象并执行；执行器只在成功后提交历史影响，命令自己实现正向、撤销和重做。
@@ -381,12 +381,12 @@ package "shared" {
 
 - 开始前 fetch 远端并确认本地 `main` 与 `origin/main` 同为 `1599ae5`，Ticket #3 已关闭且 Ticket #6 无待确认内容门禁；从最新 `main` 新建 `feat/ticket-06-container-create`，将 #6 标记为 `ready-for-agent` 后领取。
 - 按 TDD 分成四个纵向切片：空 `g` 创建与显示；`create … in` 的归属、索引和 undo/redo；六种内置类型的多层树及失败原子性；真实 CLI 成功/失败回放。先写接缝测试，再补最小实现。
-- 领域层新增 `Container` 与 `Group`，`Shape` 通过多态 `childShapes()` 统一表达“可能有子树”；`SvgDocument` 维护父子映射、根级/容器内插入、完整子树的 id 注册与移除，并集中返回 `no such container` / `not a container`。子节点变更需要文档持有的内部能力键，直接改 `g` 会被拒绝；领域测试验证该不变量。
+- 领域层新增 `Container` 与 `Group`；`SvgDocument` 独占子节点数组，统一维护父子映射、根级/容器内插入、完整子树的 id 注册与移除，并集中返回 `no such container` / `not a container`。这与早先类图草案“容器自己持有 children”不同：为满足父子关系不能绕过文档操作的要求，子节点只能由聚合根修改；`childrenOf()` 返回隔离副本，树遍历通过文档读取，领域测试验证外部修改返回值不会破坏 id/父级索引。
 - `ShapeFactory` 仍是唯一的图形类型名分派点，新增 `g` 构造；`CreateCommand` 解析末尾未加引号的 `in <containerId>`，保存父容器与原索引供 undo/redo 精确恢复，并保留 `CommandToken.quoted` 以区分文本内容 `"in"` 和语法后缀。未加引号的 `in` 若未完整构成后缀则报 usage，不能被当作 fill/stroke 或文本内容。
 - `TreeFormatter` 使用图形自己的 `childShapes()` 递归，按每组兄弟的最长标签宽度加两空格对齐；`tree <id>` 以目标图形为根显示局部子树，`show` 通过文档父子映射显示 `parent=svg` 或 `parent=g#id`。
 - 命令测试覆盖空容器、嵌套容器、六种类型后缀、局部 tree/show、兄弟对齐、撤销重做后的父级与索引、缺容器、非容器、重复 id、非法后缀、裸 `in` 占用参数槽、被引号保护的 `in`，并断言失败后树和已有 redo 不变。真实 CLI 回放独立验证相同成功链与失败链。
 - 验证：`npm run check` 通过（类型、格式、44 个测试、构建）；`npm run cli` 与构建后的 `npm start` 使用同一容器脚本回放成功创建、局部 tree/show、undo/redo、非容器、重复 id 与非法 `in` 失败，两个入口输出一致且 stderr 为空。
-- 本票未实现 move/scale/set/delete/group/ungroup/addto/front/back、SVG IO 或完整 Phase 1 验收；`Container` 的子节点变更接口目前只由 `SvgDocument` 调用。
+- 本票未实现 move/scale/set/delete/group/ungroup/addto/front/back、SVG IO 或完整 Phase 1 验收；`SvgDocument` 当前是唯一可改变层级结构的领域入口。
 
 ## 一致性自查
 

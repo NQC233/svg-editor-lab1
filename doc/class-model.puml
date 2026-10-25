@@ -15,11 +15,7 @@ abstract class LeafShape {
   +get stroke(): string | undefined
 }
 
-abstract class Container {
-  +get children(): readonly Shape[]
-  +insertChild(shape, index, capability): void
-  +removeChild(shape, capability): void
-}
+abstract class Container
 
 class Group
 class Rect
@@ -32,6 +28,7 @@ class SvgDocument {
   +get width(): number
   +get height(): number
   +get rootShapes(): readonly Shape[]
+  +childrenOf(shape): readonly Shape[]
   +find(id): Shape | undefined
   +require(id): Shape
   +appendShape(shape, container?): number
@@ -53,9 +50,8 @@ LeafShape <|-- Circle
 LeafShape <|-- Ellipse
 LeafShape <|-- Line
 LeafShape <|-- Text
-SvgDocument o-- Shape : roots and id/parent index
+SvgDocument o-- Shape : roots, children, id/parent index
 SvgDocument --> Container : validated structure changes
-Container o-- Shape : children
 ShapeFactory ..> Shape : creates
 @enduml
 
