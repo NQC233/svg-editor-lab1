@@ -1,6 +1,6 @@
 # Lab1 Phase 1：课程报告与过程记录
 
-状态：Ticket 01–03 已合入 `main`，Ticket 04 已在功能分支完成实现并待 PR 合入；测试累计 27 个。其余 15 张票仍是计划。本报告继续把“计划”和“已实现”分开记录。
+状态：Ticket 01–03 已合入 `main`，Ticket 04 已实现并通过 [PR #25](https://github.com/NQC233/svg-editor-lab1/pull/25) 待合入；测试累计 27 个。其余 15 张票仍是计划。本报告继续把“计划”和“已实现”分开记录。
 
 需求依据：[课程原始要求](../phase_cli_1.md)。
 
@@ -355,7 +355,7 @@ package "shared" {
 
 ## 一致性自查
 
-当前状态为“Ticket 01–03 已合入 `main`；Ticket 04 已实现并待 PR；其余能力仍为计划”。
+当前状态为“Ticket 01–03 已合入 `main`；Ticket 04 已实现并通过 PR #25 待合入；其余能力仍为计划”。
 
 1. **模块划分**：已落地 `src/shared/`（错误与数值）、`src/domain/`（`Shape`、`LeafShape`、`Rect`、`Circle`、`Ellipse`、`Line`、`ShapeFactory`、`SvgDocument`）、`src/display/`（`TreeFormatter`、`ShowFormatter`、`DisplayWidth`）、`src/commands/`（命令、结果、历史、上下文、执行器、create/tree/show/undo/redo）、`src/cli/`（分词、命令表、分发、REPL、输出）与 `src/main.ts`（组合根）。`io/`、`text`、容器和其余编辑命令仍为计划，与当前票边界一致。
 2. **依赖方向**：抽查 import 后，`domain` 只依赖 `shared`；`display` 依赖 `domain` 和 `shared`；`commands` 依赖 `domain`、`display` 和 `shared`；`cli` 依赖 `commands` 和 `shared`；`main` 装配全部模块。`commands` 不 import `cli`，`cli` 不直接 import `domain`/`display`，未发现循环依赖。
