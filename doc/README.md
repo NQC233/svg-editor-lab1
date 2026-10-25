@@ -1,6 +1,6 @@
 # Lab1 Phase 1：课程报告与过程记录
 
-状态：Ticket 01–16 已实现并通过本地验收，其中 Ticket 06 通过 [PR #29](https://github.com/NQC233/svg-editor-lab1/pull/29)、Ticket 07 通过 [PR #30](https://github.com/NQC233/svg-editor-lab1/pull/30)、Ticket 08 通过 [PR #31](https://github.com/NQC233/svg-editor-lab1/pull/31)、Ticket 14 通过 [PR #37](https://github.com/NQC233/svg-editor-lab1/pull/37) 交付；Ticket 09–16 已于 2026-10-25 完成实现与验收；测试累计 114 个。Ticket 17–19 仍是计划。本报告继续把“计划”和“已实现”分开记录。
+状态：Ticket 01–16 已实现并通过本地验收，其中 Ticket 06 通过 [PR #29](https://github.com/NQC233/svg-editor-lab1/pull/29)、Ticket 07 通过 [PR #30](https://github.com/NQC233/svg-editor-lab1/pull/30)、Ticket 08 通过 [PR #31](https://github.com/NQC233/svg-editor-lab1/pull/31)、Ticket 14 通过 [PR #37](https://github.com/NQC233/svg-editor-lab1/pull/37) 交付；Ticket 09–16 已于 2026-10-25 完成实现与验收；测试累计 115 个。Ticket 17–19 仍是计划。本报告继续把“计划”和“已实现”分开记录。
 
 需求依据：[课程原始要求](../phase_cli_1.md)。
 
@@ -500,6 +500,8 @@ package "shared" {
 - `CommandContext` 保存当前路径；`InitCommand` 通过 `setDocument` 清空路径；`SaveCommand` 选择显式或已保存路径，写入成功后才调用 `setCurrentPath`，由执行器看到的 `changed=true` 结果清空并锁定历史。参数错误、无路径和写失败都在提交前抛出。
 - 命令测试覆盖六种图形、嵌套与空容器、样式省略/顺序、中文与 XML 特殊字符、带空格路径、覆盖写、当前路径复用、`init` 清空路径、无路径/参数/写失败、失败保留当前路径和历史、成功屏障与后续编辑解锁。真实 CLI 回放同时断言标准输出和落盘内容。
 - 小步提交保留为 `05ab31a`（基本写出）、`3f0b42a`（全部图形与转义）、`c8a2c9c`（路径与失败原子性）、`e238b44`（历史屏障）和 `6148423`（帮助覆盖），随后单独更新 ADR 与报告。
+- 双轴审查的 Spec 轴未发现缺失、越界或行为错误。Standards 轴未发现硬性标准违反，但指出写出与计数各自遍历、样式/几何显示文本重复维护的判断性气味；已让 `SvgWriter.write` 在单次渲染中返回元素数，并让 `Shape` 的样式描述和各类图形的详细几何文本复用同一有序属性来源。树形显示的 `w`/`h` 缩写属于展示契约，保留独立格式化。
+- 审查同时指出相对 CWD 只靠人工验证。已补真实子进程用例：把 CLI 工作目录切到临时目录，`save "relative output.svg"` 与后续无参数 `save` 都解析到该目录；失败后 `init` 清空路径的行为也由同一回放覆盖。
 
 ## 一致性自查
 
@@ -562,7 +564,7 @@ package "shared" {
 - Ticket 14 的命令测试覆盖叶子与容器的 front/back 索引映射、容器子树内部顺序保持、精确原位 undo/redo、边界无操作保留 redo 与 IO 屏障、参数/缺失目标失败原子性、成功编辑清空 redo 与屏障解锁；真实 CLI 回放覆盖成功排序、tree、无操作、undo/redo 和失败链。
 - Ticket 14 的 `npm run check` 通过：类型检查、格式检查、107 个测试和构建全部成功。`npm run cli` 与构建后的 `npm start` 使用同一 front/back 脚本，输出一致且 stderr 均为空。
 - Ticket 16 的命令测试覆盖六种内置图形的有序 SVG 属性、文本正文、嵌套/空容器、XML 属性/文本转义、元素计数、样式省略与顺序、带空格路径、覆盖写、当前路径复用，以及无路径/参数/写失败和成功/失败时的历史边界；真实 CLI 回放同时检查标准输出与 UTF-8 文件内容。
-- Ticket 16 的 `npm run check` 通过：类型检查、格式检查、114 个测试和构建全部成功。写出测试使用独立临时目录并在结束后清理，没有把生成文件提交到仓库。
+- Ticket 16 的 `npm run check` 通过：类型检查、格式检查、115 个测试和构建全部成功。写出测试使用独立临时目录并在结束后清理，没有把生成文件提交到仓库。
 - Ticket 16 的 `npm run cli` 与构建后的 `npm start` 使用同一嵌套图形/中文/路径脚本，stdout 逐字节一致、stderr 均为空；两种入口都成功写出 301 字节 SVG，并在 `init` 后正确报告无当前路径。
 - Ticket 16 用 Chrome 打开 CLI 实际写出的 320×200 示例 SVG，检查嵌套 `g`、矩形、中文/特殊字符文本、圆和连线均正确显示；示例文件位于临时目录，未作为构建产物提交。
 - 脚本回放测试通过 spawn 运行 `src/main.ts`，断言空白/注释、成功输出、错误前缀、颜色参数、失败前后树一致、无横幅/提示符和 EOF 正常退出；TTY 模式通过注入终端流验证横幅、`svg> ` 提示符、stdout 错误和结果。
