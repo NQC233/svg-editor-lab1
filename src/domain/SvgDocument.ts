@@ -25,6 +25,12 @@ export class SvgDocument {
     return this.rootShapesValue;
   }
 
+  public resize(width: number, height: number): void {
+    this.assertPositiveDimensions(width, height);
+    this.widthValue = width;
+    this.heightValue = height;
+  }
+
   public find(id: string): Shape | undefined {
     return this.shapesById.get(id);
   }

@@ -1,13 +1,13 @@
 # 测试目录
 
-使用 Node.js 内置的 `node:test` 和 `node:assert/strict`，文件命名为 `*.test.ts`，通过 tsx 加载 TypeScript。当前 Ticket 01–05 已有 34 个测试，覆盖引号/转义/引号元数据、注释分词、数值边界、命令分发、失败原子性、脚本回放、TTY 输出、矩形与几何图形创建、文本创建与 JSON 转义、根级显示、宽字符对齐，以及撤销重做、redo 分支和 `init` 历史屏障。
+使用 Node.js 内置的 `node:test` 和 `node:assert/strict`，文件命名为 `*.test.ts`，通过 tsx 加载 TypeScript。当前 Ticket 01–05 和 Ticket 15 已有 38 个测试，覆盖引号/转义/引号元数据、注释分词、数值边界、命令分发、失败原子性、脚本回放、TTY 输出、矩形与几何图形创建、文本创建与 JSON 转义、根级显示、宽字符对齐，以及撤销重做、redo 分支、`init` 和带参数 `canvas` 的历史屏障。
 
 ## 当前布局
 
 ```text
 test/
 ├── cli/             # 分词、REPL、真实脚本回放
-├── commands/        # help、init、canvas、create 各类型、undo/redo、tree/show 和失败原子性
+├── commands/        # help、init、canvas 查询与缩放、create 各类型、undo/redo、tree/show 和失败原子性
 └── support/         # 共享的命令分发装配
 ```
 

@@ -39,7 +39,6 @@ test('[spec 6.17] help works without a document and lists the complete target gr
     '  undo',
     '  redo',
     'Partial implementation: available commands are help, init, canvas, create rect, circle, ellipse, line, text, tree, show, undo, and redo.',
-    'Canvas resizing is not available yet.',
   ]);
 });
 
@@ -58,8 +57,12 @@ test('[spec 3.3, 6.14] failed canvas commands leave the existing size unchanged'
     new DomainError('canvas requires both width and height'),
   );
   assert.throws(
-    () => dispatcher.dispatch(['canvas', '100', '200']),
-    new DomainError('canvas resizing is not available yet'),
+    () => dispatcher.dispatch(['canvas', '100', 'nope']),
+    new DomainError('invalid number: nope'),
+  );
+  assert.throws(
+    () => dispatcher.dispatch(['canvas', '0', '200']),
+    new DomainError('canvas width and height must be positive'),
   );
   assert.throws(
     () => dispatcher.dispatch(['canvas', '1', '2', '3']),
@@ -67,6 +70,8 @@ test('[spec 3.3, 6.14] failed canvas commands leave the existing size unchanged'
   );
 
   assert.deepEqual(dispatcher.dispatch(['canvas']), ['canvas 400x200']);
+  assert.deepEqual(dispatcher.dispatch(['canvas', '100', '200']), ['canvas resized to 100x200']);
+  assert.deepEqual(dispatcher.dispatch(['canvas']), ['canvas 100x200']);
 });
 
 test('[spec 3.1, 6.11] accepts decimal/scientific init values and rejects invalid numeric forms', () => {

@@ -73,7 +73,7 @@ ShapeFactory ..> Shape : creates
 @enduml
 
 @startuml
-title 命令与历史（Ticket 03 已落地部分；其余命令为规划）
+title 命令与历史（Ticket 03 与 15 已落地部分；其余命令为规划）
 
 abstract class Command {
   +execute(context): CommandResult
@@ -127,7 +127,7 @@ EditCommand <|.. Back
 DocumentCommand <|.. Init
 DocumentCommand <|.. Read
 DocumentCommand <|.. Save
-Command <|.. Canvas
+DocumentCommand <|.. Canvas
 Command <|.. Tree
 Command <|.. Show
 Command <|.. Help

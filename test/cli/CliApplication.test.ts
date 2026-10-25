@@ -80,7 +80,7 @@ test('[spec 4.1-4.3, 6.11, 6.14, 6.17] runs a scripted empty-canvas session thro
   assert.match(result.stdout, /\nerror: usage: init \[w\] \[h\]\ncanvas 640x480\n/);
   assert.match(
     result.stdout,
-    /\nerror: canvas requires both width and height\nerror: canvas resizing is not available yet\ncanvas 640x480\n/,
+    /\nerror: canvas requires both width and height\ncanvas resized to 100x200\ncanvas 100x200\n/,
   );
   assert.match(
     result.stdout,
@@ -232,6 +232,65 @@ test('[spec 6.10, 6.11, 9] replays create, undo, redo, failures, and the init ba
       'rect#d removed',
       'error: nothing to undo',
       'rect#d created',
+      '',
+    ].join('\n'),
+  );
+});
+
+test('[spec 3.3, 6.10, 6.14] replays canvas resize history, failures, and unlocking through the CLI', async () => {
+  const result = await runCli(
+    [
+      'init 800 600',
+      'create rect a 0 0 10 10',
+      'create rect b 20 20 10 10',
+      'undo',
+      'canvas',
+      'redo',
+      'undo',
+      'canvas 640 480',
+      'undo',
+      'redo',
+      'create rect c 40 40 10 10',
+      'undo',
+      'undo',
+      'redo',
+      'undo',
+      'canvas 0 200',
+      'canvas',
+      'tree',
+      'redo',
+      'tree',
+    ].join('\n'),
+  );
+
+  assert.equal(result.code, 0);
+  assert.equal(result.stderr, '');
+  assert.equal(
+    result.stdout,
+    [
+      'canvas 800x600 created',
+      'rect#a created',
+      'rect#b created',
+      'rect#b removed',
+      'canvas 800x600',
+      'rect#b created',
+      'rect#b removed',
+      'canvas resized to 640x480',
+      'error: undo not allowed after io command',
+      'error: undo not allowed after io command',
+      'rect#c created',
+      'rect#c removed',
+      'error: nothing to undo',
+      'rect#c created',
+      'rect#c removed',
+      'error: canvas width and height must be positive',
+      'canvas 640x480',
+      'svg (640x480)',
+      '└── rect#a  x=0 y=0 w=10 h=10',
+      'rect#c created',
+      'svg (640x480)',
+      '├── rect#a  x=0 y=0 w=10 h=10',
+      '└── rect#c  x=40 y=40 w=10 h=10',
       '',
     ].join('\n'),
   );
