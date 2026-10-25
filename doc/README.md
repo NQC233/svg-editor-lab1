@@ -1,6 +1,6 @@
 # Lab1 Phase 1：课程报告与过程记录
 
-状态：Ticket 01–08 已实现并通过本地验收，其中 Ticket 06 通过 [PR #29](https://github.com/NQC233/svg-editor-lab1/pull/29)、Ticket 07 通过 [PR #30](https://github.com/NQC233/svg-editor-lab1/pull/30) 交付 `main`；Ticket 15 已于 2026-10-25 完成实现与验收；测试累计 63 个。其余 10 张票仍是计划。本报告继续把“计划”和“已实现”分开记录。
+状态：Ticket 01–08 已实现并通过本地验收，其中 Ticket 06 通过 [PR #29](https://github.com/NQC233/svg-editor-lab1/pull/29)、Ticket 07 通过 [PR #30](https://github.com/NQC233/svg-editor-lab1/pull/30)、Ticket 08 通过 [PR #31](https://github.com/NQC233/svg-editor-lab1/pull/31) 交付 `main`；Ticket 15 已于 2026-10-25 完成实现与验收；测试累计 63 个。其余 10 张票仍是计划。本报告继续把“计划”和“已实现”分开记录。
 
 需求依据：[课程原始要求](../phase_cli_1.md)。
 
@@ -412,6 +412,7 @@ package "shared" {
 - 验证：`npm run check` 通过（类型、格式、63 个测试、构建）。`npm run cli` 与构建后的 `npm start` 使用同一缩放脚本回放，输出一致且 stderr 为空。
 - 本票未实现 set/delete/group/ungroup/addto/front/back、SVG IO 或完整 Phase 1 验收；`read`/`set` 接入后仍需确认 `stroke-width` 往返且不被缩放。
 - 双轴审查未发现硬性规范或功能错误；根据判断项把 `move`/`scale` 重复的子树遍历、快照和失败回滚提取为 `SvgDocument.transformLeafGeometry`，并修正“新增测试数”证据。两个具体命令类保留各自的摘要与重放逻辑，不为一处相似生命周期引入泛化基类。
+- Ticket 08 通过 [PR #31](https://github.com/NQC233/svg-editor-lab1/pull/31) 向 `main` 交付；Issue #8 随 PR 关联关闭。
 
 ## 一致性自查
 
