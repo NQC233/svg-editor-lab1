@@ -1,6 +1,6 @@
 # Lab1 Phase 1：课程报告与过程记录
 
-状态：Ticket 01–18 已实现并通过本地验收，其中 Ticket 06 通过 [PR #29](https://github.com/NQC233/svg-editor-lab1/pull/29)、Ticket 07 通过 [PR #30](https://github.com/NQC233/svg-editor-lab1/pull/30)、Ticket 08 通过 [PR #31](https://github.com/NQC233/svg-editor-lab1/pull/31)、Ticket 14 通过 [PR #37](https://github.com/NQC233/svg-editor-lab1/pull/37)、Ticket 16 通过 [PR #38](https://github.com/NQC233/svg-editor-lab1/pull/38)、Ticket 17 通过 [PR #40](https://github.com/NQC233/svg-editor-lab1/pull/40)、Ticket 18 通过 [PR #41](https://github.com/NQC233/svg-editor-lab1/pull/41) 提交；Ticket 09–18 已于 2026-10-25 完成实现与验收；测试累计 129 个。Ticket 19 仍是计划。本报告继续把“计划”和“已实现”分开记录。
+状态：Ticket 01–19 已实现并通过本地验收，其中 Ticket 06 通过 [PR #29](https://github.com/NQC233/svg-editor-lab1/pull/29)、Ticket 07 通过 [PR #30](https://github.com/NQC233/svg-editor-lab1/pull/30)、Ticket 08 通过 [PR #31](https://github.com/NQC233/svg-editor-lab1/pull/31)、Ticket 14 通过 [PR #37](https://github.com/NQC233/svg-editor-lab1/pull/37)、Ticket 16 通过 [PR #38](https://github.com/NQC233/svg-editor-lab1/pull/38)、Ticket 17 通过 [PR #40](https://github.com/NQC233/svg-editor-lab1/pull/40)、Ticket 18 通过 [PR #41](https://github.com/NQC233/svg-editor-lab1/pull/41) 合入 `main`。Ticket 01–19 已于 2026-10-25 完成实现与验收；测试累计 134 个。本报告继续把“计划”和“已实现”分开记录。
 
 需求依据：[课程原始要求](../phase_cli_1.md)。
 
@@ -26,7 +26,7 @@
 | 交付   | `src/cli/`      | 分词、命令表、命令分发、REPL、终端输出        | `commands`、`shared`                |
 | 装配   | `src/main.ts`   | 组合根：创建并连接以上模块                    | 全部                                |
 
-目标目录结构（当前已实现部分：六种内置图形、公共属性更新、容器树、子树删除/恢复、批量分组、嵌套容器解散/恢复、图形归属移动、同级前后顺序、移动/缩放事务、自动补 id 与元数据忽略的 SVG 读取、未建模属性往返、SVG 写出与 `read`/`save` 路径/历史提交；截至 Ticket 18）：
+目标目录结构（当前已实现部分：六种内置图形、公共属性更新、容器树、子树删除/恢复、批量分组、嵌套容器解散/恢复、图形归属移动、同级前后顺序、移动/缩放事务、自动补 id 与元数据忽略的 SVG 读取、未建模属性往返、SVG 写出与 `read`/`save` 路径/历史提交；截至 Ticket 19）：
 
 ```text
 src/
@@ -537,17 +537,29 @@ package "shared" {
 - 双轴审查发现初版 `SvgReader` 自行构造 `SvgIdAllocator`、元数据判定分散在三处调用点，且 CLI 失败回放未实际使用保留的当前路径。已改为组合根注入分配器、把元数据识别收口到 `ShapeFactory`、收敛图形工厂重复的“收集属性→构造→应用样式”流程，并在真实 CLI 回放末尾用无参数 `save` 证明失败 `read` 后路径仍可复用。
 - 小步提交保留为 `7a03417`（ADR 与任务计划）、`dec4c27`（补 id、元数据、未建模属性与测试）和 `c82f603`（双轴审查修复）。
 - 验证：`npm run check` 通过（类型检查、格式检查、129 个测试、构建）。真实 CLI 与构建后的 `npm start` 对同一补 id/元数据/未建模属性/失败读取脚本，去掉 npm 横幅后 stdout 逐字节一致，stderr 均为空；写出文件保留 `data-extra` 且可再次读取。
-- Ticket 18 通过 [PR #41](https://github.com/NQC233/svg-editor-lab1/pull/41) 提交，等待合并与远端检查。
+- Ticket 18 通过 [PR #41](https://github.com/NQC233/svg-editor-lab1/pull/41) 合入 `main`。
+
+### 2026-10-25：Ticket 19 全会话验收与课程报告收尾
+
+- 开始前 fetch 远端并确认工作区干净，本地 `main` 与 `origin/main` 同为 `cb57264`；Issue #19 的原生未关闭阻塞数为 0，Ticket #7–#15 与 #18 均已完成，随后新建 `feat/ticket-19-final-acceptance`。
+- 按 TDD 先补真实 CLI 和跨票组合测试，红灯落在帮助末尾仍写“Partial implementation”；其余跨模块组合测试直接通过，说明所需行为已由前置票实现，没有在验收票集中补写遗漏功能。
+- 新增真实 CLI 回放覆盖规格 11.1 基础会话、课程 6.1/规格 11.2 两节点流程图、规格 11.3 失败不变和 11.5 IO 屏障；预期输出逐行断言，包括完整 `help`、中文、路径、错误和屏障提示。
+- 新增 `FinalAcceptance.test.ts` 覆盖两类跨票组合：容器内创建新类型后执行 front/back、整树 move/scale 和逐步 undo；读取含未建模属性的 SVG 后创建、排序、移动、缩放、保存、再读取，断言图形顺序、建模几何、未知属性与再次保存内容一致。
+- 帮助文案改为 `Phase 1 implementation`，避免在 19 张票完成后仍声称只是部分实现；`CommandCatalog` 与 `ShapeFactory` 之外仍无新增按名字分派。
+- 验证：`npm run check` 通过（类型检查、格式检查、134 个测试、构建）。`npm run cli` 与构建后的 `npm start` 对同一 9 元素流程图脚本 stdout 逐字节一致，stderr 均为空；切换 `front start` 后的 tree 与 SVG 顺序一致。
+- 人工预览：用 macOS Quick Look 将实际 CLI 在临时目录写出的 640×360 SVG 渲染为 PNG 并检查。蓝色矩形、橙色圆、绿色椭圆、两条连线与中文“检查/完成”均正常显示；蓝色矩形覆盖其“开始”标签，和 `front start` 后最后绘制的语义一致。临时文件未提交。
+- 小步提交保留为 `07bda1b`（最终验收测试与帮助文案）；报告和数据修正单独提交。
+- 未验证/未执行边界：尚未创建或推送 `final` 标签，因为本会话没有课程截止时间，且“最终提交时点”仍需用户确认；这不影响已完成的本地实现与验收。
 
 ## 一致性自查
 
-当前状态为“Ticket 01–18 已实现并通过本地验收；Ticket 19 仍为计划”。
+当前状态为“Ticket 01–19 已实现并通过本地验收；134 个测试真实执行通过”。
 
 1. **模块划分**：已落地 `src/shared/`（错误与数值）、`src/domain/`（`Shape`、`LeafShape`、`Container`、`Group`、`Rect`、`Circle`、`Ellipse`、`Line`、`Text`、`GeometrySnapshot`、`ShapeAttributeSnapshot`、`UnmodeledAttributes`、`UngroupSnapshot`、`GroupSnapshot`、`GroupedShapePlacement`、`Point`、`ShapePlacement`、`ShapeFactory`、`SvgDocument`）、`src/io/`（`XmlNode`、`XmlElement`、`XmlText`、`XmlDocument`、`XmlParser`、`SvgIdAllocator`、`SvgIdAllocation`、`SvgReader`、`SvgReadResult`、`SvgWriter`、`XmlEscaper`）、`src/display/`（`TreeFormatter`、`ShowFormatter`、`DisplayWidth`）、`src/commands/`（命令、token/参数封装、结果、历史、上下文、执行器、create/delete/group/ungroup/addto/front/back/move/scale/set/read/save/canvas/tree/show/undo/redo）、`src/cli/`（分词、命令表、分发、REPL、输出）与 `src/main.ts`（组合根）。实际目录与规划一致。
 2. **依赖方向**：抽查 import 后，`domain` 只依赖 `shared`；`io` 只依赖 `domain` 和 `shared`；`display` 依赖 `domain` 和 `shared`；`commands` 通过 `CommandContext` 注入 `SvgReader`/`SvgWriter`，依赖 `domain`、`io`、`display` 和 `shared`；`cli` 依赖 `commands` 和 `shared`；`main` 装配 `ShapeFactory`、`SvgIdAllocator`、`SvgReader` 等全部依赖。`commands` 不 import `cli`，`cli` 不直接 import `domain`/`io`/`display`，未发现循环依赖。
 3. **名字分派**：当前只有两处名字分派，符合课程约束：`CommandCatalog` 做命令名到命令工厂的分派，`ShapeFactory` 做图形类型名与可忽略 SVG 元素名的统一识别。`SvgIdAllocator` 和 `SvgReader` 通过工厂查询，不自行复制标签集合；命令和格式化器中没有第二套类型 `switch`。
-4. **规格一致**：Ticket 01 按规格 3.1、3.3、4.1–4.3、6.11、6.14、6.17 实现；Ticket 02 按规格 3.1–3.3、5.1–5.2、5.5–5.6、6.1、6.15–6.16 实现；Ticket 03 按规格 3.3、6.10–6.11、9 实现；Ticket 04 按规格 3.1、3.3、5.1–5.2、5.5–5.6、6.1、6.10 实现；Ticket 05 按规格 3.1、4.2、5.2、5.5–5.6、6.1、6.10、9 实现；Ticket 06 按规格 3.2–3.3、4.2、5.2、5.5–5.6、6.1、6.10、9 实现；Ticket 07 按规格 3.1、5.4、6.3、6.10、9 实现；Ticket 08 按规格 2、3.3、5.4、6.4、6.10、9 实现；Ticket 09 按规格 2、3.1、3.3、5.1–5.3、6.5、6.10、9 实现；Ticket 10 按规格 3.3、5.2、6.2、9 实现；Ticket 11 按规格 2、3.3、5.2、6.8、6.10、9 实现；Ticket 12 按规格 3.3、5.2、6.6、6.10、9 与 ADR-0006 实现；Ticket 13 按规格 3.3、5.2、6.7、6.10、9 实现；Ticket 14 按规格 2、3.3、6.9、6.10、9 与 ADR-0007 实现；Ticket 15 按规格 3.3–3.4、6.10、6.14 实现；Ticket 16 按规格 2、3.3、6.10、6.13、7.6–8、9 与 ADR-0008 实现；Ticket 17 按规格 3.1、5、6.12、7.1–7.3、7.4.1、7.5–7.6、9–10 与 ADR-0009 实现；Ticket 18 按规格 3.2、5.4、6.12–6.13、7.2–7.6、8、9 与 ADR-0010 实现。测试名称引用对应章节；当前 undo/redo 覆盖六种内置类型创建、属性更新、叶子/容器移动和缩放、子树删除、容器分组/解散、图形归属移动及 `front`/`back` 同级排序，`read` 后创建遵循新的历史屏障。
-5. **文档一致**：`CONTEXT.md`、`doc/spec.md`、`doc/ticket-plan.md`、ADR-0003、ADR-0005、ADR-0006、ADR-0007、ADR-0008、ADR-0009、ADR-0010 与本报告一致；自动补 id、元数据忽略和未建模属性往返已按 Ticket 18 实现，不再列为后续缺口。
+4. **规格一致**：Ticket 01 按规格 3.1、3.3、4.1–4.3、6.11、6.14、6.17 实现；Ticket 02 按规格 3.1–3.3、5.1–5.2、5.5–5.6、6.1、6.15–6.16 实现；Ticket 03 按规格 3.3、6.10–6.11、9 实现；Ticket 04 按规格 3.1、3.3、5.1–5.2、5.5–5.6、6.1、6.10 实现；Ticket 05 按规格 3.1、4.2、5.2、5.5–5.6、6.1、6.10、9 实现；Ticket 06 按规格 3.2–3.3、4.2、5.2、5.5–5.6、6.1、6.10、9 实现；Ticket 07 按规格 3.1、5.4、6.3、6.10、9 实现；Ticket 08 按规格 2、3.3、5.4、6.4、6.10、9 实现；Ticket 09 按规格 2、3.1、3.3、5.1–5.3、6.5、6.10、9 实现；Ticket 10 按规格 3.3、5.2、6.2、9 实现；Ticket 11 按规格 2、3.3、5.2、6.8、6.10、9 实现；Ticket 12 按规格 3.3、5.2、6.6、6.10、9 与 ADR-0006 实现；Ticket 13 按规格 3.3、5.2、6.7、6.10、9 实现；Ticket 14 按规格 2、3.3、6.9、6.10、9 与 ADR-0007 实现；Ticket 15 按规格 3.3–3.4、6.10、6.14 实现；Ticket 16 按规格 2、3.3、6.10、6.13、7.6–8、9 与 ADR-0008 实现；Ticket 17 按规格 3.1、5、6.12、7.1–7.3、7.4.1、7.5–7.6、9–10 与 ADR-0009 实现；Ticket 18 按规格 3.2、5.4、6.12–6.13、7.2–7.6、8、9 与 ADR-0010 实现；Ticket 19 按规格第 11 节的 11.1–11.5 完成全链路与跨票组合验收。测试名称引用对应章节；当前 undo/redo 覆盖六种内置类型创建、属性更新、叶子/容器移动和缩放、子树删除、容器分组/解散、图形归属移动及 `front`/`back` 同级排序，`read` 后创建遵循新的历史屏障。
+5. **文档一致**：`CONTEXT.md`、`doc/spec.md`、`doc/ticket-plan.md`、ADR-0003、ADR-0005、ADR-0006、ADR-0007、ADR-0008、ADR-0009、ADR-0010 与本报告一致；自动补 id、元数据忽略、未建模属性往返、最终课程会话与人工预览已按 Ticket 18/19 记录。`final` 标签仍未创建，报告与票据计划明确保留这一边界。
 
 ## 质量保证手段
 
@@ -608,5 +620,9 @@ package "shared" {
 - Ticket 18 的测试覆盖先收集全部显式 id 再按文档顺序避让分配、空 id、`title`/`desc`/`metadata` 整棵子树忽略、元素计数、实体与文本/CDATA 往返、未建模属性顺序、`scale`/`set`/tree/show 隔离、失败不输出半途警告，以及失败后文档、当前路径和 redo 保持。
 - Ticket 18 的 `npm run check` 通过：类型检查、格式检查、129 个测试和构建全部成功。真实 CLI 回放先读取缺 id 且带元数据/未知属性的文件，再保存、创建/撤销、失败读取、redo 并复用当前路径保存；写入文件保留未知属性，未知属性不影响几何缩放。
 - Ticket 18 的 `npm run cli` 与构建后的 `npm start` 对同一补 id/元数据/未知属性/失败读取脚本，去掉 npm 横幅后应用 stdout 逐字节一致，stderr 均为空；保存结果再次读取后得到相同 SVG。
+- Ticket 19 的 `npm run check` 通过：类型检查、格式检查、134 个测试和构建全部成功。新增真实 CLI 回放逐行断言完整 help、规格 11.1 基础会话、课程 6.1/规格 11.2 流程图、规格 11.3 失败不变和 11.5 IO 屏障；跨票测试覆盖容器内新类型变换、重叠顺序、未建模属性隔离及保存读取往返。
+- Ticket 19 的 `npm run cli` 与构建后的 `npm start` 使用同一 9 元素流程图脚本，stdout 逐字节一致、stderr 均为空；tree 中 `front start` 把矩形移到末尾，写出 SVG 的兄弟顺序与显示一致。
+- Ticket 19 用 macOS Quick Look 渲染 CLI 实际写出的 640×360 示例 SVG，人工确认中文、矩形、圆、椭圆、连线和覆盖顺序正常；临时 SVG/PNG 未提交。
+- `final` 标签未创建：需要用户确认课程截止时间与最终提交时点后，才能在最终提交处创建并推送。
 - 脚本回放测试通过 spawn 运行 `src/main.ts`，断言空白/注释、成功输出、错误前缀、颜色参数、失败前后树一致、无横幅/提示符和 EOF 正常退出；TTY 模式通过注入终端流验证横幅、`svg> ` 提示符、stdout 错误和结果。
-- 当前完成 Ticket 01–18 的功能实现。历史基础设施已接入六种内置类型创建、属性更新、叶子/整棵子树删除、批量分组、嵌套容器解散、图形归属移动、front/back 同级排序、叶子/整棵子树移动/缩放、自动补 id 与元数据忽略的 SVG 读取、未建模属性往返、带参数 `canvas` 以及成功 `read`/`save` 的屏障。Ticket 19 的跨票组合验收、完整帮助样例和课程报告最终收尾仍未完成，不能由 Ticket 18 的检查绿灯替代。
+- 当前完成 Ticket 01–19 的功能实现与本地验收。历史基础设施已接入六种内置类型创建、属性更新、叶子/整棵子树删除、批量分组、嵌套容器解散、图形归属移动、front/back 同级排序、叶子/整棵子树移动/缩放、自动补 id 与元数据忽略的 SVG 读取、未建模属性往返、带参数 `canvas` 以及成功 `read`/`save` 的屏障。最终验收不是单次检查绿灯：课程会话、跨票组合、开发/构建入口、134 个真实测试和 SVG 人工预览分别有证据。

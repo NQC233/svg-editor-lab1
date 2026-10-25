@@ -1,6 +1,6 @@
 # Phase 1 纵向任务计划
 
-状态：19 张票的粒度与阻塞关系已于 2026-10-23 获用户批准；Ticket 01–18 已实现并通过本地验收，其中 Ticket 06 通过 [PR #29](https://github.com/NQC233/svg-editor-lab1/pull/29)、Ticket 07 通过 [PR #30](https://github.com/NQC233/svg-editor-lab1/pull/30)、Ticket 08 通过 [PR #31](https://github.com/NQC233/svg-editor-lab1/pull/31) 交付 `main`；Ticket 09–18 已于 2026-10-25 完成实现与验收。当前 129 个测试通过，Ticket 19 尚未开始。
+状态：19 张票的粒度与阻塞关系已于 2026-10-23 获用户批准；Ticket 01–19 已于 2026-10-25 完成实现与本地验收。当前 134 个测试通过；Ticket 19 的课程会话、跨票组合、开发/构建入口与 SVG 人工预览证据已记录在[课程报告](./README.md)。
 
 依据：[规格](./spec.md)、[课程要求](../phase_cli_1.md)、[领域术语](../CONTEXT.md)和[架构方案](./README.md)。本计划取代原 [T1–T8](./tasks.md) 的执行顺序；旧内容仅作历史技术工作清单。下列编号为计划编号，GitHub 对应关系见发布索引。
 
@@ -277,6 +277,8 @@
 - 影响模块/接口：跨模块验收与报告，不承担遗漏功能的集中补写。
 - 风险与人工审核：不得用一次检查绿灯替代课程功能与架构验收。
 
+**实现状态（2026-10-25）：** 已完成本地实现与验收。新增真实 CLI 回放覆盖规格 11.1 基础会话、课程 6.1/规格 11.2 两节点流程图、规格 11.3 失败不变和 11.5 IO 屏障；新增跨票组合测试覆盖容器内新类型创建后移动/缩放、重叠图形 front/back、未建模属性不参与变换，以及编辑后 `save`/`read`/`save` 往返。完整检查通过且由 Node.js 测试运行器实际执行 134 个测试。`npm run cli` 与构建后的 `npm start` 对同一 9 元素脚本 stdout 逐字节一致、stderr 均为空；保存的 SVG 经 Quick Look 渲染后人工检查中文、嵌套容器、样式和覆盖顺序。`final` 标签因尚未确认课程截止时间及最终提交时点而未创建。
+
 ## 依赖阅读与发布
 
 主干是 01 → 02 → 03。随后 04、05、06、15 可以各自推进；06 完成后结构编辑票可以分别推进。07–09 等待全类型，是因为各票承诺全类型验收。17 读取不依赖 16 保存，只有 18 的往返依赖二者。
@@ -309,6 +311,6 @@
 | 16   | [#16 保存 SVG 与当前路径](https://github.com/NQC233/svg-editor-lab1/issues/16)        | [#4](https://github.com/NQC233/svg-editor-lab1/issues/4)、[#5](https://github.com/NQC233/svg-editor-lab1/issues/5)、[#6](https://github.com/NQC233/svg-editor-lab1/issues/6)                                                                                                                                                                                                                                                                                                                                                                                                                                     | 已实现；见 [PR #38](https://github.com/NQC233/svg-editor-lab1/pull/38) |
 | 17   | [#17 读取显式 id 的 SVG](https://github.com/NQC233/svg-editor-lab1/issues/17)         | [#4](https://github.com/NQC233/svg-editor-lab1/issues/4)、[#5](https://github.com/NQC233/svg-editor-lab1/issues/5)、[#6](https://github.com/NQC233/svg-editor-lab1/issues/6)                                                                                                                                                                                                                                                                                                                                                                                                                                     | 已实现；见 [PR #40](https://github.com/NQC233/svg-editor-lab1/pull/40) |
 | 18   | [#18 外部 SVG 补 id 与完整往返](https://github.com/NQC233/svg-editor-lab1/issues/18)  | [#17](https://github.com/NQC233/svg-editor-lab1/issues/17)、[#16](https://github.com/NQC233/svg-editor-lab1/issues/16)                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           | 已实现；见 [PR #41](https://github.com/NQC233/svg-editor-lab1/pull/41) |
-| 19   | [#19 全会话验收与课程报告收尾](https://github.com/NQC233/svg-editor-lab1/issues/19)   | [#7](https://github.com/NQC233/svg-editor-lab1/issues/7)、[#8](https://github.com/NQC233/svg-editor-lab1/issues/8)、[#9](https://github.com/NQC233/svg-editor-lab1/issues/9)、[#10](https://github.com/NQC233/svg-editor-lab1/issues/10)、[#11](https://github.com/NQC233/svg-editor-lab1/issues/11)、[#12](https://github.com/NQC233/svg-editor-lab1/issues/12)、[#13](https://github.com/NQC233/svg-editor-lab1/issues/13)、[#14](https://github.com/NQC233/svg-editor-lab1/issues/14)、[#15](https://github.com/NQC233/svg-editor-lab1/issues/15)、[#18](https://github.com/NQC233/svg-editor-lab1/issues/18) | 等待前置完成                                                           |
+| 19   | [#19 全会话验收与课程报告收尾](https://github.com/NQC233/svg-editor-lab1/issues/19)   | [#7](https://github.com/NQC233/svg-editor-lab1/issues/7)、[#8](https://github.com/NQC233/svg-editor-lab1/issues/8)、[#9](https://github.com/NQC233/svg-editor-lab1/issues/9)、[#10](https://github.com/NQC233/svg-editor-lab1/issues/10)、[#11](https://github.com/NQC233/svg-editor-lab1/issues/11)、[#12](https://github.com/NQC233/svg-editor-lab1/issues/12)、[#13](https://github.com/NQC233/svg-editor-lab1/issues/13)、[#14](https://github.com/NQC233/svg-editor-lab1/issues/14)、[#15](https://github.com/NQC233/svg-editor-lab1/issues/15)、[#18](https://github.com/NQC233/svg-editor-lab1/issues/18) | 已实现；验收证据见报告                                                 |
 
-Ticket 01–18 已实现；Ticket 19 等待跨票验收与报告收尾。
+Ticket 01–19 已实现；`final` 标签待课程最终提交时按截止要求处理。
