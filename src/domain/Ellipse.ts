@@ -67,6 +67,30 @@ export class Ellipse extends LeafShape {
     this.centerYValue = centerY;
   }
 
+  public override scaleOwnGeometry(factor: number): void {
+    const centerX = this.centerXValue * factor;
+    const centerY = this.centerYValue * factor;
+    const radiusX = this.radiusXValue * factor;
+    const radiusY = this.radiusYValue * factor;
+    LeafShape.assertFinite(centerX);
+    LeafShape.assertFinite(centerY);
+    LeafShape.assertFinite(radiusX);
+    LeafShape.assertFinite(radiusY);
+
+    if (radiusX <= 0) {
+      throw new DomainError('ellipse rx must be positive');
+    }
+
+    if (radiusY <= 0) {
+      throw new DomainError('ellipse ry must be positive');
+    }
+
+    this.centerXValue = centerX;
+    this.centerYValue = centerY;
+    this.radiusXValue = radiusX;
+    this.radiusYValue = radiusY;
+  }
+
   public override snapshotGeometry(): GeometrySnapshot {
     const centerX = this.centerXValue;
     const centerY = this.centerYValue;

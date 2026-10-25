@@ -67,6 +67,30 @@ export class Rect extends LeafShape {
     this.yValue = y;
   }
 
+  public override scaleOwnGeometry(factor: number): void {
+    const x = this.xValue * factor;
+    const y = this.yValue * factor;
+    const width = this.widthValue * factor;
+    const height = this.heightValue * factor;
+    LeafShape.assertFinite(x);
+    LeafShape.assertFinite(y);
+    LeafShape.assertFinite(width);
+    LeafShape.assertFinite(height);
+
+    if (width <= 0) {
+      throw new DomainError('rect width must be positive');
+    }
+
+    if (height <= 0) {
+      throw new DomainError('rect height must be positive');
+    }
+
+    this.xValue = x;
+    this.yValue = y;
+    this.widthValue = width;
+    this.heightValue = height;
+  }
+
   public override snapshotGeometry(): GeometrySnapshot {
     const x = this.xValue;
     const y = this.yValue;

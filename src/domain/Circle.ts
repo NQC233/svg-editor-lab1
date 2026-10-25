@@ -49,6 +49,23 @@ export class Circle extends LeafShape {
     this.centerYValue = centerY;
   }
 
+  public override scaleOwnGeometry(factor: number): void {
+    const centerX = this.centerXValue * factor;
+    const centerY = this.centerYValue * factor;
+    const radius = this.radiusValue * factor;
+    LeafShape.assertFinite(centerX);
+    LeafShape.assertFinite(centerY);
+    LeafShape.assertFinite(radius);
+
+    if (radius <= 0) {
+      throw new DomainError('circle r must be positive');
+    }
+
+    this.centerXValue = centerX;
+    this.centerYValue = centerY;
+    this.radiusValue = radius;
+  }
+
   public override snapshotGeometry(): GeometrySnapshot {
     const centerX = this.centerXValue;
     const centerY = this.centerYValue;

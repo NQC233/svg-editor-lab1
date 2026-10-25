@@ -28,6 +28,8 @@ export abstract class LeafShape extends Shape {
 
   public abstract moveOwnGeometry(dx: number, dy: number): void;
 
+  public abstract scaleOwnGeometry(factor: number): void;
+
   public abstract snapshotGeometry(): GeometrySnapshot;
 
   protected static assertFinite(value: number): void {

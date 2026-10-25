@@ -148,6 +148,38 @@ export class SvgDocument {
     return snapshots.every((snapshot) => snapshot.matchesCurrent()) ? [] : snapshots;
   }
 
+  public scale(shape: Shape, factor: number): readonly GeometrySnapshot[] {
+    if (!Number.isFinite(factor)) {
+      throw new DomainError(`invalid number: ${NumberFormatter.format(factor)}`);
+    }
+
+    if (factor <= 0) {
+      throw new DomainError('scale factor must be positive');
+    }
+
+    const subtree = this.collectSubtree(shape);
+    const leaves = subtree.filter((member): member is LeafShape => member instanceof LeafShape);
+    const snapshots = leaves.map((leaf) => leaf.snapshotGeometry());
+
+    if (factor === 1 || snapshots.length === 0) {
+      return [];
+    }
+
+    try {
+      for (const leaf of leaves) {
+        leaf.scaleOwnGeometry(factor);
+      }
+    } catch (error) {
+      for (const snapshot of snapshots) {
+        snapshot.restore();
+      }
+
+      throw error;
+    }
+
+    return snapshots.every((snapshot) => snapshot.matchesCurrent()) ? [] : snapshots;
+  }
+
   private assertPositiveDimensions(width: number, height: number): void {
     if (!Number.isFinite(width) || !Number.isFinite(height) || width <= 0 || height <= 0) {
       throw new DomainError('canvas width and height must be positive');
