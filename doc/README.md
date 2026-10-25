@@ -1,6 +1,6 @@
 # Lab1 Phase 1：课程报告与过程记录
 
-状态：需求与架构设计完成，**尚未实现业务代码**。本报告把“计划”和“已实现”分开记录；当前 `src/` 仍只有启动骨架，业务测试为 0。
+状态：Ticket 01“空画布命令会话”已实现，当前 7 个业务测试通过；其余 18 张票仍是计划。本报告继续把“计划”和“已实现”分开记录。
 
 需求依据：[课程原始要求](../phase_cli_1.md)。
 
@@ -10,7 +10,7 @@
 - [纵向任务计划](./ticket-plan.md)：已批准的 19 张任务、验收与阻塞关系。
 - [原 T1–T8](./tasks.md)：保留为历史技术工作清单，不再作为执行顺序。
 - [模块依赖图](./architecture.puml) 与 [类模型图](./class-model.puml)：PlantUML 源文件。
-- [领域词汇表](../CONTEXT.md) 与 [ADR](../docs/adr/)：已确认的术语和关键决策。
+- [领域词汇表](../CONTEXT.md) 与 [ADR](../docs/adr/)：已确认的术语和关键决策；Ticket 01 的 CLI 默认见 [ADR-0005](../docs/adr/0005-ticket-01-cli-defaults.md)。
 
 ## 架构方案
 
@@ -212,6 +212,7 @@ package "shared" {
 | 10  | 无操作命令成功但不进历史、不解锁                                           | 无状态变化不产生撤销单元                 | [spec.md](./spec.md) 2、9                                 |
 | 11  | 尺寸类 > 0，坐标可为负，`scale` 因子 > 0                                   | SVG 几何边界；避免不可见零尺寸图形       | [spec.md](./spec.md) 3、5                                 |
 | 12  | 根必须有宽高；`viewBox` 缺失或恰为 `0 0 w h`                               | 不引入未建模的坐标缩放                   | [spec.md](./spec.md) 7                                    |
+| 13  | Ticket 01 采用 TTY 提示、stdout 输出和 `init` 直接替换默认                 | 先收口本票所需契约，不推定其余 C1 条目   | [ADR-0005](../docs/adr/0005-ticket-01-cli-defaults.md)    |
 
 ## 需求摘要
 
@@ -300,20 +301,24 @@ package "shared" {
 - 发布中发生一次连接超时，回读实际状态后恢复，未重复创建票据。发布完成后逐票回读：19 张票的标题、正文、标签、分支要求一致，38 条原生依赖与计划逐边一致。
 - 本轮为文档与 tracker 变更，未运行或宣称通过业务测试；本地文档尚未提交或推送。
 
+### 2026-10-25：Ticket 01 空画布命令会话
+
+- 用户要求实现 Ticket 01。该实现指令被记录为本票所需 C1 默认的采纳决定：横幅与提示符仅 TTY 输出、结果/警告/错误统一 stdout、`init` 直接替换文档；其余 C1 条目仍不由本票推定。决定写入 ADR-0005。
+- 按 TDD 依次在分词、命令分发和真实 CLI 接缝写失败测试，再补最小实现。当前有 7 个测试，覆盖引号/注释/未闭合引号、`help` 完整目标语法、`init` 默认与显式尺寸、失败原子性、无文档错误、TTY 横幅/提示符以及脚本 EOF。
+- 实现采用 `Command` → `CommandInvoker` → `CommandContext` → `SvgDocument` 的命令链；`CommandCatalog` 是当前唯一的命令名分派点，`main.ts` 是唯一组合根。终端只负责分词、分发和输出，不直接修改领域对象。
+- 双轴审查发现初版把带参数 `canvas` 的尺寸修改提前带入了 Ticket 01，且 `CliApplication` 自行装配依赖。修正后带参数 `canvas` 明确报 `canvas resizing is not available yet` 并保持状态不变，留给 Ticket 15；组合根移到 `main.ts`。
+- 验证：`npm run check` 通过（类型、格式、7 个测试、构建）；`npm run cli` 回放 `help`、`init 320 240`、`canvas` 得到完整帮助和 `canvas 320x240`；构建后的 `npm start` 回放 `init`、`canvas` 得到 `canvas 800x600`。
+- 当前范围仍只是 Ticket 01，不包含图形创建、SVG 读写、撤销重做或带参数 `canvas`；因此不能据此宣称 Phase 1 完成。
+
 ## 一致性自查
 
-实现完成后逐项填写；当前状态为“设计已记录，待实现验证”。
+当前状态为“Ticket 01 已按方案实现并验证；其余能力仍为计划”。
 
-1. **模块划分**：计划目录见上表。当前实际只有 `src/main.ts` 和 `src/cli/CliApplication.ts`，与业务方案不一致是预期的，因为尚未实现。实现后核对实际目录与上表；任何偏差记录理由并更新本报告。
-2. **依赖方向**：当前没有业务依赖可检查。实现后抽查 `src/` 的 import：
-   - `domain` 不 import `io`/`display`/`commands`/`cli`；
-   - `io`、`display` 不 import `commands`/`cli`；
-   - `commands` 不 import `cli`；
-   - `cli` 不直接 import `domain`/`io`/`display`；
-   - 无循环依赖。
-3. **名字分派**：计划只有 `CommandCatalog` 和 `ShapeFactory` 两处。实现后检查是否出现第三处 `switch(type)` 或命令名映射；`set` 的属性白名单应留在各图形类内。
-4. **规格一致**：逐条对照 `doc/spec.md` 的输出、错误消息、数值边界和 SVG 支持子集；测试名称引用规格章节。
-5. **文档一致**：`CONTEXT.md`、`doc/spec.md`、`doc/ticket-plan.md`、ADR 与本报告的决策一致；`doc/tasks.md` 保留为历史；未实现内容不写成已完成。
+1. **模块划分**：已落地 `src/shared/`（错误与数值）、`src/domain/SvgDocument.ts`、`src/commands/`（命令、上下文、执行器）、`src/cli/`（分词、命令表、分发、REPL、输出）与 `src/main.ts`（组合根）。`io/`、`display/`、完整图形层次和历史尚未实现，与当前票边界一致；差异已由本过程和任务计划记录。
+2. **依赖方向**：抽查 import 后，`domain` 只依赖 `shared`；`commands` 依赖 `domain` 和 `shared`；`cli` 依赖 `commands` 和 `shared`；`main` 装配全部模块。`commands` 不 import `cli`，`cli` 不直接 import `domain`/`io`/`display`，未发现循环依赖。
+3. **名字分派**：当前只有 `CommandCatalog` 一处“命令名 → 命令对象”分派；图形工厂尚未实现。终端和命令实现中没有第二套命令名 `switch`。
+4. **规格一致**：Ticket 01 按规格 3.1、3.3、4.1–4.3、6.11、6.14、6.17 实现；测试名称引用对应章节。带参数 `canvas` 按本票边界明确拒绝，历史屏障留给 Ticket 15。
+5. **文档一致**：`CONTEXT.md`、`doc/spec.md`、`doc/ticket-plan.md`、ADR-0005 与本报告一致；未实现的图形、IO、历史和显示能力没有写成已完成。
 
 ## 质量保证手段
 
@@ -331,6 +336,7 @@ package "shared" {
 
 ### 当前证据与限制
 
-- 初始化阶段 `npm run check` 通过，但只证明类型、格式、测试入口和构建可运行；**业务测试为 0，不能作为功能验收依据**。
-- 当前没有实现任何命令、图形模型、SVG 读写或历史；本报告中的架构、规格和任务均为计划。
-- 实现过程中每完成一个任务，在 Git 提交和本报告“过程记录”中记录实际验证结果；最终验收前补齐测试数量、脚本回放输出和一致性自查证据。
+- Ticket 01 的 `npm run check` 通过：类型检查、格式检查、7 个测试和构建全部成功；测试由 Node.js 测试运行器实际发现，不是“零测试绿灯”。
+- 真实开发入口 `npm run cli` 已回放 `help`、`init 320 240`、`canvas`；构建入口 `npm start` 已回放 `init`、`canvas`，均无 stderr 输出。
+- 脚本模式测试通过 spawn 运行 `src/main.ts` 并断言无横幅/提示符、EOF 正常退出；TTY 模式通过注入终端流验证横幅、`svg> ` 提示符、stdout 错误和结果。
+- 当前只完成 Ticket 01。图形模型、IO、显示、历史和其余命令仍未实现；带参数 `canvas` 在 Ticket 15 前不可用。这些限制不能由本票测试通过覆盖。

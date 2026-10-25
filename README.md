@@ -2,7 +2,7 @@
 
 高级软件开发技术课程作业：使用 TypeScript 和面向对象方式开发 SVG 命令行编辑器。
 
-**当前状态：19 张纵向任务的拆分已批准，部分规格语义仍待收口，业务代码尚未实现。** `src/` 仍只有启动骨架；CLI 不提供 REPL、命令或 SVG 读写。实现顺序和验收标准见[纵向任务计划](doc/ticket-plan.md)。
+**当前状态：Ticket 01“空画布命令会话”已实现。** CLI 已支持 REPL、注释、引号参数，以及 `help`、`init` 和无参数 `canvas`；图形编辑、SVG 读写、撤销重做和带参数 `canvas` 仍待后续票。实现顺序和验收标准见[纵向任务计划](doc/ticket-plan.md)。
 
 ## 项目资料
 
@@ -12,7 +12,7 @@
 - [纵向任务计划](doc/ticket-plan.md)：已批准的 19 张任务、验收标准和 GitHub 阻塞关系。
 - [原 T1–T8](doc/tasks.md)：历史技术工作清单。
 - [领域词汇表](CONTEXT.md)：项目统一术语。
-- [架构决策记录](docs/adr/)：零依赖、SVG 支持子集、IO 历史屏障、group 锚点规则。
+- [架构决策记录](docs/adr/)：零依赖、SVG 支持子集、IO 历史屏障、group 锚点规则和 Ticket 01 CLI 默认。
 - [智能体协作规则](AGENTS.md)：统一维护项目约束；[CLAUDE.md](CLAUDE.md) 为 Claude 入口。
 
 ## 环境与启动
@@ -29,16 +29,16 @@ npm run cli
 
 ## 开发命令
 
-| 命令                   | 用途                                         |
-| ---------------------- | -------------------------------------------- |
-| `npm run cli`          | 使用 tsx 运行 TypeScript 入口                |
-| `npm run typecheck`    | 严格检查源代码和测试代码的类型               |
-| `npm run build`        | 编译源代码到 `dist/`                         |
-| `npm start`            | 运行已编译的入口；需先构建                   |
-| `npm test`             | 使用 Node.js 测试运行器执行测试，目前为 0 个 |
-| `npm run format`       | 格式化工程文件，排除课程原始要求             |
-| `npm run format:check` | 检查文件格式                                 |
-| `npm run check`        | 依次执行类型检查、格式检查、测试和构建       |
+| 命令                   | 用途                                       |
+| ---------------------- | ------------------------------------------ |
+| `npm run cli`          | 使用 tsx 运行 TypeScript 入口              |
+| `npm run typecheck`    | 严格检查源代码和测试代码的类型             |
+| `npm run build`        | 编译源代码到 `dist/`                       |
+| `npm start`            | 运行已编译的入口；需先构建                 |
+| `npm test`             | 使用 Node.js 测试运行器执行测试，当前 7 个 |
+| `npm run format`       | 格式化工程文件，排除课程原始要求           |
+| `npm run format:check` | 检查文件格式                               |
+| `npm run check`        | 依次执行类型检查、格式检查、测试和构建     |
 
 ## 当前目录
 
@@ -58,17 +58,21 @@ npm run cli
 │   ├── adr/                # 架构决策记录
 │   └── agents/             # 智能体协作约定
 ├── src/
-│   ├── main.ts             # 程序装配与启动入口（当前为占位）
-│   └── cli/
-│       └── CliApplication.ts # 启动占位类
-├── test/                   # 后续测试
+│   ├── main.ts             # 组合根与启动入口
+│   ├── cli/                # 分词、命令表、分发、REPL、输出
+│   ├── commands/           # Command、上下文、执行器和当前命令
+│   ├── domain/             # SvgDocument
+│   └── shared/             # 领域错误、数值解析与格式化
+├── test/
+│   ├── cli/                # 分词与 CLI 回放
+│   └── commands/           # 命令分发、help、init、canvas
 ├── package.json
 ├── package-lock.json       # 依赖版本锁定
 ├── tsconfig.json           # 源代码与测试的类型检查配置
 └── tsconfig.build.json     # 仅构建 src/ 的配置
 ```
 
-规划的业务目录（`shared/`、`domain/`、`io/`、`display/`、`commands/`）见 [doc/README.md](doc/README.md) 的模块划分；实现后实际目录会与本文件同步。
+当前已落地 `shared/`、`domain/`、`commands/` 和 `cli/`；`io/`、`display/` 及完整图形层次仍按 [doc/README.md](doc/README.md) 的模块划分在后续票中实现。
 
 生产运行依赖为空；开发工具包括 TypeScript、tsx、Node.js 类型声明和 Prettier。
 
