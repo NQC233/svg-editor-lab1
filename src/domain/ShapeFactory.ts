@@ -2,6 +2,7 @@ import { DomainError } from '../shared/DomainError.js';
 import { NumberParser } from '../shared/NumberParser.js';
 import { Circle } from './Circle.js';
 import { Ellipse } from './Ellipse.js';
+import { Group } from './Group.js';
 import { Line } from './Line.js';
 import { Rect } from './Rect.js';
 import type { Shape } from './Shape.js';
@@ -11,6 +12,7 @@ import { Text } from './Text.js';
 export class ShapeFactory {
   private static readonly CIRCLE_SYNTAX = 'circle <id> <cx> <cy> <r> [fill]';
   private static readonly ELLIPSE_SYNTAX = 'ellipse <id> <cx> <cy> <rx> <ry> [fill]';
+  private static readonly GROUP_SYNTAX = 'g <id>';
   private static readonly LINE_SYNTAX = 'line <id> <x1> <y1> <x2> <y2> [stroke]';
   private static readonly RECT_SYNTAX = 'rect <id> <x> <y> <w> <h> [fill]';
   private static readonly TEXT_SYNTAX = 'text <id> <x> <y> <content>';
@@ -21,6 +23,8 @@ export class ShapeFactory {
         return this.createCircle(id, args);
       case 'ellipse':
         return this.createEllipse(id, args);
+      case 'g':
+        return this.createGroup(id, args);
       case 'line':
         return this.createLine(id, args);
       case 'rect':
@@ -79,6 +83,14 @@ export class ShapeFactory {
       NumberParser.parse(radiusYToken),
       args[4],
     );
+  }
+
+  private createGroup(id: string, args: readonly string[]): Group {
+    if (args.length !== 0) {
+      throw new ShapeUsageError(ShapeFactory.GROUP_SYNTAX);
+    }
+
+    return new Group(id);
   }
 
   private createLine(id: string, args: readonly string[]): Line {
