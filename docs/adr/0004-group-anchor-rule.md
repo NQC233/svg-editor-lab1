@@ -1,6 +1,8 @@
 # group 以第一个 id 为父级和位置锚点，子节点按命令行顺序排列
 
-Status: accepted (2026-10-22)
+Status: superseded in part by [ADR-0006](./0006-group-relative-order.md) (2026-10-25)
+
+> ADR-0006 保留“第一个目标决定新容器父级和位置”的锚点规则，取代本文“子节点按命令行顺序排列”的决定。
 
 `group <newGid> <id1> <id2>…` 的语法没有 `in` 子句，但目标可以来自不同父级。我们决定：新容器的父级和插入位置取**第一个目标**分组前的父级和索引；其余目标从各自原父级摘出；新容器内的顺序等于命令行列出的顺序。目标集合中同时包含容器和它的子孙时，在修改前拒绝并报 `cannot group a container into its own descendant: <id>`。
 
