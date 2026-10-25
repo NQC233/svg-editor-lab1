@@ -14,6 +14,7 @@ import { InitCommand } from './commands/InitCommand.js';
 import { MoveCommand } from './commands/MoveCommand.js';
 import { RedoCommand } from './commands/RedoCommand.js';
 import { ScaleCommand } from './commands/ScaleCommand.js';
+import { SetCommand } from './commands/SetCommand.js';
 import { ShowCommand } from './commands/ShowCommand.js';
 import { TreeCommand } from './commands/TreeCommand.js';
 import { UndoCommand } from './commands/UndoCommand.js';
@@ -37,6 +38,7 @@ const catalog = new CommandCatalog([
   ['ungroup', () => new UngroupCommand()],
   ['move', () => new MoveCommand()],
   ['scale', () => new ScaleCommand()],
+  ['set', () => new SetCommand()],
   ['tree', () => new TreeCommand()],
   ['show', () => new ShowCommand()],
   ['help', () => new HelpCommand()],
