@@ -8,6 +8,8 @@ import { Rect } from './Rect.js';
 import type { Shape } from './Shape.js';
 import { ShapeUsageError } from './ShapeUsageError.js';
 import { Text } from './Text.js';
+import { UnmodeledAttributes } from './UnmodeledAttributes.js';
+import type { SvgAttribute } from './Shape.js';
 
 export class ShapeFactory {
   private static readonly CIRCLE_SYNTAX = 'circle <id> <cx> <cy> <r> [fill]';
@@ -65,8 +67,10 @@ export class ShapeFactory {
       case 'ellipse':
         return this.createEllipseFromSvg(id, attributes);
       case 'g':
-        this.assertSvgAttributes(type, attributes, []);
-        return this.applySvgStyle(new Group(id), attributes);
+        return this.applySvgStyle(
+          new Group(id, this.collectSvgAttributes(type, attributes, [])),
+          attributes,
+        );
       case 'line':
         return this.createLineFromSvg(id, attributes);
       case 'rect':
@@ -207,20 +211,22 @@ export class ShapeFactory {
   }
 
   private createCircleFromSvg(id: string, attributes: ReadonlyMap<string, string>): Circle {
-    this.assertSvgAttributes('circle', attributes, ['cx', 'cy', 'r']);
+    const unmodeled = this.collectSvgAttributes('circle', attributes, ['cx', 'cy', 'r']);
     return this.applySvgStyle(
       new Circle(
         id,
         this.svgNumber(attributes, 'cx'),
         this.svgNumber(attributes, 'cy'),
         this.svgNumber(attributes, 'r'),
+        undefined,
+        unmodeled,
       ),
       attributes,
     );
   }
 
   private createEllipseFromSvg(id: string, attributes: ReadonlyMap<string, string>): Ellipse {
-    this.assertSvgAttributes('ellipse', attributes, ['cx', 'cy', 'rx', 'ry']);
+    const unmodeled = this.collectSvgAttributes('ellipse', attributes, ['cx', 'cy', 'rx', 'ry']);
     return this.applySvgStyle(
       new Ellipse(
         id,
@@ -228,13 +234,15 @@ export class ShapeFactory {
         this.svgNumber(attributes, 'cy'),
         this.svgNumber(attributes, 'rx'),
         this.svgNumber(attributes, 'ry'),
+        undefined,
+        unmodeled,
       ),
       attributes,
     );
   }
 
   private createLineFromSvg(id: string, attributes: ReadonlyMap<string, string>): Line {
-    this.assertSvgAttributes('line', attributes, ['x1', 'y1', 'x2', 'y2']);
+    const unmodeled = this.collectSvgAttributes('line', attributes, ['x1', 'y1', 'x2', 'y2']);
     return this.applySvgStyle(
       new Line(
         id,
@@ -242,13 +250,15 @@ export class ShapeFactory {
         this.svgNumber(attributes, 'y1'),
         this.svgNumber(attributes, 'x2'),
         this.svgNumber(attributes, 'y2'),
+        undefined,
+        unmodeled,
       ),
       attributes,
     );
   }
 
   private createRectFromSvg(id: string, attributes: ReadonlyMap<string, string>): Rect {
-    this.assertSvgAttributes('rect', attributes, ['x', 'y', 'width', 'height']);
+    const unmodeled = this.collectSvgAttributes('rect', attributes, ['x', 'y', 'width', 'height']);
     return this.applySvgStyle(
       new Rect(
         id,
@@ -256,6 +266,8 @@ export class ShapeFactory {
         this.svgNumber(attributes, 'y'),
         this.svgNumber(attributes, 'width'),
         this.svgNumber(attributes, 'height'),
+        undefined,
+        unmodeled,
       ),
       attributes,
     );
@@ -266,9 +278,15 @@ export class ShapeFactory {
     attributes: ReadonlyMap<string, string>,
     content: string,
   ): Text {
-    this.assertSvgAttributes('text', attributes, ['x', 'y']);
+    const unmodeled = this.collectSvgAttributes('text', attributes, ['x', 'y']);
     return this.applySvgStyle(
-      new Text(id, this.svgNumber(attributes, 'x'), this.svgNumber(attributes, 'y'), content),
+      new Text(
+        id,
+        this.svgNumber(attributes, 'x'),
+        this.svgNumber(attributes, 'y'),
+        content,
+        unmodeled,
+      ),
       attributes,
     );
   }
@@ -288,13 +306,14 @@ export class ShapeFactory {
     return shape;
   }
 
-  private assertSvgAttributes(
+  private collectSvgAttributes(
     type: string,
     attributes: ReadonlyMap<string, string>,
     geometry: readonly string[],
-  ): void {
+  ): UnmodeledAttributes {
     const supported = new Set([...ShapeFactory.SVG_COMMON_ATTRIBUTES, ...geometry]);
-    for (const name of attributes.keys()) {
+    const unmodeled: SvgAttribute[] = [];
+    for (const [name, value] of attributes) {
       if (name === 'transform') {
         throw new DomainError(`unsupported transform on ${type}`);
       }
@@ -304,8 +323,10 @@ export class ShapeFactory {
       }
 
       if (!supported.has(name)) {
-        throw new DomainError(`unsupported attribute: ${name}`);
+        unmodeled.push([name, value]);
       }
     }
+
+    return new UnmodeledAttributes(unmodeled);
   }
 }

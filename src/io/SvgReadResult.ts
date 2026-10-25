@@ -4,6 +4,7 @@ export class SvgReadResult {
   public constructor(
     private readonly documentValue: SvgDocument,
     private readonly elementCountValue: number,
+    private readonly warningsValue: readonly string[] = [],
   ) {}
 
   public get document(): SvgDocument {
@@ -12,5 +13,9 @@ export class SvgReadResult {
 
   public get elementCount(): number {
     return this.elementCountValue;
+  }
+
+  public get warnings(): readonly string[] {
+    return [...this.warningsValue];
   }
 }

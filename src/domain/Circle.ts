@@ -5,14 +5,22 @@ import { LeafShape } from './LeafShape.js';
 import { Point } from './Point.js';
 import type { SvgAttribute } from './Shape.js';
 import type { ShapeAttributeSnapshot } from './ShapeAttributeSnapshot.js';
+import type { UnmodeledAttributes } from './UnmodeledAttributes.js';
 
 export class Circle extends LeafShape {
   private centerXValue: number;
   private centerYValue: number;
   private radiusValue: number;
 
-  public constructor(id: string, centerX: number, centerY: number, radius: number, fill?: string) {
-    super(id, fill);
+  public constructor(
+    id: string,
+    centerX: number,
+    centerY: number,
+    radius: number,
+    fill?: string,
+    unmodeledAttributes?: UnmodeledAttributes,
+  ) {
+    super(id, fill, undefined, unmodeledAttributes);
     LeafShape.assertFinite(centerX);
     LeafShape.assertFinite(centerY);
     LeafShape.assertFinite(radius);

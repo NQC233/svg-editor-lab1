@@ -5,6 +5,7 @@ import { LeafShape } from './LeafShape.js';
 import { Point } from './Point.js';
 import type { SvgAttribute } from './Shape.js';
 import type { ShapeAttributeSnapshot } from './ShapeAttributeSnapshot.js';
+import type { UnmodeledAttributes } from './UnmodeledAttributes.js';
 
 export class Line extends LeafShape {
   private startXValue: number;
@@ -19,8 +20,9 @@ export class Line extends LeafShape {
     endX: number,
     endY: number,
     stroke?: string,
+    unmodeledAttributes?: UnmodeledAttributes,
   ) {
-    super(id, undefined, stroke);
+    super(id, undefined, stroke, unmodeledAttributes);
     LeafShape.assertFinite(startX);
     LeafShape.assertFinite(startY);
     LeafShape.assertFinite(endX);

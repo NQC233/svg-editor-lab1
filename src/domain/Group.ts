@@ -1,10 +1,11 @@
 import { DomainError } from '../shared/DomainError.js';
 import { Container } from './Container.js';
 import type { ShapeAttributeSnapshot } from './ShapeAttributeSnapshot.js';
+import type { UnmodeledAttributes } from './UnmodeledAttributes.js';
 
 export class Group extends Container {
-  public constructor(id: string) {
-    super(id);
+  public constructor(id: string, unmodeledAttributes?: UnmodeledAttributes) {
+    super(id, undefined, undefined, unmodeledAttributes);
   }
 
   public override get type(): string {

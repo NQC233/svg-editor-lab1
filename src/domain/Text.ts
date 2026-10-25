@@ -5,14 +5,21 @@ import { LeafShape } from './LeafShape.js';
 import { Point } from './Point.js';
 import type { SvgAttribute } from './Shape.js';
 import { ShapeAttributeSnapshot } from './ShapeAttributeSnapshot.js';
+import type { UnmodeledAttributes } from './UnmodeledAttributes.js';
 
 export class Text extends LeafShape {
   private xValue: number;
   private yValue: number;
   private contentValue: string;
 
-  public constructor(id: string, x: number, y: number, content: string) {
-    super(id);
+  public constructor(
+    id: string,
+    x: number,
+    y: number,
+    content: string,
+    unmodeledAttributes?: UnmodeledAttributes,
+  ) {
+    super(id, undefined, undefined, unmodeledAttributes);
     LeafShape.assertFinite(x);
     LeafShape.assertFinite(y);
     this.xValue = x;

@@ -195,26 +195,6 @@ test('[spec 6.12, 7, 10] rejects unsupported or malformed SVG and stays atomic',
       'unsupported element: path',
     ],
     [
-      'metadata.svg',
-      '<svg width="100" height="80"><title>title</title></svg>',
-      'unsupported element: title',
-    ],
-    [
-      'unknown-attr.svg',
-      '<svg width="100" height="80"><rect id="r" x="0" y="0" width="1" height="1" rx="2"/></svg>',
-      'unsupported attribute: rx',
-    ],
-    [
-      'missing-id.svg',
-      '<svg width="100" height="80"><rect x="0" y="0" width="1" height="1"/></svg>',
-      'invalid SVG: missing id on rect',
-    ],
-    [
-      'empty-id.svg',
-      '<svg width="100" height="80"><rect id="" x="0" y="0" width="1" height="1"/></svg>',
-      'invalid SVG: missing id on rect',
-    ],
-    [
       'whitespace-id.svg',
       '<svg width="100" height="80"><rect id="bad id" x="0" y="0" width="1" height="1"/></svg>',
       'invalid id: bad id',
@@ -228,6 +208,11 @@ test('[spec 6.12, 7, 10] rejects unsupported or malformed SVG and stays atomic',
       'text-child.svg',
       '<svg width="100" height="80"><text id="t">a<tspan>b</tspan></text></svg>',
       'unsupported element: tspan',
+    ],
+    [
+      'leaf-child.svg',
+      '<svg width="100" height="80"><rect id="r" x="0" y="0" width="1" height="1"><circle id="c" cx="0" cy="0" r="1"/></rect></svg>',
+      'unsupported element: circle',
     ],
     [
       'group-text.svg',

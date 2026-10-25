@@ -5,6 +5,7 @@ import { LeafShape } from './LeafShape.js';
 import { Point } from './Point.js';
 import type { SvgAttribute } from './Shape.js';
 import type { ShapeAttributeSnapshot } from './ShapeAttributeSnapshot.js';
+import type { UnmodeledAttributes } from './UnmodeledAttributes.js';
 
 export class Ellipse extends LeafShape {
   private centerXValue: number;
@@ -19,8 +20,9 @@ export class Ellipse extends LeafShape {
     radiusX: number,
     radiusY: number,
     fill?: string,
+    unmodeledAttributes?: UnmodeledAttributes,
   ) {
-    super(id, fill);
+    super(id, fill, undefined, unmodeledAttributes);
     LeafShape.assertFinite(centerX);
     LeafShape.assertFinite(centerY);
     LeafShape.assertFinite(radiusX);
