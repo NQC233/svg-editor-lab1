@@ -351,6 +351,78 @@ test('[spec 3.3, 5.1, 5.2, 5.5, 5.6, 6.1, 6.10] replays geometry shape creation,
   );
 });
 
+test('[spec 5.1-5.3, 6.5, 6.10, 9] replays set updates, no-ops, failures, history, and barriers', async () => {
+  const result = await runCli(
+    [
+      'set r x 1',
+      'init 400 200',
+      'create rect r 0 0 10 10',
+      'create text t 1 2 "old"',
+      'set t text "new \\"label\\""',
+      'set r fill red',
+      'set r x 5',
+      'set r stroke-width 2.50',
+      'show r',
+      'show t',
+      'set r x 5.0',
+      'set r width 0',
+      'set r opacity 1',
+      'set r fill ""',
+      'set r fill red',
+      'undo',
+      'show r',
+      'undo',
+      'undo',
+      'show r',
+      'redo',
+      'canvas 640 480',
+      'set r x 0',
+      'undo',
+    ].join('\n'),
+  );
+
+  assert.equal(result.code, 0);
+  assert.equal(result.stderr, '');
+  assert.equal(
+    result.stdout,
+    [
+      "error: no document. use 'init' or 'read' first",
+      'canvas 400x200 created',
+      'rect#r created',
+      'text#t created',
+      'text#t updated: text="new \\"label\\""',
+      'rect#r updated: fill=red',
+      'rect#r updated: x=5',
+      'rect#r updated: stroke-width=2.5',
+      'rect#r  parent=svg',
+      '  x=5 y=0 width=10 height=10',
+      '  fill=red',
+      '  stroke-width=2.5',
+      'text#t  parent=svg',
+      '  x=1 y=2',
+      '  text="new \\"label\\""',
+      'rect#r unchanged',
+      'error: rect width must be positive',
+      'error: unknown attribute: opacity',
+      'error: fill must not be empty',
+      'rect#r unchanged',
+      'rect#r updated: stroke-width=(unset)',
+      'rect#r  parent=svg',
+      '  x=5 y=0 width=10 height=10',
+      '  fill=red',
+      'rect#r updated: x=0',
+      'rect#r updated: fill=(unset)',
+      'rect#r  parent=svg',
+      '  x=0 y=0 width=10 height=10',
+      'rect#r updated: fill=red',
+      'canvas resized to 640x480',
+      'rect#r unchanged',
+      'error: undo not allowed after io command',
+      '',
+    ].join('\n'),
+  );
+});
+
 test('[spec 4.2, 5.2, 5.5, 5.6, 6.1, 6.10] replays quoted text creation, display, history, and failures', async () => {
   const result = await runCli(
     [

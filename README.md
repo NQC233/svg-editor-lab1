@@ -2,7 +2,7 @@
 
 高级软件开发技术课程作业：使用 TypeScript 和面向对象方式开发 SVG 命令行编辑器。
 
-**当前状态：Ticket 01–08、10、13 和 15 已完成实现与验收。** CLI 已支持 REPL、注释、引号参数、`help`、`init`、查询和修改画布尺寸的 `canvas`、`create rect/circle/ellipse/line/text/g`、`create … in <containerId>`、删除叶子或整棵子树的 `delete`、解散嵌套容器的 `ungroup`、对叶子或整棵容器的 `move`/`scale`、嵌套 `tree`、`show`、`undo` 和 `redo`；SVG 读写和其余编辑命令仍待后续票。实现顺序和验收标准见[纵向任务计划](doc/ticket-plan.md)。
+**当前状态：Ticket 01–10、13 和 15 已完成实现与验收。** CLI 已支持 REPL、注释、引号参数、`help`、`init`、查询和修改画布尺寸的 `canvas`、`create rect/circle/ellipse/line/text/g`、`create … in <containerId>`、删除叶子或整棵子树的 `delete`、解散嵌套容器的 `ungroup`、对叶子或整棵容器的 `move`/`scale`、`set` 修改公共样式、几何属性或文本内容、嵌套 `tree`、`show`、`undo` 和 `redo`；SVG 读写、`group`/`addto`/`front`/`back` 仍待后续票。实现顺序和验收标准见[纵向任务计划](doc/ticket-plan.md)。
 
 ## 项目资料
 
@@ -35,7 +35,7 @@ npm run cli
 | `npm run typecheck`    | 严格检查源代码和测试代码的类型              |
 | `npm run build`        | 编译源代码到 `dist/`                        |
 | `npm start`            | 运行已编译的入口；需先构建                  |
-| `npm test`             | 使用 Node.js 测试运行器执行测试，当前 76 个 |
+| `npm test`             | 使用 Node.js 测试运行器执行测试，当前 85 个 |
 | `npm run format`       | 格式化工程文件，排除课程原始要求            |
 | `npm run format:check` | 检查文件格式                                |
 | `npm run check`        | 依次执行类型检查、格式检查、测试和构建      |
@@ -61,12 +61,12 @@ npm run cli
 │   ├── main.ts             # 组合根与启动入口
 │   ├── cli/                # 分词、命令表、分发、REPL、输出
 │   ├── commands/           # Command、历史、上下文、执行器和当前命令
-│   ├── domain/             # Shape 层次、GeometrySnapshot、Point、ShapePlacement、ShapeFactory、SvgDocument
+│   ├── domain/             # Shape 层次、几何与属性快照、Point、ShapePlacement、ShapeFactory、SvgDocument
 │   ├── display/            # tree/show 格式化与显示宽度
 │   └── shared/             # 领域错误、数值解析与格式化
 ├── test/
 │   ├── cli/                # 分词与 CLI 回放
-│   ├── commands/           # 命令分发、图形创建/删除/移动/缩放、画布缩放、undo/redo、tree/show 和失败原子性
+│   ├── commands/           # 命令分发、图形创建/删除/移动/缩放/属性更新、画布缩放、undo/redo、tree/show 和失败原子性
 │   └── support/            # 共享的命令分发装配
 ├── package.json
 ├── package-lock.json       # 依赖版本锁定
@@ -74,7 +74,7 @@ npm run cli
 └── tsconfig.build.json     # 仅构建 src/ 的配置
 ```
 
-当前已落地 `shared/`、`domain/`、`display/`、`commands/` 和 `cli/`。图形层次已实现 `Shape` → `LeafShape`/`Container`，包含五个叶子图形与 `Group`；`move` 和 `scale` 通过多态几何操作和精确 `GeometrySnapshot` 支持叶子及整棵子树，并由 `SvgDocument` 对一次变换统一执行、失败时回滚。`delete` 由 `SvgDocument` 保存原父级和索引、释放整棵子树的 id 索引，再通过同一位置恢复。命令历史还支持创建、删除、移动和缩放的撤销/重做、redo 分支清空以及 `init` 和带参数 `canvas` 建立的屏障。`io/` 和其余编辑命令仍按 [doc/README.md](doc/README.md) 的模块划分在后续票中实现。
+当前已落地 `shared/`、`domain/`、`display/`、`commands/` 和 `cli/`。图形层次已实现 `Shape` → `LeafShape`/`Container`，包含五个叶子图形与 `Group`；`Shape` 统一封装公共样式与多态属性更新，`ShapeAttributeSnapshot` 保存旧值或未设置状态。`move` 和 `scale` 通过多态几何操作和精确 `GeometrySnapshot` 支持叶子及整棵子树，并由 `SvgDocument` 对一次变换统一执行、失败时回滚。`delete` 由 `SvgDocument` 保存原父级和索引、释放整棵子树的 id 索引，再通过同一位置恢复。命令历史支持创建、删除、移动、缩放和属性更新的撤销/重做、redo 分支清空以及 `init` 和带参数 `canvas` 建立的屏障。`io/` 和其余编辑命令仍按 [doc/README.md](doc/README.md) 的模块划分在后续票中实现。
 
 生产运行依赖为空；开发工具包括 TypeScript、tsx、Node.js 类型声明和 Prettier。
 

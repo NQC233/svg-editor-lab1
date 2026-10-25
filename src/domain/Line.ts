@@ -1,7 +1,9 @@
+import { DomainError } from '../shared/DomainError.js';
 import { NumberFormatter } from '../shared/NumberFormatter.js';
 import { GeometrySnapshot } from './GeometrySnapshot.js';
 import { LeafShape } from './LeafShape.js';
 import { Point } from './Point.js';
+import type { ShapeAttributeSnapshot } from './ShapeAttributeSnapshot.js';
 
 export class Line extends LeafShape {
   private startXValue: number;
@@ -117,5 +119,28 @@ export class Line extends LeafShape {
       ].join(' '),
       ...this.styleLines(),
     ];
+  }
+
+  protected override setOwnAttribute(attribute: string, value: string): ShapeAttributeSnapshot {
+    switch (attribute) {
+      case 'x1':
+        return this.setNumberAttribute(attribute, value, this.startXValue, (next) => {
+          this.startXValue = next;
+        });
+      case 'y1':
+        return this.setNumberAttribute(attribute, value, this.startYValue, (next) => {
+          this.startYValue = next;
+        });
+      case 'x2':
+        return this.setNumberAttribute(attribute, value, this.endXValue, (next) => {
+          this.endXValue = next;
+        });
+      case 'y2':
+        return this.setNumberAttribute(attribute, value, this.endYValue, (next) => {
+          this.endYValue = next;
+        });
+      default:
+        throw new DomainError(`unknown attribute: ${attribute}`);
+    }
   }
 }

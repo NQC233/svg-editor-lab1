@@ -1,12 +1,14 @@
+import { DomainError } from '../shared/DomainError.js';
 import { NumberFormatter } from '../shared/NumberFormatter.js';
 import { GeometrySnapshot } from './GeometrySnapshot.js';
 import { LeafShape } from './LeafShape.js';
 import { Point } from './Point.js';
+import { ShapeAttributeSnapshot } from './ShapeAttributeSnapshot.js';
 
 export class Text extends LeafShape {
   private xValue: number;
   private yValue: number;
-  private readonly contentValue: string;
+  private contentValue: string;
 
   public constructor(id: string, x: number, y: number, content: string) {
     super(id);
@@ -75,7 +77,40 @@ export class Text extends LeafShape {
     return [
       `x=${NumberFormatter.format(this.x)} y=${NumberFormatter.format(this.y)}`,
       `text=${this.quotedContent()}`,
+      ...this.styleLines(),
     ];
+  }
+
+  protected override setOwnAttribute(attribute: string, value: string): ShapeAttributeSnapshot {
+    switch (attribute) {
+      case 'x':
+        return this.setNumberAttribute(attribute, value, this.xValue, (next) => {
+          this.xValue = next;
+        });
+      case 'y':
+        return this.setNumberAttribute(attribute, value, this.yValue, (next) => {
+          this.yValue = next;
+        });
+      case 'text': {
+        const current = this.contentValue;
+        const changed = current !== value;
+        if (changed) {
+          this.contentValue = value;
+        }
+
+        return new ShapeAttributeSnapshot(
+          attribute,
+          changed,
+          JSON.stringify(current),
+          JSON.stringify(value),
+          () => {
+            this.contentValue = current;
+          },
+        );
+      }
+      default:
+        throw new DomainError(`unknown attribute: ${attribute}`);
+    }
   }
 
   private quotedContent(): string {

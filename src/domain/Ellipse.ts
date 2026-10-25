@@ -3,6 +3,7 @@ import { NumberFormatter } from '../shared/NumberFormatter.js';
 import { GeometrySnapshot } from './GeometrySnapshot.js';
 import { LeafShape } from './LeafShape.js';
 import { Point } from './Point.js';
+import type { ShapeAttributeSnapshot } from './ShapeAttributeSnapshot.js';
 
 export class Ellipse extends LeafShape {
   private centerXValue: number;
@@ -121,7 +122,7 @@ export class Ellipse extends LeafShape {
       `cy=${NumberFormatter.format(this.centerY)}`,
       `rx=${NumberFormatter.format(this.radiusX)}`,
       `ry=${NumberFormatter.format(this.radiusY)}`,
-      ...this.styleLines(),
+      ...this.treeFillLines(),
     ].join(' ');
   }
 
@@ -135,5 +136,36 @@ export class Ellipse extends LeafShape {
       ].join(' '),
       ...this.styleLines(),
     ];
+  }
+
+  protected override setOwnAttribute(attribute: string, value: string): ShapeAttributeSnapshot {
+    switch (attribute) {
+      case 'cx':
+        return this.setNumberAttribute(attribute, value, this.centerXValue, (next) => {
+          this.centerXValue = next;
+        });
+      case 'cy':
+        return this.setNumberAttribute(attribute, value, this.centerYValue, (next) => {
+          this.centerYValue = next;
+        });
+      case 'rx':
+        return this.setNumberAttribute(attribute, value, this.radiusXValue, (next) => {
+          if (next <= 0) {
+            throw new DomainError('ellipse rx must be positive');
+          }
+
+          this.radiusXValue = next;
+        });
+      case 'ry':
+        return this.setNumberAttribute(attribute, value, this.radiusYValue, (next) => {
+          if (next <= 0) {
+            throw new DomainError('ellipse ry must be positive');
+          }
+
+          this.radiusYValue = next;
+        });
+      default:
+        throw new DomainError(`unknown attribute: ${attribute}`);
+    }
   }
 }
