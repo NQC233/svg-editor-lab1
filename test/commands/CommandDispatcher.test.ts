@@ -2,6 +2,7 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 
 import { CommandContext } from '../../src/commands/CommandContext.js';
+import { CommandHistory } from '../../src/commands/CommandHistory.js';
 import { CommandInvoker } from '../../src/commands/CommandInvoker.js';
 import { CanvasCommand } from '../../src/commands/CanvasCommand.js';
 import { CreateCommand } from '../../src/commands/CreateCommand.js';
@@ -18,6 +19,7 @@ import { DomainError } from '../../src/shared/DomainError.js';
 
 function createContext(): CommandContext {
   return new CommandContext({
+    history: new CommandHistory(),
     shapeFactory: new ShapeFactory(),
     showFormatter: new ShowFormatter(),
     treeFormatter: new TreeFormatter(),
@@ -26,12 +28,12 @@ function createContext(): CommandContext {
 
 function createDispatcher(): CommandDispatcher {
   const catalog = new CommandCatalog([
-    ['init', new InitCommand()],
-    ['canvas', new CanvasCommand()],
-    ['create', new CreateCommand()],
-    ['tree', new TreeCommand()],
-    ['show', new ShowCommand()],
-    ['help', new HelpCommand()],
+    ['init', () => new InitCommand()],
+    ['canvas', () => new CanvasCommand()],
+    ['create', () => new CreateCommand()],
+    ['tree', () => new TreeCommand()],
+    ['show', () => new ShowCommand()],
+    ['help', () => new HelpCommand()],
   ]);
   return new CommandDispatcher(catalog, new CommandInvoker(createContext()));
 }
@@ -70,7 +72,7 @@ test('[spec 6.17] help works without a document and lists the complete target gr
     'History:',
     '  undo',
     '  redo',
-    'Partial implementation: available commands are help, init, canvas, create rect, tree, and show.',
+    'Partial implementation: available commands are help, init, canvas, create rect, tree, show, undo, and redo.',
     'Canvas resizing is not available yet.',
   ]);
 });

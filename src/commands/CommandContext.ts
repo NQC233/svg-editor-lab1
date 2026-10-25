@@ -3,8 +3,10 @@ import type { ShapeFactory } from '../domain/ShapeFactory.js';
 import type { ShowFormatter } from '../display/ShowFormatter.js';
 import type { TreeFormatter } from '../display/TreeFormatter.js';
 import { DomainError } from '../shared/DomainError.js';
+import type { CommandHistory } from './CommandHistory.js';
 
 interface CommandContextDependencies {
+  readonly history: CommandHistory;
   readonly shapeFactory: ShapeFactory;
   readonly showFormatter: ShowFormatter;
   readonly treeFormatter: TreeFormatter;
@@ -14,6 +16,10 @@ export class CommandContext {
   private document: SvgDocument | undefined;
 
   public constructor(private readonly dependencies: CommandContextDependencies) {}
+
+  public get history(): CommandHistory {
+    return this.dependencies.history;
+  }
 
   public get shapeFactory(): ShapeFactory {
     return this.dependencies.shapeFactory;

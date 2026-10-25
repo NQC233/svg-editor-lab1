@@ -4,9 +4,15 @@ import { NumberFormatter } from '../shared/NumberFormatter.js';
 import { NumberParser } from '../shared/NumberParser.js';
 import { Command } from './Command.js';
 import type { CommandContext } from './CommandContext.js';
+import { CommandKind } from './CommandKind.js';
+import { CommandResult } from './CommandResult.js';
 
 export class InitCommand extends Command {
-  public execute(context: CommandContext, args: readonly string[]): readonly string[] {
+  public override get kind(): CommandKind {
+    return CommandKind.Document;
+  }
+
+  public execute(context: CommandContext, args: readonly string[]): CommandResult {
     if (args.length > 2) {
       throw new DomainError('usage: init [w] [h]');
     }
@@ -39,6 +45,8 @@ export class InitCommand extends Command {
       throw error;
     }
 
-    return [`canvas ${NumberFormatter.format(width)}x${NumberFormatter.format(height)} created`];
+    return new CommandResult([
+      `canvas ${NumberFormatter.format(width)}x${NumberFormatter.format(height)} created`,
+    ]);
   }
 }

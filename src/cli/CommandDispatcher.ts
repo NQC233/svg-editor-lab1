@@ -14,11 +14,12 @@ export class CommandDispatcher {
       return [];
     }
 
-    const command = this.catalog.find(name);
-    if (command === undefined) {
+    const createCommand = this.catalog.find(name);
+    if (createCommand === undefined) {
       throw new DomainError(`unknown command: ${name}`);
     }
 
+    const command = createCommand();
     return this.invoker.execute(command, tokens.slice(1));
   }
 }

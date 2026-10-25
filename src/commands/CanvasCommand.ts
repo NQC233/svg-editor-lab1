@@ -2,15 +2,24 @@ import { DomainError } from '../shared/DomainError.js';
 import { NumberFormatter } from '../shared/NumberFormatter.js';
 import { Command } from './Command.js';
 import type { CommandContext } from './CommandContext.js';
+import { CommandKind } from './CommandKind.js';
+import { CommandResult } from './CommandResult.js';
 
 export class CanvasCommand extends Command {
-  public execute(context: CommandContext, args: readonly string[]): readonly string[] {
+  public override get kind(): CommandKind {
+    return CommandKind.Display;
+  }
+
+  public execute(context: CommandContext, args: readonly string[]): CommandResult {
     const document = context.requireDocument();
 
     if (args.length === 0) {
-      return [
-        `canvas ${NumberFormatter.format(document.width)}x${NumberFormatter.format(document.height)}`,
-      ];
+      return new CommandResult(
+        [
+          `canvas ${NumberFormatter.format(document.width)}x${NumberFormatter.format(document.height)}`,
+        ],
+        false,
+      );
     }
 
     if (args.length === 1) {

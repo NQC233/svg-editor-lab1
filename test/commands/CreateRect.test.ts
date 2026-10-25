@@ -2,6 +2,7 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 
 import { CommandContext } from '../../src/commands/CommandContext.js';
+import { CommandHistory } from '../../src/commands/CommandHistory.js';
 import { CommandInvoker } from '../../src/commands/CommandInvoker.js';
 import { CanvasCommand } from '../../src/commands/CanvasCommand.js';
 import { CreateCommand } from '../../src/commands/CreateCommand.js';
@@ -17,18 +18,20 @@ import { ShapeFactory } from '../../src/domain/ShapeFactory.js';
 import { DomainError } from '../../src/shared/DomainError.js';
 
 function createDispatcher(): CommandDispatcher {
+  const history = new CommandHistory();
   const context = new CommandContext({
+    history,
     shapeFactory: new ShapeFactory(),
     showFormatter: new ShowFormatter(),
     treeFormatter: new TreeFormatter(),
   });
   const catalog = new CommandCatalog([
-    ['init', new InitCommand()],
-    ['canvas', new CanvasCommand()],
-    ['create', new CreateCommand()],
-    ['tree', new TreeCommand()],
-    ['show', new ShowCommand()],
-    ['help', new HelpCommand()],
+    ['init', () => new InitCommand()],
+    ['canvas', () => new CanvasCommand()],
+    ['create', () => new CreateCommand()],
+    ['tree', () => new TreeCommand()],
+    ['show', () => new ShowCommand()],
+    ['help', () => new HelpCommand()],
   ]);
   return new CommandDispatcher(catalog, new CommandInvoker(context));
 }

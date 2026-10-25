@@ -39,13 +39,29 @@ export class SvgDocument {
   }
 
   public appendShape(shape: Shape): number {
+    const insertionIndex = this.rootShapesValue.length;
+    this.insertShape(shape, insertionIndex);
+    return insertionIndex;
+  }
+
+  public insertShape(shape: Shape, insertionIndex: number): void {
+    this.assertInsertionIndex(insertionIndex);
     if (this.shapesById.has(shape.id)) {
       throw new DomainError(`id already exists: ${shape.id}`);
     }
 
+    this.rootShapesValue.splice(insertionIndex, 0, shape);
     this.shapesById.set(shape.id, shape);
-    this.rootShapesValue.push(shape);
-    return this.rootShapesValue.length - 1;
+  }
+
+  public removeShape(shape: Shape): void {
+    const insertionIndex = this.rootShapesValue.indexOf(shape);
+    if (insertionIndex < 0 || this.shapesById.get(shape.id) !== shape) {
+      throw new DomainError(`no such shape: ${shape.id}`);
+    }
+
+    this.rootShapesValue.splice(insertionIndex, 1);
+    this.shapesById.delete(shape.id);
   }
 
   public parentLabelOf(shape: Shape): string {
@@ -59,6 +75,16 @@ export class SvgDocument {
   private assertPositiveDimensions(width: number, height: number): void {
     if (!Number.isFinite(width) || !Number.isFinite(height) || width <= 0 || height <= 0) {
       throw new DomainError('canvas width and height must be positive');
+    }
+  }
+
+  private assertInsertionIndex(insertionIndex: number): void {
+    if (
+      !Number.isInteger(insertionIndex) ||
+      insertionIndex < 0 ||
+      insertionIndex > this.rootShapesValue.length
+    ) {
+      throw new DomainError(`invalid insertion index: ${insertionIndex}`);
     }
   }
 }

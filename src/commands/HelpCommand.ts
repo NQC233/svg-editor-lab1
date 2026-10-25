@@ -1,6 +1,8 @@
 import { DomainError } from '../shared/DomainError.js';
 import { Command } from './Command.js';
 import type { CommandContext } from './CommandContext.js';
+import { CommandKind } from './CommandKind.js';
+import { CommandResult } from './CommandResult.js';
 
 export class HelpCommand extends Command {
   private static readonly HELP_LINES = [
@@ -27,15 +29,19 @@ export class HelpCommand extends Command {
     'History:',
     '  undo',
     '  redo',
-    'Partial implementation: available commands are help, init, canvas, create rect, tree, and show.',
+    'Partial implementation: available commands are help, init, canvas, create rect, tree, show, undo, and redo.',
     'Canvas resizing is not available yet.',
   ] as const;
 
-  public execute(_context: CommandContext, args: readonly string[]): readonly string[] {
+  public override get kind(): CommandKind {
+    return CommandKind.Display;
+  }
+
+  public execute(_context: CommandContext, args: readonly string[]): CommandResult {
     if (args.length > 0) {
       throw new DomainError('usage: help');
     }
 
-    return HelpCommand.HELP_LINES;
+    return new CommandResult(HelpCommand.HELP_LINES, false);
   }
 }
