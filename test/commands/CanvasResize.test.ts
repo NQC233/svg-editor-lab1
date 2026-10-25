@@ -62,6 +62,12 @@ test('[spec 3.3, 3.4, 6.14] failed resizes preserve dimensions, shapes, and hist
     () => dispatcher.dispatch(['canvas', 'nope', '480']),
     new DomainError('invalid number: nope'),
   );
+  for (const value of ['NaN', 'Infinity', '1e999']) {
+    assert.throws(
+      () => dispatcher.dispatch(['canvas', value, '480']),
+      new DomainError(`invalid number: ${value}`),
+    );
+  }
   assert.throws(
     () => dispatcher.dispatch(['canvas', '0', '480']),
     new DomainError('canvas width and height must be positive'),
