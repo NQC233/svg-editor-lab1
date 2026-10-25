@@ -45,11 +45,12 @@ test('[spec 8] serializes every shape, nested containers, styles, and escaped te
   dispatcher.dispatch(['create', 'line', 'l', '12', '13', '14', '15', 'green', 'in', 'outer']);
   dispatcher.dispatch(['create', 'g', 'nested', 'in', 'outer']);
   dispatcher.dispatch(['create', 'text', 't', '16', '17', 'A & <B> "C"', 'in', 'nested']);
+  dispatcher.dispatch(['create', 'text', 'empty-text', '0', '0', '', 'in', 'nested']);
   dispatcher.dispatch(['set', 't', 'fill', '#fff']);
   dispatcher.dispatch(['set', 't', 'stroke', '#000']);
   dispatcher.dispatch(['create', 'g', 'empty', 'in', 'outer']);
 
-  assert.deepEqual(dispatcher.dispatch(['save', file]), [`saved to ${file} (8 elements)`]);
+  assert.deepEqual(dispatcher.dispatch(['save', file]), [`saved to ${file} (9 elements)`]);
   assert.equal(
     await readFile(file, 'utf8'),
     [
@@ -62,6 +63,7 @@ test('[spec 8] serializes every shape, nested containers, styles, and escaped te
       '    <line id="l" x1="12" y1="13" x2="14" y2="15" stroke="green"/>',
       '    <g id="nested">',
       '      <text id="t" x="16" y="17" fill="#fff" stroke="#000">A &amp; &lt;B&gt; &quot;C&quot;</text>',
+      '      <text id="empty-text" x="0" y="0"></text>',
       '    </g>',
       '    <g id="empty"/>',
       '  </g>',
