@@ -4,6 +4,7 @@ import { Container } from './Container.js';
 import type { GeometrySnapshot } from './GeometrySnapshot.js';
 import { LeafShape } from './LeafShape.js';
 import type { Shape } from './Shape.js';
+import { ShapePlacement } from './ShapePlacement.js';
 
 export class SvgDocument {
   private widthValue: number;
@@ -78,7 +79,7 @@ export class SvgDocument {
     this.registerSubtree(shape, container);
   }
 
-  public removeShape(shape: Shape): void {
+  public removeShape(shape: Shape): ShapePlacement {
     if (!this.parents.has(shape) || this.shapesById.get(shape.id) !== shape) {
       throw new DomainError(`no such shape: ${shape.id}`);
     }
@@ -93,6 +94,7 @@ export class SvgDocument {
     siblings.splice(insertionIndex, 1);
 
     this.unregisterSubtree(shape);
+    return new ShapePlacement(parent, insertionIndex);
   }
 
   public requireContainer(id: string): Container {
