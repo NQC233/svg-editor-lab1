@@ -1,6 +1,6 @@
 @startuml
 skinparam componentStyle rectangle
-title SVG 编辑器 Phase 1 模块依赖（当前已实现部分，截至 Ticket 16；其余规划）
+title SVG 编辑器 Phase 1 模块依赖（当前已实现部分，截至 Ticket 17；其余规划）
 
 package "cli" {
   [CliApplication]
@@ -26,6 +26,7 @@ package "domain" {
 }
 
 package "io" {
+  [Xml 节点层次]
   [SvgReader]
   [SvgWriter]
   [XmlParser]
@@ -69,6 +70,7 @@ package "shared" {
 [显示命令] --> [TreeFormatter]
 [显示命令] --> [ShowFormatter]
 [SvgReader] --> [XmlParser]
+[XmlParser] --> [Xml 节点层次]
 [SvgReader] --> [SvgDocument]
 [SvgReader] --> [ShapeFactory]
 [SvgWriter] --> [SvgDocument]

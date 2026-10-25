@@ -1,5 +1,5 @@
 @startuml
-title 图形模型（当前已实现部分，截至 Ticket 16）
+title 图形模型（当前已实现部分，截至 Ticket 17）
 
 abstract class Shape {
   +get id(): string
@@ -8,6 +8,7 @@ abstract class Shape {
   +get fill(): string | undefined
   +get stroke(): string | undefined
   +get strokeWidth(): number | undefined
+  +isContainer(): this is Container
   +svgAttributes(): readonly SvgAttribute[]
   +svgTextContent(): string | undefined
   +setAttribute(attribute, value): ShapeAttributeSnapshot
@@ -101,7 +102,43 @@ class SvgDocument {
 
 class ShapeFactory {
   +create(type, id, args): Shape
+  +createFromSvg(type, id, attributes, text?): Shape
   +createGroup(id): Group
+}
+
+abstract class XmlNode {
+  +accept(visitor): T
+}
+
+class XmlElement {
+  +get name(): string
+  +get attributes(): readonly XmlAttribute[]
+  +get children(): readonly XmlNode[]
+  +attribute(name): string | undefined
+  +appendChild(child): void
+}
+
+class XmlText {
+  +get value(): string
+  +get cdata(): boolean
+}
+
+class XmlDocument {
+  +get root(): XmlElement
+}
+
+class XmlParser {
+  +parse(source): XmlDocument
+}
+
+class SvgReader {
+  +read(path): SvgReadResult
+  +parse(source): SvgReadResult
+}
+
+class SvgReadResult {
+  +get document(): SvgDocument
+  +get elementCount(): number
 }
 
 Shape <|-- LeafShape
@@ -123,10 +160,19 @@ LeafShape ..> GeometrySnapshot : captures exact geometry
 LeafShape ..> Point : exposes movement anchor
 ShapeFactory ..> Shape : creates
 Shape ..> ShapeAttributeSnapshot : returns attribute memento
+XmlNode <|-- XmlElement
+XmlNode <|-- XmlText
+XmlElement o-- XmlNode : children
+XmlDocument o-- XmlElement : root
+XmlParser --> XmlDocument : builds
+XmlParser --> XmlNode : dispatches polymorphically
+SvgReader --> XmlParser : parses
+SvgReader --> ShapeFactory : creates shapes
+SvgReader --> SvgReadResult : returns
 @enduml
 
 @startuml
-title 命令与历史（当前已实现部分，截至 Ticket 16）
+title 命令与历史（当前已实现部分，截至 Ticket 17）
 
 abstract class Command {
   +execute(context, args): CommandResult
@@ -165,6 +211,7 @@ class ScaleCommand
 class SetCommand
 class CanvasCommand
 class InitCommand
+class ReadCommand
 class SaveCommand
 class TreeCommand
 class ShowCommand
@@ -172,6 +219,9 @@ class HelpCommand
 class UndoCommand
 class RedoCommand
 class SvgWriter
+class SvgReader
+class SvgReadResult
+class XmlParser
 class XmlEscaper
 
 Command <|-- EditCommand
@@ -189,6 +239,7 @@ EditCommand <|.. ScaleCommand
 EditCommand <|.. SetCommand
 DocumentCommand <|.. CanvasCommand
 DocumentCommand <|.. InitCommand
+DocumentCommand <|.. ReadCommand
 DocumentCommand <|.. SaveCommand
 Command <|.. TreeCommand
 Command <|.. ShowCommand
@@ -198,6 +249,9 @@ Command <|.. RedoCommand
 SvgWriter --> SvgDocument : writes
 SvgWriter --> Shape : reads polymorphic SVG attributes
 SvgWriter --> XmlEscaper : escapes XML values
+ReadCommand --> SvgReader : builds a complete document first
+SvgReader --> SvgReadResult : returns document and count
+SvgReader --> XmlParser : parses XML nodes
 
 CommandInvoker --> CommandHistory
 CommandInvoker --> Command
