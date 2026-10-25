@@ -28,6 +28,7 @@ import { ShapeFactory } from '../../src/domain/ShapeFactory.js';
 import { SvgWriter } from '../../src/io/SvgWriter.js';
 import { SvgReader } from '../../src/io/SvgReader.js';
 import { XmlParser } from '../../src/io/XmlParser.js';
+import { SvgIdAllocator } from '../../src/io/SvgIdAllocator.js';
 
 export function createDispatcher(): CommandDispatcher {
   const history = new CommandHistory();
@@ -36,7 +37,7 @@ export function createDispatcher(): CommandDispatcher {
     history,
     shapeFactory,
     showFormatter: new ShowFormatter(),
-    svgReader: new SvgReader(new XmlParser(), shapeFactory),
+    svgReader: new SvgReader(new XmlParser(), shapeFactory, new SvgIdAllocator(shapeFactory)),
     svgWriter: new SvgWriter(),
     treeFormatter: new TreeFormatter(),
   });

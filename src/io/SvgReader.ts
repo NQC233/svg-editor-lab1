@@ -9,6 +9,8 @@ import { DomainError } from '../shared/DomainError.js';
 import { NumberParser } from '../shared/NumberParser.js';
 import type { XmlElement } from './XmlElement.js';
 import { XmlParser } from './XmlParser.js';
+import type { SvgIdAllocation } from './SvgIdAllocation.js';
+import type { SvgIdAllocator } from './SvgIdAllocator.js';
 import { SvgReadResult } from './SvgReadResult.js';
 import type { XmlText } from './XmlText.js';
 
@@ -19,6 +21,7 @@ export class SvgReader {
   public constructor(
     private readonly xmlParser: XmlParser,
     private readonly shapeFactory: ShapeFactory,
+    private readonly idAllocator: SvgIdAllocator,
   ) {}
 
   public read(path: string): SvgReadResult {
@@ -49,20 +52,20 @@ export class SvgReader {
     const width = this.readRootDimension(root, 'width');
     const height = this.readRootDimension(root, 'height');
     this.validateViewBox(root.attribute('viewBox'), width, height);
+    const idAllocation = this.idAllocator.allocate(root);
 
     const document = new SvgDocument(width, height);
-    return new SvgReadResult(document, this.appendElementChildren(root, document));
+    const elementCount = this.appendElementChildren(root, document, idAllocation);
+    return new SvgReadResult(document, elementCount, idAllocation.warnings);
   }
 
-  private appendElement(element: XmlElement, document: SvgDocument, parent?: Container): number {
-    if (!this.shapeFactory.isSvgElement(element.name)) {
-      throw new DomainError(`unsupported element: ${element.name}`);
-    }
-
-    const id = element.attribute('id');
-    if (id === undefined || id.length === 0) {
-      throw new DomainError(`invalid SVG: missing id on ${element.name}`);
-    }
+  private appendElement(
+    element: XmlElement,
+    document: SvgDocument,
+    idAllocation: SvgIdAllocation,
+    parent?: Container,
+  ): number {
+    const id = idAllocation.idFor(element);
 
     if (document.find(id) !== undefined) {
       throw new DomainError(`id already exists: ${id}`);
@@ -86,18 +89,25 @@ export class SvgReader {
       return 1;
     }
 
-    return 1 + this.appendElementChildren(element, document, shape);
+    return 1 + this.appendElementChildren(element, document, idAllocation, shape);
   }
 
   private appendElementChildren(
     element: XmlElement,
     document: SvgDocument,
+    idAllocation: SvgIdAllocation,
     parent?: Container,
   ): number {
     let elementCount = 0;
     for (const child of element.children) {
       elementCount += child.accept({
-        visitElement: (childElement) => this.appendElement(childElement, document, parent),
+        visitElement: (childElement) => {
+          if (this.shapeFactory.isIgnoredSvgElement(childElement.name)) {
+            return 0;
+          }
+
+          return this.appendElement(childElement, document, idAllocation, parent);
+        },
         visitText: (text) => {
           this.assertIgnorableText(text, element.name);
           return 0;
@@ -112,6 +122,10 @@ export class SvgReader {
     for (const child of element.children) {
       child.accept({
         visitElement: (childElement) => {
+          if (this.shapeFactory.isIgnoredSvgElement(childElement.name)) {
+            return;
+          }
+
           if (!shape.isContainer()) {
             throw new DomainError(`unsupported element: ${childElement.name}`);
           }
@@ -125,6 +139,10 @@ export class SvgReader {
     for (const child of element.children) {
       child.accept({
         visitElement: (childElement) => {
+          if (this.shapeFactory.isIgnoredSvgElement(childElement.name)) {
+            return;
+          }
+
           throw new DomainError(`unsupported element: ${childElement.name}`);
         },
         visitText: () => undefined,

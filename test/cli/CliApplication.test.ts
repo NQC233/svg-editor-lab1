@@ -1206,3 +1206,66 @@ test('[spec 6.12, 7, 9] replays read success, relative paths, failures, and pres
     ].join('\n'),
   );
 });
+
+test('[spec 6.12, 6.13, 7.3, 7.4, 8] replays assigned-id warnings, attribute roundtrip, and warning-free failures through the CLI', async (t) => {
+  const directory = await mkdtemp(join(tmpdir(), 'svg-editor-cli-roundtrip-'));
+  t.after(() => rm(directory, { force: true, recursive: true }));
+  const unnamed = 'unnamed input.svg';
+  const invalid = 'invalid.svg';
+  const saved = 'roundtrip.svg';
+  await writeFile(
+    join(directory, unnamed),
+    '<svg width="100" height="80"><title>ignored</title><rect x="1" y="2" width="3" height="4" data-extra="keep"/></svg>',
+  );
+  await writeFile(
+    join(directory, invalid),
+    '<svg width="100" height="80"><g><rect width="0" height="1"/></g></svg>',
+  );
+
+  const result = await runCli(
+    [
+      `read "${unnamed}"`,
+      'tree',
+      `save "${saved}"`,
+      'create rect temp 10 10 5 5',
+      'undo',
+      `read "${invalid}"`,
+      'tree',
+      'redo',
+      'save',
+    ].join('\n'),
+    directory,
+  );
+
+  assert.equal(result.code, 0);
+  assert.equal(result.stderr, '');
+  assert.equal(
+    result.stdout,
+    [
+      'warning: assigned id rect1 to unnamed <rect>',
+      `read ${unnamed} (1 elements)`,
+      'svg (100x80)',
+      '└── rect#rect1  x=1 y=2 w=3 h=4',
+      `saved to ${saved} (1 elements)`,
+      'rect#temp created',
+      'rect#temp removed',
+      'error: rect width must be positive',
+      'svg (100x80)',
+      '└── rect#rect1  x=1 y=2 w=3 h=4',
+      'rect#temp created',
+      `saved to ${saved} (2 elements)`,
+      '',
+    ].join('\n'),
+  );
+  assert.equal(
+    await readFile(join(directory, saved), 'utf8'),
+    [
+      '<?xml version="1.0" encoding="UTF-8"?>',
+      '<svg xmlns="http://www.w3.org/2000/svg" width="100" height="80" viewBox="0 0 100 80">',
+      '  <rect id="rect1" x="1" y="2" width="3" height="4" data-extra="keep"/>',
+      '  <rect id="temp" x="10" y="10" width="5" height="5"/>',
+      '</svg>',
+      '',
+    ].join('\n'),
+  );
+});

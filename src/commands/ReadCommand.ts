@@ -18,6 +18,9 @@ export class ReadCommand extends DocumentCommand {
     const result = context.svgReader.read(path);
     context.setDocument(result.document);
     context.setCurrentPath(path);
-    return new CommandResult([`read ${path} (${result.elementCount} elements)`]);
+    return new CommandResult([
+      ...result.warnings,
+      `read ${path} (${result.elementCount} elements)`,
+    ]);
   }
 }

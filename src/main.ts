@@ -28,6 +28,7 @@ import { FrontCommand } from './commands/FrontCommand.js';
 import { ShowFormatter } from './display/ShowFormatter.js';
 import { TreeFormatter } from './display/TreeFormatter.js';
 import { ShapeFactory } from './domain/ShapeFactory.js';
+import { SvgIdAllocator } from './io/SvgIdAllocator.js';
 import { SvgWriter } from './io/SvgWriter.js';
 import { SvgReader } from './io/SvgReader.js';
 import { XmlParser } from './io/XmlParser.js';
@@ -38,7 +39,7 @@ const context = new CommandContext({
   history,
   shapeFactory,
   showFormatter: new ShowFormatter(),
-  svgReader: new SvgReader(new XmlParser(), shapeFactory),
+  svgReader: new SvgReader(new XmlParser(), shapeFactory, new SvgIdAllocator(shapeFactory)),
   svgWriter: new SvgWriter(),
   treeFormatter: new TreeFormatter(),
 });

@@ -4,6 +4,7 @@ import { NumberParser } from '../shared/NumberParser.js';
 import type { Point } from './Point.js';
 import { ShapeAttributeSnapshot } from './ShapeAttributeSnapshot.js';
 import type { Container } from './Container.js';
+import { UnmodeledAttributes } from './UnmodeledAttributes.js';
 
 export type SvgAttribute = readonly [name: string, value: string];
 
@@ -12,8 +13,14 @@ export abstract class Shape {
   private fillValue: string | undefined;
   private strokeValue: string | undefined;
   private strokeWidthValue: number | undefined;
+  private readonly unmodeledAttributesValue: UnmodeledAttributes;
 
-  protected constructor(id: string, fill?: string, stroke?: string) {
+  protected constructor(
+    id: string,
+    fill?: string,
+    stroke?: string,
+    unmodeledAttributes: UnmodeledAttributes = new UnmodeledAttributes(),
+  ) {
     if (id.length === 0 || /\s/.test(id)) {
       throw new DomainError(`invalid id: ${id}`);
     }
@@ -23,6 +30,7 @@ export abstract class Shape {
     this.shapeId = id;
     this.fillValue = fill;
     this.strokeValue = stroke;
+    this.unmodeledAttributesValue = unmodeledAttributes;
   }
 
   public get id(): string {
@@ -52,7 +60,12 @@ export abstract class Shape {
   }
 
   public svgAttributes(): readonly SvgAttribute[] {
-    return [['id', this.id], ...this.svgGeometryAttributes(), ...this.styleAttributes()];
+    return [
+      ['id', this.id],
+      ...this.svgGeometryAttributes(),
+      ...this.styleAttributes(),
+      ...this.unmodeledAttributesValue.entries,
+    ];
   }
 
   public svgTextContent(): string | undefined {

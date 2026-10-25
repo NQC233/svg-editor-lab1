@@ -5,10 +5,16 @@ import { NumberParser } from '../shared/NumberParser.js';
 import type { Point } from './Point.js';
 import { Shape } from './Shape.js';
 import { ShapeAttributeSnapshot } from './ShapeAttributeSnapshot.js';
+import type { UnmodeledAttributes } from './UnmodeledAttributes.js';
 
 export abstract class LeafShape extends Shape {
-  protected constructor(id: string, fill?: string, stroke?: string) {
-    super(id, fill, stroke);
+  protected constructor(
+    id: string,
+    fill?: string,
+    stroke?: string,
+    unmodeledAttributes?: UnmodeledAttributes,
+  ) {
+    super(id, fill, stroke, unmodeledAttributes);
   }
 
   public abstract override movementAnchor(): Point;
