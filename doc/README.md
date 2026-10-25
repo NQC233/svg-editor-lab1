@@ -1,6 +1,6 @@
 # Lab1 Phase 1：课程报告与过程记录
 
-状态：Ticket 01–17 已实现并通过本地验收，其中 Ticket 06 通过 [PR #29](https://github.com/NQC233/svg-editor-lab1/pull/29)、Ticket 07 通过 [PR #30](https://github.com/NQC233/svg-editor-lab1/pull/30)、Ticket 08 通过 [PR #31](https://github.com/NQC233/svg-editor-lab1/pull/31)、Ticket 14 通过 [PR #37](https://github.com/NQC233/svg-editor-lab1/pull/37)、Ticket 16 通过 [PR #38](https://github.com/NQC233/svg-editor-lab1/pull/38) 交付；Ticket 09–17 已于 2026-10-25 完成实现与验收；测试累计 125 个。Ticket 18–19 仍是计划。本报告继续把“计划”和“已实现”分开记录。
+状态：Ticket 01–17 已实现并通过本地验收，其中 Ticket 06 通过 [PR #29](https://github.com/NQC233/svg-editor-lab1/pull/29)、Ticket 07 通过 [PR #30](https://github.com/NQC233/svg-editor-lab1/pull/30)、Ticket 08 通过 [PR #31](https://github.com/NQC233/svg-editor-lab1/pull/31)、Ticket 14 通过 [PR #37](https://github.com/NQC233/svg-editor-lab1/pull/37)、Ticket 16 通过 [PR #38](https://github.com/NQC233/svg-editor-lab1/pull/38)、Ticket 17 通过 [PR #40](https://github.com/NQC233/svg-editor-lab1/pull/40) 交付；Ticket 09–17 已于 2026-10-25 完成实现与验收；测试累计 125 个。Ticket 18–19 仍是计划。本报告继续把“计划”和“已实现”分开记录。
 
 需求依据：[课程原始要求](../phase_cli_1.md)。
 
@@ -516,6 +516,7 @@ package "shared" {
 - `ReadCommand` 先让 `SvgReader` 构建完整临时文档，全部成功后才调用 `setDocument`/`setCurrentPath`；执行器随后按文档命令协议清空并锁定历史。参数、文件读取、UTF-8、XML、根属性和图形校验失败都不改变文档、当前路径或已有 redo。
 - 双轴审查发现 XML 联合类型与 `instanceof` 仍是过程式节点分派，且 XML 声明、注释和控制字符校验不足；已改为多态访问并补回归用例。Spec 轴同时指出非文本 CDATA 证据缺失，后续测试补了根、容器、嵌套容器和叶子四类位置。
 - 小步提交保留为 `3b82a28`（语义与 ADR）、`9ecc15b`（零依赖 XML 解析器）、`6309aeb`（`read` 命令与测试）和 `8384aaa`（审查修复）。
+- Ticket 17 通过 [PR #40](https://github.com/NQC233/svg-editor-lab1/pull/40) 提交。
 
 ## 一致性自查
 
