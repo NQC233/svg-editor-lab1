@@ -328,7 +328,7 @@ package "shared" {
 - Ticket 01 经 [PR #20](https://github.com/NQC233/svg-editor-lab1/pull/20) 合入 `main`（`311409e`）；Ticket 02 经 rebase 后由 [PR #21](https://github.com/NQC233/svg-editor-lab1/pull/21) 合入（`e5c71b5`）。两条主线的分步提交历史均保留。
 - 集成复审补齐了 Ticket 01 的唯一组合根、引号/转义/注释与数值边界测试；Ticket 02 复审补齐了数值首尾空白处理，并把 `create` 命令名从领域 usage 文案移回命令层。
 - Ticket 03 C1 收口：无操作编辑成功返回，但不记录历史、不清空 redo、不解除历史屏障，采用已接受的 [ADR-0003](../docs/adr/0003-io-history-barrier.md)。
-- Ticket 03 C2 收口：`create` 的撤销摘要统一为 `<type>#<id> removed`；`deleted` 只用于 `delete` 命令。规格 11.5 示例已同步，Trackers 将 Ticket 03 标记为 `ready-for-agent`。
+- Ticket 03 C2 收口：`create` 的撤销摘要统一为 `<type>#<id> removed`；`deleted` 只用于 `delete` 命令。规格 11.5 示例已同步，Issue #3 已标记为 `ready-for-agent`。
 - 本轮只收口契约和集成状态，未实现 undo/redo；Ticket 03 的业务代码应在下一步从最新 `main` 新建 `feat/` 分支。
 
 ## 一致性自查
