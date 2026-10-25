@@ -2,7 +2,7 @@
 
 高级软件开发技术课程作业：使用 TypeScript 和面向对象方式开发 SVG 命令行编辑器。
 
-**当前状态：Ticket 01–05 已合入 `main`，Ticket 15 已完成实现与验收。** CLI 已支持 REPL、注释、引号参数、`help`、`init`、查询和修改画布尺寸的 `canvas`、根级 `create rect/circle/ellipse/line/text`、`tree`、`show`、`undo` 和 `redo`；容器、SVG 读写和其余编辑命令仍待后续票。实现顺序和验收标准见[纵向任务计划](doc/ticket-plan.md)。
+**当前状态：Ticket 01–06 已实现并验收，Ticket 15 已完成实现与验收。** CLI 已支持 REPL、注释、引号参数、`help`、`init`、查询和修改画布尺寸的 `canvas`、`create rect/circle/ellipse/line/text/g`、`create … in <containerId>`、嵌套容器、`tree`、`show`、`undo` 和 `redo`；SVG 读写和其余编辑命令仍待后续票。实现顺序和验收标准见[纵向任务计划](doc/ticket-plan.md)。
 
 ## 项目资料
 
@@ -35,7 +35,7 @@ npm run cli
 | `npm run typecheck`    | 严格检查源代码和测试代码的类型              |
 | `npm run build`        | 编译源代码到 `dist/`                        |
 | `npm start`            | 运行已编译的入口；需先构建                  |
-| `npm test`             | 使用 Node.js 测试运行器执行测试，当前 38 个 |
+| `npm test`             | 使用 Node.js 测试运行器执行测试，当前 43 个 |
 | `npm run format`       | 格式化工程文件，排除课程原始要求            |
 | `npm run format:check` | 检查文件格式                                |
 | `npm run check`        | 依次执行类型检查、格式检查、测试和构建      |
@@ -61,7 +61,7 @@ npm run cli
 │   ├── main.ts             # 组合根与启动入口
 │   ├── cli/                # 分词、命令表、分发、REPL、输出
 │   ├── commands/           # Command、历史、上下文、执行器和当前命令
-│   ├── domain/             # Shape、LeafShape、Rect、Circle、Ellipse、Line、Text、ShapeFactory、SvgDocument
+│   ├── domain/             # Shape、LeafShape、Container、Group、各叶子图形、ShapeFactory、SvgDocument
 │   ├── display/            # tree/show 格式化与显示宽度
 │   └── shared/             # 领域错误、数值解析与格式化
 ├── test/
@@ -74,7 +74,7 @@ npm run cli
 └── tsconfig.build.json     # 仅构建 src/ 的配置
 ```
 
-当前已落地 `shared/`、`domain/`、`display/`、`commands/` 和 `cli/`。图形层次已实现 `Shape` → `LeafShape` → `Rect`、`Circle`、`Ellipse`、`Line`、`Text`；命令历史已支持这五个叶子图形创建的撤销、重做、redo 分支清空，以及 `init` 和带参数 `canvas` 建立的屏障。容器、`io/` 和其余编辑命令仍按 [doc/README.md](doc/README.md) 的模块划分在后续票中实现。
+当前已落地 `shared/`、`domain/`、`display/`、`commands/` 和 `cli/`。图形层次已实现 `Shape` → `LeafShape` → `Rect`、`Circle`、`Ellipse`、`Line`、`Text`，以及 `Shape` → `Container` → `Group`；命令历史已支持六种内置类型创建的撤销、重做、redo 分支清空和容器内归属恢复，以及 `init` 和带参数 `canvas` 建立的屏障。`io/` 和其余编辑命令仍按 [doc/README.md](doc/README.md) 的模块划分在后续票中实现。
 
 生产运行依赖为空；开发工具包括 TypeScript、tsx、Node.js 类型声明和 Prettier。
 

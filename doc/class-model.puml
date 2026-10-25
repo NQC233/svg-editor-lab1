@@ -1,33 +1,24 @@
 @startuml
-title 图形模型（规划）
+title 图形模型（Ticket 06 已落地部分）
 
 abstract class Shape {
-  +id: string
-  +parent: ShapeParent
-  +fill: string
-  +stroke: string
-  +strokeWidth: number
-  +move(dx, dy): void
-  +scale(factor): void
-  +setAttribute(name, value): void
-  +getAttribute(name): string
-  +captureGeometry(): GeometrySnapshot
-  +restoreGeometry(snapshot): void
-  +toSvg(indent): string
-  +treeHeader(): string
+  +get id(): string
+  +get label(): string
+  +get type(): string
+  +childShapes(): readonly Shape[]
   +treeAttributes(): string
-  +showLines(): string[]
+  +detailLines(): readonly string[]
 }
 
 abstract class LeafShape {
-  +isContainer(): false
-  +getChildren(): Shape[]
+  +get fill(): string | undefined
+  +get stroke(): string | undefined
 }
 
 abstract class Container {
-  +children: ShapeCollection
-  +isContainer(): true
-  +getChildren(): Shape[]
+  +get children(): readonly Shape[]
+  +insertChild(shape, index): void
+  +removeChild(shape): void
 }
 
 class Group
@@ -37,24 +28,22 @@ class Ellipse
 class Line
 class Text
 
-interface ShapeParent {
-  +children: ShapeCollection
-  +parentLabel(): string
+class SvgDocument {
+  +get width(): number
+  +get height(): number
+  +get rootShapes(): readonly Shape[]
+  +find(id): Shape | undefined
+  +require(id): Shape
+  +appendShape(shape, container?): number
+  +insertShape(shape, index, container?): void
+  +removeShape(shape): void
+  +requireContainer(id): Container
+  +parentLabelOf(shape): string
 }
 
-class ShapeCollection
-class SvgDocument {
-  +width: number
-  +height: number
-  +filePath: string
-  +find(id): Shape
-  +require(id): Shape
-  +requireContainer(id): Container
-  +insert(shape, parent, index): void
-  +remove(shape): void
-  +reparent(shape, parent, index): void
+class ShapeFactory {
+  +create(type, id, args): Shape
 }
-class ShapeFactory
 
 Shape <|-- LeafShape
 Shape <|-- Container
@@ -64,82 +53,8 @@ LeafShape <|-- Circle
 LeafShape <|-- Ellipse
 LeafShape <|-- Line
 LeafShape <|-- Text
-ShapeParent <|.. SvgDocument
-ShapeParent <|.. Container
-SvgDocument *-- ShapeCollection
-Container *-- ShapeCollection
-ShapeCollection o-- Shape
+SvgDocument o-- Shape : roots and id/parent index
+SvgDocument --> Container : validated structure changes
+Container o-- Shape : children
 ShapeFactory ..> Shape : creates
-@enduml
-
-@startuml
-title 命令与历史（Ticket 03 与 15 已落地部分；其余命令为规划）
-
-abstract class Command {
-  +execute(context): CommandResult
-}
-
-abstract class DocumentCommand
-
-abstract class EditCommand {
-  +undo(context): CommandResult
-  +redo(context): CommandResult
-}
-
-class CommandResult
-class CommandCatalog
-class CommandInvoker
-class CommandHistory
-class CommandContext
-
-class "CreateCommand" as Create
-class "DeleteCommand" as Delete
-class "MoveCommand" as Move
-class "ScaleCommand" as Scale
-class "SetCommand" as Set
-class "GroupCommand" as GroupCmd
-class "UngroupCommand" as Ungroup
-class "AddToCommand" as AddTo
-class "FrontCommand" as Front
-class "BackCommand" as Back
-class "InitCommand" as Init
-class "ReadCommand" as Read
-class "SaveCommand" as Save
-class "CanvasCommand" as Canvas
-class "TreeCommand" as Tree
-class "ShowCommand" as Show
-class "HelpCommand" as Help
-class "UndoCommand" as Undo
-class "RedoCommand" as Redo
-
-Command <|-- EditCommand
-Command <|-- DocumentCommand
-EditCommand <|.. Create
-EditCommand <|.. Delete
-EditCommand <|.. Move
-EditCommand <|.. Scale
-EditCommand <|.. Set
-EditCommand <|.. GroupCmd
-EditCommand <|.. Ungroup
-EditCommand <|.. AddTo
-EditCommand <|.. Front
-EditCommand <|.. Back
-DocumentCommand <|.. Init
-DocumentCommand <|.. Read
-DocumentCommand <|.. Save
-DocumentCommand <|.. Canvas
-Command <|.. Tree
-Command <|.. Show
-Command <|.. Help
-Command <|.. Undo
-Command <|.. Redo
-
-CommandInvoker --> CommandHistory
-CommandInvoker --> Command
-CommandInvoker --> CommandResult
-CommandCatalog --> Command : creates via factory
-CommandHistory o-- EditCommand
-CommandHistory --> CommandResult
-Command --> CommandContext
-Command --> CommandResult
 @enduml
