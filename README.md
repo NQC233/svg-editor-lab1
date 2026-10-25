@@ -2,13 +2,18 @@
 
 高级软件开发技术课程作业：使用 TypeScript 和面向对象方式开发 SVG 命令行编辑器。
 
-**当前状态：工程初始化。** CLI 入口仅输出启动信息并退出，尚未实现 REPL、命令、图形模型或 SVG 读写。业务需求与架构将在下一步讨论。
+**当前状态：Ticket 01“空画布命令会话”已实现。** CLI 已支持 REPL、注释、引号参数，以及 `help`、`init` 和无参数 `canvas`；图形编辑、SVG 读写、撤销重做和带参数 `canvas` 仍待后续票。实现顺序和验收标准见[纵向任务计划](doc/ticket-plan.md)。
 
 ## 项目资料
 
 - [课程原始要求](phase_cli_1.md)：保留原文，作为需求依据。
-- [课程报告与过程记录](doc/README.md)：按作业要求维护。
-- [智能体协作规则](AGENTS.md)：统一维护项目约束；[AGENT.md](AGENT.md) 与 [CLAUDE.md](CLAUDE.md) 为对应入口。
+- [课程报告与过程记录](doc/README.md)：架构方案、设计模式、依赖规则、变化点、访谈记录和自查。
+- [需求规格](doc/spec.md)：命令语义、错误目录、SVG 支持子集和输出格式。
+- [纵向任务计划](doc/ticket-plan.md)：已批准的 19 张任务、验收标准和 GitHub 阻塞关系。
+- [原 T1–T8](doc/tasks.md)：历史技术工作清单。
+- [领域词汇表](CONTEXT.md)：项目统一术语。
+- [架构决策记录](docs/adr/)：零依赖、SVG 支持子集、IO 历史屏障、group 锚点规则和 Ticket 01 CLI 默认。
+- [智能体协作规则](AGENTS.md)：统一维护项目约束；[CLAUDE.md](CLAUDE.md) 为 Claude 入口。
 
 ## 环境与启动
 
@@ -24,16 +29,16 @@ npm run cli
 
 ## 开发命令
 
-| 命令                   | 用途                                         |
-| ---------------------- | -------------------------------------------- |
-| `npm run cli`          | 使用 tsx 运行 TypeScript 入口                |
-| `npm run typecheck`    | 严格检查源代码和测试代码的类型               |
-| `npm run build`        | 编译源代码到 `dist/`                         |
-| `npm start`            | 运行已编译的入口；需先构建                   |
-| `npm test`             | 使用 Node.js 测试运行器执行测试，目前为 0 个 |
-| `npm run format`       | 格式化工程文件，排除课程原始要求             |
-| `npm run format:check` | 检查文件格式                                 |
-| `npm run check`        | 依次执行类型检查、格式检查、测试和构建       |
+| 命令                   | 用途                                        |
+| ---------------------- | ------------------------------------------- |
+| `npm run cli`          | 使用 tsx 运行 TypeScript 入口               |
+| `npm run typecheck`    | 严格检查源代码和测试代码的类型              |
+| `npm run build`        | 编译源代码到 `dist/`                        |
+| `npm start`            | 运行已编译的入口；需先构建                  |
+| `npm test`             | 使用 Node.js 测试运行器执行测试，当前 11 个 |
+| `npm run format`       | 格式化工程文件，排除课程原始要求            |
+| `npm run format:check` | 检查文件格式                                |
+| `npm run check`        | 依次执行类型检查、格式检查、测试和构建      |
 
 ## 当前目录
 
@@ -41,24 +46,39 @@ npm run cli
 .
 ├── phase_cli_1.md          # 课程原始要求
 ├── README.md               # 环境与开发说明
+├── CONTEXT.md              # 领域词汇表
 ├── doc/
-│   └── README.md           # 课程报告与过程记录
+│   ├── README.md           # 课程报告与过程记录
+│   ├── spec.md             # 需求规格
+│   ├── ticket-plan.md      # 已批准的纵向任务与 GitHub 索引
+│   ├── tasks.md            # 原分层任务（历史）
+│   ├── architecture.puml   # 模块依赖图
+│   └── class-model.puml    # 类模型图
+├── docs/
+│   ├── adr/                # 架构决策记录
+│   └── agents/             # 智能体协作约定
 ├── src/
-│   ├── main.ts             # 程序装配与启动入口
-│   └── cli/
-│       └── CliApplication.ts # 启动占位类
-├── test/                   # 后续测试
+│   ├── main.ts             # 组合根与启动入口
+│   ├── cli/                # 分词、命令表、分发、REPL、输出
+│   ├── commands/           # Command、上下文、执行器和当前命令
+│   ├── domain/             # SvgDocument
+│   └── shared/             # 领域错误、数值解析与格式化
+├── test/
+│   ├── cli/                # 分词与 CLI 回放
+│   └── commands/           # 命令分发、help、init、canvas
 ├── package.json
 ├── package-lock.json       # 依赖版本锁定
 ├── tsconfig.json           # 源代码与测试的类型检查配置
 └── tsconfig.build.json     # 仅构建 src/ 的配置
 ```
 
-目前的目录只表达启动骨架。领域、命令、持久化等业务模块的划分与依赖方向待讨论后记录到课程报告。生产运行依赖暂为空，开发工具包括 TypeScript、tsx、Node.js 类型声明和 Prettier。
+当前已落地 `shared/`、`domain/`、`commands/` 和 `cli/`；`io/`、`display/` 及完整图形层次仍按 [doc/README.md](doc/README.md) 的模块划分在后续票中实现。
+
+生产运行依赖为空；开发工具包括 TypeScript、tsx、Node.js 类型声明和 Prettier。
 
 ## 开发与提交
 
-使用 Git 分步记录需求、设计、实现和验证过程。当前已建立本地 `main` 分支；远程仓库地址尚未提供，暂未配置和推送。最终验收完成后，按课程要求在截止时间前创建并推送 `final` 标签。
+使用 Git 分步记录需求、设计、实现和验证过程。功能实现的分支规则见 [AGENTS.md](AGENTS.md)。远程 `origin` 已配置为 [NQC233/svg-editor-lab1](https://github.com/NQC233/svg-editor-lab1)；配置存在不代表工作区内容已提交或推送。最终验收完成后，按课程要求在截止时间前创建并推送 `final` 标签。
 
 ## 工具文档
 

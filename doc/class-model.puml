@@ -1,0 +1,137 @@
+@startuml
+title 图形模型（规划）
+
+abstract class Shape {
+  +id: string
+  +parent: ShapeParent
+  +fill: string
+  +stroke: string
+  +strokeWidth: number
+  +move(dx, dy): void
+  +scale(factor): void
+  +setAttribute(name, value): void
+  +getAttribute(name): string
+  +captureGeometry(): GeometrySnapshot
+  +restoreGeometry(snapshot): void
+  +toSvg(indent): string
+  +treeHeader(): string
+  +treeAttributes(): string
+  +showLines(): string[]
+}
+
+abstract class LeafShape {
+  +isContainer(): false
+  +getChildren(): Shape[]
+}
+
+abstract class Container {
+  +children: ShapeCollection
+  +isContainer(): true
+  +getChildren(): Shape[]
+}
+
+class Group
+class Rect
+class Circle
+class Ellipse
+class Line
+class Text
+
+interface ShapeParent {
+  +children: ShapeCollection
+  +parentLabel(): string
+}
+
+class ShapeCollection
+class SvgDocument {
+  +width: number
+  +height: number
+  +filePath: string
+  +find(id): Shape
+  +require(id): Shape
+  +requireContainer(id): Container
+  +insert(shape, parent, index): void
+  +remove(shape): void
+  +reparent(shape, parent, index): void
+}
+class ShapeFactory
+
+Shape <|-- LeafShape
+Shape <|-- Container
+Container <|-- Group
+LeafShape <|-- Rect
+LeafShape <|-- Circle
+LeafShape <|-- Ellipse
+LeafShape <|-- Line
+LeafShape <|-- Text
+ShapeParent <|.. SvgDocument
+ShapeParent <|.. Container
+SvgDocument *-- ShapeCollection
+Container *-- ShapeCollection
+ShapeCollection o-- Shape
+ShapeFactory ..> Shape : creates
+@enduml
+
+@startuml
+title 命令与历史（规划）
+
+interface Command {
+  +kind: CommandKind
+  +execute(context): CommandResult
+}
+
+interface EditCommand {
+  +undo(context): CommandResult
+  +redo(context): CommandResult
+}
+
+class CommandInvoker
+class CommandHistory
+class CommandContext
+
+class "CreateCommand" as Create
+class "DeleteCommand" as Delete
+class "MoveCommand" as Move
+class "ScaleCommand" as Scale
+class "SetCommand" as Set
+class "GroupCommand" as GroupCmd
+class "UngroupCommand" as Ungroup
+class "AddToCommand" as AddTo
+class "FrontCommand" as Front
+class "BackCommand" as Back
+class "InitCommand" as Init
+class "ReadCommand" as Read
+class "SaveCommand" as Save
+class "CanvasCommand" as Canvas
+class "TreeCommand" as Tree
+class "ShowCommand" as Show
+class "HelpCommand" as Help
+class "UndoCommand" as Undo
+class "RedoCommand" as Redo
+
+Command <|-- EditCommand
+EditCommand <|.. Create
+EditCommand <|.. Delete
+EditCommand <|.. Move
+EditCommand <|.. Scale
+EditCommand <|.. Set
+EditCommand <|.. GroupCmd
+EditCommand <|.. Ungroup
+EditCommand <|.. AddTo
+EditCommand <|.. Front
+EditCommand <|.. Back
+Command <|.. Init
+Command <|.. Read
+Command <|.. Save
+Command <|.. Canvas
+Command <|.. Tree
+Command <|.. Show
+Command <|.. Help
+Command <|.. Undo
+Command <|.. Redo
+
+CommandInvoker --> CommandHistory
+CommandInvoker --> Command
+CommandHistory o-- EditCommand
+Command --> CommandContext
+@enduml

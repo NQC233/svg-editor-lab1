@@ -1,4 +1,25 @@
 import { CliApplication } from './cli/CliApplication.js';
+import { CommandCatalog } from './cli/CommandCatalog.js';
+import { CommandDispatcher } from './cli/CommandDispatcher.js';
+import { ConsoleOutput } from './cli/ConsoleOutput.js';
+import { LineTokenizer } from './cli/LineTokenizer.js';
+import { CanvasCommand } from './commands/CanvasCommand.js';
+import { CommandContext } from './commands/CommandContext.js';
+import { CommandInvoker } from './commands/CommandInvoker.js';
+import { HelpCommand } from './commands/HelpCommand.js';
+import { InitCommand } from './commands/InitCommand.js';
 
-const application = new CliApplication();
-application.run();
+const context = new CommandContext();
+const catalog = new CommandCatalog([
+  ['init', new InitCommand()],
+  ['canvas', new CanvasCommand()],
+  ['help', new HelpCommand()],
+]);
+const dispatcher = new CommandDispatcher(catalog, new CommandInvoker(context));
+const application = new CliApplication({
+  dispatcher,
+  input: process.stdin,
+  output: new ConsoleOutput(process.stdout),
+  tokenizer: new LineTokenizer(),
+});
+await application.run();
