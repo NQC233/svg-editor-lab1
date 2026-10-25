@@ -1,19 +1,44 @@
 import { DomainError } from '../shared/DomainError.js';
 import { NumberParser } from '../shared/NumberParser.js';
+import { Circle } from './Circle.js';
 import { Rect } from './Rect.js';
 import type { Shape } from './Shape.js';
 import { ShapeUsageError } from './ShapeUsageError.js';
 
 export class ShapeFactory {
+  private static readonly CIRCLE_SYNTAX = 'circle <id> <cx> <cy> <r> [fill]';
   private static readonly RECT_SYNTAX = 'rect <id> <x> <y> <w> <h> [fill]';
 
   public create(type: string, id: string, args: readonly string[]): Shape {
     switch (type) {
+      case 'circle':
+        return this.createCircle(id, args);
       case 'rect':
         return this.createRect(id, args);
       default:
         throw new DomainError(`unknown shape type: ${type} (is the plugin loaded?)`);
     }
+  }
+
+  private createCircle(id: string, args: readonly string[]): Circle {
+    if (args.length < 3 || args.length > 4) {
+      throw new ShapeUsageError(ShapeFactory.CIRCLE_SYNTAX);
+    }
+
+    const centerXToken = args[0];
+    const centerYToken = args[1];
+    const radiusToken = args[2];
+    if (centerXToken === undefined || centerYToken === undefined || radiusToken === undefined) {
+      throw new ShapeUsageError(ShapeFactory.CIRCLE_SYNTAX);
+    }
+
+    return new Circle(
+      id,
+      NumberParser.parse(centerXToken),
+      NumberParser.parse(centerYToken),
+      NumberParser.parse(radiusToken),
+      args[3],
+    );
   }
 
   private createRect(id: string, args: readonly string[]): Rect {
