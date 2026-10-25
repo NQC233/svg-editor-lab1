@@ -2,7 +2,7 @@
 
 高级软件开发技术课程作业：使用 TypeScript 和面向对象方式开发 SVG 命令行编辑器。
 
-**当前状态：Ticket 01–03 已实现；Ticket 03 正在 PR 验收与合并流程中。** CLI 已支持 REPL、注释、引号参数、`help`、`init`、无参数 `canvas`、根级 `create rect`、`tree`、`show`、`undo` 和 `redo`；其他图形、SVG 读写和带参数 `canvas` 仍待后续票。实现顺序和验收标准见[纵向任务计划](doc/ticket-plan.md)。
+**当前状态：Ticket 01–03 已实现，其中 Ticket 03 已通过 [PR #23](https://github.com/NQC233/svg-editor-lab1/pull/23) 合入 `main`。** CLI 已支持 REPL、注释、引号参数、`help`、`init`、无参数 `canvas`、根级 `create rect`、`tree`、`show`、`undo` 和 `redo`；其他图形、SVG 读写和带参数 `canvas` 仍待后续票。实现顺序和验收标准见[纵向任务计划](doc/ticket-plan.md)。
 
 ## 项目资料
 
