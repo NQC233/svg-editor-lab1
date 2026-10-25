@@ -38,7 +38,7 @@ test('[spec 6.17] help works without a document and lists the complete target gr
     'History:',
     '  undo',
     '  redo',
-    'Partial implementation: available commands are help, init, canvas, create rect, circle, ellipse, line, text, g, delete, move, scale, tree, show, undo, and redo.',
+    'Partial implementation: available commands are help, init, canvas, create rect, circle, ellipse, line, text, g, delete, ungroup, move, scale, tree, show, undo, and redo.',
   ]);
 });
 

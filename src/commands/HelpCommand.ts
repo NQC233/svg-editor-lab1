@@ -29,7 +29,7 @@ export class HelpCommand extends Command {
     'History:',
     '  undo',
     '  redo',
-    'Partial implementation: available commands are help, init, canvas, create rect, circle, ellipse, line, text, g, delete, move, scale, tree, show, undo, and redo.',
+    'Partial implementation: available commands are help, init, canvas, create rect, circle, ellipse, line, text, g, delete, ungroup, move, scale, tree, show, undo, and redo.',
   ] as const;
 
   public execute(_context: CommandContext, args: CommandArguments): CommandResult {

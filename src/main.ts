@@ -17,6 +17,7 @@ import { ScaleCommand } from './commands/ScaleCommand.js';
 import { ShowCommand } from './commands/ShowCommand.js';
 import { TreeCommand } from './commands/TreeCommand.js';
 import { UndoCommand } from './commands/UndoCommand.js';
+import { UngroupCommand } from './commands/UngroupCommand.js';
 import { ShowFormatter } from './display/ShowFormatter.js';
 import { TreeFormatter } from './display/TreeFormatter.js';
 import { ShapeFactory } from './domain/ShapeFactory.js';
@@ -33,6 +34,7 @@ const catalog = new CommandCatalog([
   ['canvas', () => new CanvasCommand()],
   ['create', () => new CreateCommand()],
   ['delete', () => new DeleteCommand()],
+  ['ungroup', () => new UngroupCommand()],
   ['move', () => new MoveCommand()],
   ['scale', () => new ScaleCommand()],
   ['tree', () => new TreeCommand()],

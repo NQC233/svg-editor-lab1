@@ -5,6 +5,7 @@ import type { GeometrySnapshot } from './GeometrySnapshot.js';
 import { LeafShape } from './LeafShape.js';
 import type { Shape } from './Shape.js';
 import { ShapePlacement } from './ShapePlacement.js';
+import { UngroupSnapshot } from './UngroupSnapshot.js';
 
 export class SvgDocument {
   private widthValue: number;
@@ -97,6 +98,69 @@ export class SvgDocument {
     return new ShapePlacement(parent, insertionIndex);
   }
 
+  public ungroup(container: Container): UngroupSnapshot {
+    if (!this.parents.has(container) || this.shapesById.get(container.id) !== container) {
+      throw new DomainError(`no such shape: ${container.id}`);
+    }
+
+    const parent = this.parents.get(container);
+    if (parent === undefined) {
+      throw new DomainError(`cannot ungroup top-level container: ${container.id}`);
+    }
+
+    const siblings = this.mutableChildrenOf(parent);
+    const index = siblings.indexOf(container);
+    if (index < 0) {
+      throw new DomainError(`no such shape: ${container.id}`);
+    }
+
+    const children = this.mutableChildrenOf(container);
+    this.assertChildrenBelongTo(container, children);
+    const snapshot = new UngroupSnapshot(container, parent, index, children);
+
+    siblings.splice(index, 1, ...children);
+    for (const child of children) {
+      this.parents.set(child, parent);
+    }
+
+    this.childrenByShape.set(container, []);
+    this.parents.delete(container);
+    this.shapesById.delete(container.id);
+    return snapshot;
+  }
+
+  public restoreUngrouped(snapshot: UngroupSnapshot): void {
+    const { container, parent, index } = snapshot;
+    const children = snapshot.children;
+    if (!this.parents.has(parent) || this.shapesById.get(parent.id) !== parent) {
+      throw new DomainError(`no such shape: ${parent.id}`);
+    }
+
+    if (this.parents.has(container) || this.shapesById.has(container.id)) {
+      throw new DomainError(`id already exists: ${container.id}`);
+    }
+
+    const siblings = this.mutableChildrenOf(parent);
+    this.assertInsertionIndex(index, siblings.length);
+    children.forEach((child, offset) => {
+      if (
+        siblings[index + offset] !== child ||
+        this.parents.get(child) !== parent ||
+        this.shapesById.get(child.id) !== child
+      ) {
+        throw new DomainError(`cannot restore ungrouped container: ${container.id}`);
+      }
+    });
+
+    siblings.splice(index, children.length, container);
+    this.shapesById.set(container.id, container);
+    this.parents.set(container, parent);
+    this.childrenByShape.set(container, [...children]);
+    for (const child of children) {
+      this.parents.set(child, container);
+    }
+  }
+
   public requireContainer(id: string): Container {
     const shape = this.find(id);
     if (shape === undefined) {
@@ -167,6 +231,21 @@ export class SvgDocument {
   private assertSubtreeIdsAvailable(shape: Shape): void {
     const ids = new Set<string>();
     this.collectIds(shape, ids);
+  }
+
+  private assertChildrenBelongTo(container: Container, children: readonly Shape[]): void {
+    const childIds = new Set<string>();
+    for (const child of children) {
+      if (
+        this.parents.get(child) !== container ||
+        this.shapesById.get(child.id) !== child ||
+        childIds.has(child.id)
+      ) {
+        throw new DomainError(`id already exists: ${child.id}`);
+      }
+
+      childIds.add(child.id);
+    }
   }
 
   private collectIds(shape: Shape, ids: Set<string>): void {

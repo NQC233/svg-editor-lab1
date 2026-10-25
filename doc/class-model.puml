@@ -1,5 +1,5 @@
 @startuml
-title 图形模型（Ticket 10 已落地部分）
+title 图形模型（Ticket 13 已落地部分）
 
 abstract class Shape {
   +get id(): string
@@ -42,6 +42,13 @@ class ShapePlacement {
   +get index(): number
 }
 
+class UngroupSnapshot {
+  +get container(): Container
+  +get parent(): Container
+  +get index(): number
+  +get children(): readonly Shape[]
+}
+
 class SvgDocument {
   +get width(): number
   +get height(): number
@@ -52,6 +59,8 @@ class SvgDocument {
   +appendShape(shape, container?): number
   +insertShape(shape, index, container?): void
   +removeShape(shape): ShapePlacement
+  +ungroup(container): UngroupSnapshot
+  +restoreUngrouped(snapshot): void
   +requireContainer(id): Container
   +parentLabelOf(shape): string
   +move(shape, dx, dy): readonly GeometrySnapshot[]
@@ -74,13 +83,14 @@ SvgDocument o-- Shape : roots, children, id/parent index
 SvgDocument --> Container : validated structure changes
 SvgDocument --> GeometrySnapshot : creates transaction snapshots
 SvgDocument --> ShapePlacement : returns removal position
+SvgDocument --> UngroupSnapshot : captures and restores structure
 LeafShape ..> GeometrySnapshot : captures exact geometry
 LeafShape ..> Point : exposes movement anchor
 ShapeFactory ..> Shape : creates
 @enduml
 
 @startuml
-title 命令与历史（Ticket 10 已落地部分）
+title 命令与历史（Ticket 13 已落地部分）
 
 abstract class Command {
   +execute(context, args): CommandResult
@@ -99,9 +109,11 @@ class CommandInvoker
 class CommandHistory
 class CommandContext
 class ShapePlacement
+class UngroupSnapshot
 
 class CreateCommand
 class DeleteCommand
+class UngroupCommand
 class MoveCommand
 class ScaleCommand
 class CanvasCommand
@@ -116,6 +128,7 @@ Command <|-- EditCommand
 Command <|-- DocumentCommand
 EditCommand <|.. CreateCommand
 EditCommand <|.. DeleteCommand
+EditCommand <|.. UngroupCommand
 EditCommand <|.. MoveCommand
 EditCommand <|.. ScaleCommand
 DocumentCommand <|.. CanvasCommand
@@ -135,6 +148,7 @@ CommandHistory --> CommandResult
 Command --> CommandContext
 Command --> CommandResult
 DeleteCommand --> ShapePlacement : restores original position
+UngroupCommand --> UngroupSnapshot : restores original container
 MoveCommand --> GeometrySnapshot : keeps undo snapshots
 ScaleCommand --> GeometrySnapshot : keeps undo snapshots
 @enduml
