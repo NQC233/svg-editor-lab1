@@ -1,5 +1,5 @@
 @startuml
-title 图形模型（Ticket 07 已落地部分）
+title 图形模型（Ticket 08 已落地部分）
 
 abstract class Shape {
   +get id(): string
@@ -15,6 +15,7 @@ abstract class LeafShape {
   +get stroke(): string | undefined
   +movementAnchor(): Point
   +moveOwnGeometry(dx, dy): void
+  +scaleOwnGeometry(factor): void
   +snapshotGeometry(): GeometrySnapshot
 }
 
@@ -49,6 +50,7 @@ class SvgDocument {
   +requireContainer(id): Container
   +parentLabelOf(shape): string
   +move(shape, dx, dy): readonly GeometrySnapshot[]
+  +scale(shape, factor): readonly GeometrySnapshot[]
 }
 
 class ShapeFactory {
@@ -72,7 +74,7 @@ ShapeFactory ..> Shape : creates
 @enduml
 
 @startuml
-title 命令与历史（Ticket 07 已落地部分）
+title 命令与历史（Ticket 08 已落地部分）
 
 abstract class Command {
   +execute(context, args): CommandResult
@@ -93,6 +95,7 @@ class CommandContext
 
 class CreateCommand
 class MoveCommand
+class ScaleCommand
 class CanvasCommand
 class InitCommand
 class TreeCommand
@@ -105,6 +108,7 @@ Command <|-- EditCommand
 Command <|-- DocumentCommand
 EditCommand <|.. CreateCommand
 EditCommand <|.. MoveCommand
+EditCommand <|.. ScaleCommand
 DocumentCommand <|.. CanvasCommand
 DocumentCommand <|.. InitCommand
 Command <|.. TreeCommand
@@ -122,4 +126,5 @@ CommandHistory --> CommandResult
 Command --> CommandContext
 Command --> CommandResult
 MoveCommand --> GeometrySnapshot : keeps undo snapshots
+ScaleCommand --> GeometrySnapshot : keeps undo snapshots
 @enduml
