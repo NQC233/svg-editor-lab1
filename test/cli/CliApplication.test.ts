@@ -236,3 +236,58 @@ test('[spec 6.10, 6.11, 9] replays create, undo, redo, failures, and the init ba
     ].join('\n'),
   );
 });
+
+test('[spec 3.3, 5.1, 5.2, 5.5, 5.6, 6.1, 6.10] replays geometry shape creation, display, history, and failures', async () => {
+  const result = await runCli(
+    [
+      'init 320 240',
+      'create circle c1 -5.5 10 2 #f00',
+      'create ellipse e1 20 30 4.5 6',
+      'create line edge 0 0 100 50 #333',
+      'tree',
+      'show c1',
+      'undo',
+      'show edge',
+      'redo',
+      'show edge',
+      'create ellipse zero 0 0 0 10',
+      'create line invalid 0 0 nope 10',
+      'undo',
+      'tree',
+      'redo',
+    ].join('\n'),
+  );
+
+  assert.equal(result.code, 0);
+  assert.equal(result.stderr, '');
+  assert.equal(
+    result.stdout,
+    [
+      'canvas 320x240 created',
+      'circle#c1 created',
+      'ellipse#e1 created',
+      'line#edge created',
+      'svg (320x240)',
+      '├── circle#c1   cx=-5.5 cy=10 r=2 fill=#f00',
+      '├── ellipse#e1  cx=20 cy=30 rx=4.5 ry=6',
+      '└── line#edge   (0,0) -> (100,50)',
+      'circle#c1  parent=svg',
+      '  cx=-5.5 cy=10 r=2',
+      '  fill=#f00',
+      'line#edge removed',
+      'error: no such shape: edge',
+      'line#edge created',
+      'line#edge  parent=svg',
+      '  x1=0 y1=0 x2=100 y2=50',
+      '  stroke=#333',
+      'error: ellipse rx must be positive',
+      'error: invalid number: nope',
+      'line#edge removed',
+      'svg (320x240)',
+      '├── circle#c1   cx=-5.5 cy=10 r=2 fill=#f00',
+      '└── ellipse#e1  cx=20 cy=30 rx=4.5 ry=6',
+      'line#edge created',
+      '',
+    ].join('\n'),
+  );
+});
