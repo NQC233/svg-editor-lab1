@@ -14,6 +14,7 @@ import { ScaleCommand } from '../../src/commands/ScaleCommand.js';
 import { ShowCommand } from '../../src/commands/ShowCommand.js';
 import { TreeCommand } from '../../src/commands/TreeCommand.js';
 import { UndoCommand } from '../../src/commands/UndoCommand.js';
+import { UngroupCommand } from '../../src/commands/UngroupCommand.js';
 import { ShowFormatter } from '../../src/display/ShowFormatter.js';
 import { TreeFormatter } from '../../src/display/TreeFormatter.js';
 import { ShapeFactory } from '../../src/domain/ShapeFactory.js';
@@ -31,6 +32,7 @@ export function createDispatcher(): CommandDispatcher {
     ['canvas', () => new CanvasCommand()],
     ['create', () => new CreateCommand()],
     ['delete', () => new DeleteCommand()],
+    ['ungroup', () => new UngroupCommand()],
     ['move', () => new MoveCommand()],
     ['scale', () => new ScaleCommand()],
     ['tree', () => new TreeCommand()],
