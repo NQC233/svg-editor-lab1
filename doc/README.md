@@ -1,6 +1,6 @@
 # Lab1 Phase 1：课程报告与过程记录
 
-状态：Ticket 01–06 已实现并通过本地验收，Ticket 15 已于 2026-10-25 完成实现与验收；测试累计 44 个。其余 12 张票仍是计划。Ticket 06 的远端 PR 与合并结果在完成后补充。本报告继续把“计划”和“已实现”分开记录。
+状态：Ticket 01–06 已实现并通过本地验收，其中 Ticket 06 通过 [PR #29](https://github.com/NQC233/svg-editor-lab1/pull/29) 交付 `main`；Ticket 15 已于 2026-10-25 完成实现与验收；测试累计 44 个。其余 12 张票仍是计划。本报告继续把“计划”和“已实现”分开记录。
 
 需求依据：[课程原始要求](../phase_cli_1.md)。
 
@@ -386,6 +386,7 @@ package "shared" {
 - `TreeFormatter` 通过 `SvgDocument.childrenOf()` 递归，按每组兄弟的最长标签宽度加两空格对齐；`tree <id>` 以目标图形为根显示局部子树，`show` 通过文档父子映射显示 `parent=svg` 或 `parent=g#id`。
 - 命令测试覆盖空容器、嵌套容器、六种类型后缀、局部 tree/show、兄弟对齐、撤销重做后的父级与索引、缺容器、非容器、重复 id、非法后缀、裸 `in` 占用参数槽、被引号保护的 `in`，并断言失败后树和已有 redo 不变。真实 CLI 回放独立验证相同成功链与失败链。
 - 验证：`npm run check` 通过（类型、格式、44 个测试、构建）；`npm run cli` 与构建后的 `npm start` 使用同一容器脚本回放成功创建、局部 tree/show、undo/redo、非容器、重复 id 与非法 `in` 失败，两个入口输出一致且 stderr 为空。
+- Ticket 06 通过 [PR #29](https://github.com/NQC233/svg-editor-lab1/pull/29) 向 `main` 交付；Issue #6 随 PR 关联关闭。
 - 本票未实现 move/scale/set/delete/group/ungroup/addto/front/back、SVG IO 或完整 Phase 1 验收；`SvgDocument` 当前是唯一可改变层级结构的领域入口。
 
 ## 一致性自查
