@@ -122,7 +122,7 @@ export class Ellipse extends LeafShape {
       `cy=${NumberFormatter.format(this.centerY)}`,
       `rx=${NumberFormatter.format(this.radiusX)}`,
       `ry=${NumberFormatter.format(this.radiusY)}`,
-      ...this.styleLines(),
+      ...this.treeFillLines(),
     ].join(' ');
   }
 

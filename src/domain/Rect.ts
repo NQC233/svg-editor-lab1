@@ -122,7 +122,7 @@ export class Rect extends LeafShape {
       `y=${NumberFormatter.format(this.y)}`,
       `w=${NumberFormatter.format(this.width)}`,
       `h=${NumberFormatter.format(this.height)}`,
-      ...this.styleLines(),
+      ...this.treeFillLines(),
     ].join(' ');
   }
 

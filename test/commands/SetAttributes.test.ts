@@ -15,12 +15,9 @@ test('[spec 5.1, 5.3, 6.5] sets common styles on every shape and only on the sel
   dispatcher.dispatch(['create', 'line', 'l', '0', '0', '10', '10']);
   dispatcher.dispatch(['create', 'text', 't', '5', '6', 'hello']);
 
-  for (const id of ['scene', 'child', 'c', 'e', 'l', 't']) {
-    assert.deepEqual(dispatcher.dispatch(['set', id, 'fill', '#123456']), [
-      `${id === 'scene' ? 'g' : id === 'child' ? 'rect' : id === 'c' ? 'circle' : id === 'e' ? 'ellipse' : id === 'l' ? 'line' : 'text'}#${id} updated: fill=#123456`,
-    ]);
-  }
-
+  assert.deepEqual(dispatcher.dispatch(['set', 'scene', 'fill', '#123456']), [
+    'g#scene updated: fill=#123456',
+  ]);
   assert.deepEqual(dispatcher.dispatch(['show', 'scene']), [
     'g#scene  parent=svg',
     '  fill=#123456',
@@ -28,7 +25,27 @@ test('[spec 5.1, 5.3, 6.5] sets common styles on every shape and only on the sel
   assert.deepEqual(dispatcher.dispatch(['show', 'child']), [
     'rect#child  parent=g#scene',
     '  x=0 y=0 width=10 height=10',
-    '  fill=#123456',
+  ]);
+
+  dispatcher.dispatch(['set', 'child', 'fill', '#654321']);
+  dispatcher.dispatch(['set', 'child', 'stroke', 'blue']);
+  dispatcher.dispatch(['set', 'child', 'stroke-width', '2']);
+  for (const id of ['c', 'e', 'l', 't']) {
+    assert.deepEqual(dispatcher.dispatch(['set', id, 'fill', '#123456']), [
+      `${id === 'c' ? 'circle' : id === 'e' ? 'ellipse' : id === 'l' ? 'line' : 'text'}#${id} updated: fill=#123456`,
+    ]);
+  }
+
+  assert.deepEqual(dispatcher.dispatch(['show', 'child']), [
+    'rect#child  parent=g#scene',
+    '  x=0 y=0 width=10 height=10',
+    '  fill=#654321',
+    '  stroke=blue',
+    '  stroke-width=2',
+  ]);
+  assert.deepEqual(dispatcher.dispatch(['tree', 'scene']), [
+    'g#scene',
+    '└── rect#child  x=0 y=0 w=10 h=10 fill=#654321',
   ]);
   assert.deepEqual(dispatcher.dispatch(['show', 't']), [
     'text#t  parent=svg',
@@ -150,7 +167,11 @@ test('[spec 3.3, 5.1, 5.2, 5.3, 6.5, 9] rejects invalid sets without changing th
   dispatcher.dispatch(['create', 'g', 'scene']);
   dispatcher.dispatch(['create', 'rect', 'r', '10', '20', '30', '40', 'red', 'in', 'scene']);
   dispatcher.dispatch(['create', 'text', 't', '1', '2', 'old']);
-  assert.deepEqual(dispatcher.dispatch(['undo']), ['text#t removed']);
+  dispatcher.dispatch(['create', 'circle', 'c', '1', '2', '3']);
+  dispatcher.dispatch(['create', 'ellipse', 'e', '4', '5', '6', '7']);
+  dispatcher.dispatch(['create', 'line', 'l', '8', '9', '10', '11']);
+  dispatcher.dispatch(['create', 'rect', 'pending', '50', '60', '5', '5']);
+  assert.deepEqual(dispatcher.dispatch(['undo']), ['rect#pending removed']);
 
   assert.throws(
     () => dispatcher.dispatch(['set', 'r', 'opacity', '1']),
@@ -160,6 +181,18 @@ test('[spec 3.3, 5.1, 5.2, 5.3, 6.5, 9] rejects invalid sets without changing th
     () => dispatcher.dispatch(['set', 'scene', 'x', '1']),
     new DomainError('unknown attribute: x'),
   );
+  for (const [id, attribute] of [
+    ['r', 'cx'],
+    ['c', 'x'],
+    ['e', 'r'],
+    ['l', 'width'],
+    ['t', 'radius'],
+  ] as const) {
+    assert.throws(
+      () => dispatcher.dispatch(['set', id, attribute, '1']),
+      new DomainError(`unknown attribute: ${attribute}`),
+    );
+  }
   assert.throws(
     () => dispatcher.dispatch(['set', 'missing', 'x', '1']),
     new DomainError('no such shape: missing'),
@@ -203,10 +236,14 @@ test('[spec 3.3, 5.1, 5.2, 5.3, 6.5, 9] rejects invalid sets without changing th
 
   assert.deepEqual(dispatcher.dispatch(['tree']), [
     'svg (800x600)',
-    '└── g#scene',
-    '    └── rect#r  x=10 y=20 w=30 h=40 fill=red',
+    '├── g#scene',
+    '│   └── rect#r  x=10 y=20 w=30 h=40 fill=red',
+    '├── text#t     (1,2) "old"',
+    '├── circle#c   cx=1 cy=2 r=3',
+    '├── ellipse#e  cx=4 cy=5 rx=6 ry=7',
+    '└── line#l     (8,9) -> (10,11)',
   ]);
-  assert.deepEqual(dispatcher.dispatch(['redo']), ['text#t created']);
+  assert.deepEqual(dispatcher.dispatch(['redo']), ['rect#pending created']);
 });
 
 test('[spec 5.3, 6.5] accepts quoted values and formats text content as a JSON string', () => {
@@ -234,4 +271,18 @@ test('[spec 3.3, 6.5] requires a document before validating set arguments', () =
     () => dispatcher.dispatch(['set', 'r', 'x', '1']),
     new DomainError("no document. use 'init' or 'read' first"),
   );
+});
+
+test('[spec 6.5, 6.10, 9] a successful set clears redo and remains one undo unit', () => {
+  const dispatcher = createDispatcher();
+
+  dispatcher.dispatch(['init', '800', '600']);
+  dispatcher.dispatch(['create', 'rect', 'a', '0', '0', '10', '10']);
+  dispatcher.dispatch(['create', 'rect', 'b', '20', '20', '10', '10']);
+  assert.deepEqual(dispatcher.dispatch(['undo']), ['rect#b removed']);
+
+  assert.deepEqual(dispatcher.dispatch(['set', 'a', 'x', '5']), ['rect#a updated: x=5']);
+  assert.throws(() => dispatcher.dispatch(['redo']), new DomainError('nothing to redo'));
+  assert.deepEqual(dispatcher.dispatch(['undo']), ['rect#a updated: x=0']);
+  assert.deepEqual(dispatcher.dispatch(['redo']), ['rect#a updated: x=5']);
 });

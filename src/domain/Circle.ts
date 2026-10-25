@@ -93,7 +93,7 @@ export class Circle extends LeafShape {
       `cx=${NumberFormatter.format(this.centerX)}`,
       `cy=${NumberFormatter.format(this.centerY)}`,
       `r=${NumberFormatter.format(this.radius)}`,
-      ...this.styleLines(),
+      ...this.treeFillLines(),
     ].join(' ');
   }
 

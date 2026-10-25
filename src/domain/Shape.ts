@@ -88,6 +88,10 @@ export abstract class Shape {
     return attributes;
   }
 
+  protected treeFillLines(): readonly string[] {
+    return this.fill === undefined ? [] : [`fill=${this.fill}`];
+  }
+
   private setStyleText(
     attribute: string,
     value: string,

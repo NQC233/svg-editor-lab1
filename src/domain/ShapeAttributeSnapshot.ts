@@ -2,8 +2,8 @@ export class ShapeAttributeSnapshot {
   public constructor(
     private readonly attributeValue: string,
     private readonly changedValue: boolean,
-    private readonly previousValue: string | undefined,
-    private readonly currentValue: string,
+    private readonly previousValueData: string | undefined,
+    private readonly currentValueData: string,
     private readonly restoreValue: () => void,
   ) {}
 
@@ -15,12 +15,12 @@ export class ShapeAttributeSnapshot {
     return this.changedValue;
   }
 
-  public get updatedDescription(): string {
-    return `${this.attributeValue}=${this.currentValue}`;
+  public get previousValue(): string | undefined {
+    return this.previousValueData;
   }
 
-  public get restoredDescription(): string {
-    return `${this.attributeValue}=${this.previousValue ?? '(unset)'}`;
+  public get currentValue(): string {
+    return this.currentValueData;
   }
 
   public restore(): void {

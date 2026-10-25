@@ -37,21 +37,27 @@ export class SetCommand extends EditCommand {
     }
 
     this.updated = { shape, attribute, value, snapshot };
-    return new CommandResult([`${shape.label} updated: ${snapshot.updatedDescription}`]);
+    return new CommandResult([
+      `${shape.label} updated: ${snapshot.attribute}=${snapshot.currentValue}`,
+    ]);
   }
 
   public undo(context: CommandContext): CommandResult {
     context.requireDocument();
     const { shape, snapshot } = this.requireUpdated();
     snapshot.restore();
-    return new CommandResult([`${shape.label} updated: ${snapshot.restoredDescription}`]);
+    return new CommandResult([
+      `${shape.label} updated: ${snapshot.attribute}=${snapshot.previousValue ?? '(unset)'}`,
+    ]);
   }
 
   public redo(context: CommandContext): CommandResult {
     context.requireDocument();
     const { shape, attribute, value } = this.requireUpdated();
     const snapshot = shape.setAttribute(attribute, value);
-    return new CommandResult([`${shape.label} updated: ${snapshot.updatedDescription}`]);
+    return new CommandResult([
+      `${shape.label} updated: ${snapshot.attribute}=${snapshot.currentValue}`,
+    ]);
   }
 
   private requireUpdated(): UpdatedShape {
