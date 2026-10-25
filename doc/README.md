@@ -10,7 +10,7 @@
 - [纵向任务计划](./ticket-plan.md)：已批准的 19 张任务、验收与阻塞关系。
 - [原 T1–T8](./tasks.md)：保留为历史技术工作清单，不再作为执行顺序。
 - [模块依赖图](./architecture.puml) 与 [类模型图](./class-model.puml)：PlantUML 源文件。
-- [领域词汇表](../CONTEXT.md) 与 [ADR](../docs/adr/)：已确认的术语和关键决策；Ticket 01 的 CLI 默认见 [ADR-0005](../docs/adr/0005-ticket-01-cli-defaults.md)，Ticket 16 的路径与 `save` 提交语义见 [ADR-0008](../docs/adr/0008-ticket-16-save-path-defaults.md)，Ticket 17 的读取边界与 CDATA 规则见 [ADR-0009](../docs/adr/0009-ticket-17-read-boundaries.md)。
+- [领域词汇表](../CONTEXT.md) 与 [ADR](../docs/adr/)：已确认的术语和关键决策；Ticket 01 的 CLI 默认见 [ADR-0005](../docs/adr/0005-ticket-01-cli-defaults.md)，Ticket 16 的路径与 `save` 提交语义见 [ADR-0008](../docs/adr/0008-ticket-16-save-path-defaults.md)，Ticket 17 的读取边界与 CDATA 规则见 [ADR-0009](../docs/adr/0009-ticket-17-read-boundaries.md)，Ticket 18 的补 id、元数据与未建模属性边界见 [ADR-0010](../docs/adr/0010-ticket-18-roundtrip-boundaries.md)。
 
 ## 架构方案
 
@@ -228,6 +228,7 @@ package "shared" {
 | 14  | `front` 对应同级末尾和最后绘制，`back` 对应索引 0 和最先绘制                   | 与 SVG 文档顺序和可见覆盖关系一致        | [ADR-0007](../docs/adr/0007-z-order-semantics.md)                                                       |
 | 15  | 文件按 UTF-8 写出，相对路径按进程工作目录解析；`save` 成功后才更新路径和屏障   | 失败不改变会话；路径保留用户输入形式     | [ADR-0008](../docs/adr/0008-ticket-16-save-path-defaults.md)                                            |
 | 16  | Ticket 17 只读显式 id；缺 id/元数据/未建模属性明确报错；text 的 CDATA 计入正文 | 保持中间版本边界，不静默丢失输入         | [ADR-0009](../docs/adr/0009-ticket-17-read-boundaries.md)                                               |
+| 17  | Ticket 18 两阶段补 id、延迟警告、忽略元数据并有序保留未建模属性                | 完成支持子集往返，同时隔离不可编辑内容   | [ADR-0010](../docs/adr/0010-ticket-18-roundtrip-boundaries.md)                                          |
 
 ## 需求摘要
 
