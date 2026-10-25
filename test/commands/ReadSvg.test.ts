@@ -23,15 +23,20 @@ test('[spec 6.12, 7] reads every shape, nested containers, entities, direct text
       '\uFEFF<?xml version="1.0" encoding="UTF-8"?>',
       '<svg xmlns="http://www.w3.org/2000/svg" width="320" height="200" viewBox="0 0 320 200" version="1.1" custom="ignored">',
       '  <g id="scene" fill="none">',
-      '    <rect id="r" x="1" y="2" width="3" height="4" fill="#fff" stroke="black" stroke-width="2"/>',
+      '    <![CDATA[ignored in a container]]>',
+      '    <rect id="r" x="1" y="2" width="3" height="4" fill="#fff" stroke="black" stroke-width="2">',
+      '      <![CDATA[ignored in a leaf]]>',
+      '    </rect>',
       '    <circle id="c" cx="5" cy="6" r="7"/>',
       '    <ellipse id="e" cx="8" cy="9" rx="10" ry="11"/>',
       '    <line id="l" x1="12" y1="13" x2="14" y2="15" stroke="red"/>',
       '    <text id="label" x="16" y="17">A&amp;B<![CDATA[ <C>]]></text>',
       '    <g id="nested">',
+      '      <![CDATA[ignored in a nested container]]>',
       '      <rect id="child" x="18" y="19" width="2" height="2"/>',
       '    </g>',
       '  </g>',
+      '  <![CDATA[ignored at the root]]>',
       '  <text id="empty-text">empty</text>',
       '</svg>',
     ].join('\n'),
@@ -89,6 +94,16 @@ test('[spec 3.3, 6.12, 9] read barriers and later editing use the normal history
   assert.deepEqual(dispatcher.dispatch(['redo']), ['rect#next created']);
 });
 
+test('[spec 6.12] validates read argument count before touching the document', () => {
+  const dispatcher = createDispatcher();
+
+  assert.throws(() => dispatcher.dispatch(['read']), new DomainError('usage: read <file.svg>'));
+  assert.throws(
+    () => dispatcher.dispatch(['read', 'one.svg', 'two.svg']),
+    new DomainError('usage: read <file.svg>'),
+  );
+});
+
 test('[spec 6.12, 7, 10] rejects unsupported or malformed SVG and stays atomic', async (t) => {
   const directory = await mkdtemp(join(tmpdir(), 'svg-editor-read-errors-'));
   t.after(() => rm(directory, { force: true, recursive: true }));
@@ -120,6 +135,11 @@ test('[spec 6.12, 7, 10] rejects unsupported or malformed SVG and stays atomic',
       'svg root width and height must be positive numbers',
     ],
     [
+      'root-missing-size.svg',
+      '<svg height="80"/>',
+      'svg root width and height must be positive numbers',
+    ],
+    [
       'root-negative.svg',
       '<svg width="100" height="0"/>',
       'svg root width and height must be positive numbers',
@@ -138,6 +158,21 @@ test('[spec 6.12, 7, 10] rejects unsupported or malformed SVG and stays atomic',
       'xmlns.svg',
       '<svg xmlns="urn:other" width="100" height="80"/>',
       'unsupported xmlns: urn:other',
+    ],
+    [
+      'root-transform.svg',
+      '<svg width="100" height="80" transform="scale(2)"/>',
+      'unsupported transform on svg',
+    ],
+    [
+      'root-style.svg',
+      '<svg width="100" height="80" style="fill:red"/>',
+      'unsupported attribute: style',
+    ],
+    [
+      'root-event.svg',
+      '<svg width="100" height="80" onload="x()"/>',
+      'unsupported attribute: onload',
     ],
     [
       'transform.svg',
@@ -178,6 +213,11 @@ test('[spec 6.12, 7, 10] rejects unsupported or malformed SVG and stays atomic',
       'empty-id.svg',
       '<svg width="100" height="80"><rect id="" x="0" y="0" width="1" height="1"/></svg>',
       'invalid SVG: missing id on rect',
+    ],
+    [
+      'whitespace-id.svg',
+      '<svg width="100" height="80"><rect id="bad id" x="0" y="0" width="1" height="1"/></svg>',
+      'invalid id: bad id',
     ],
     [
       'duplicate-id.svg',

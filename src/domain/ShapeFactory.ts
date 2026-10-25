@@ -53,7 +53,12 @@ export class ShapeFactory {
     return ShapeFactory.SVG_ELEMENTS.has(type);
   }
 
-  public createFromSvg(type: string, id: string, attributes: ReadonlyMap<string, string>): Shape {
+  public createFromSvg(
+    type: string,
+    id: string,
+    attributes: ReadonlyMap<string, string>,
+    text: string = '',
+  ): Shape {
     switch (type) {
       case 'circle':
         return this.createCircleFromSvg(id, attributes);
@@ -67,7 +72,7 @@ export class ShapeFactory {
       case 'rect':
         return this.createRectFromSvg(id, attributes);
       case 'text':
-        return this.createTextFromSvg(id, attributes);
+        return this.createTextFromSvg(id, attributes, text);
       default:
         throw new DomainError(`unsupported element: ${type}`);
     }
@@ -256,10 +261,14 @@ export class ShapeFactory {
     );
   }
 
-  private createTextFromSvg(id: string, attributes: ReadonlyMap<string, string>): Text {
+  private createTextFromSvg(
+    id: string,
+    attributes: ReadonlyMap<string, string>,
+    content: string,
+  ): Text {
     this.assertSvgAttributes('text', attributes, ['x', 'y']);
     return this.applySvgStyle(
-      new Text(id, this.svgNumber(attributes, 'x'), this.svgNumber(attributes, 'y'), ''),
+      new Text(id, this.svgNumber(attributes, 'x'), this.svgNumber(attributes, 'y'), content),
       attributes,
     );
   }

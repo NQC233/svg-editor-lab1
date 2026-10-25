@@ -3,6 +3,7 @@ import { NumberFormatter } from '../shared/NumberFormatter.js';
 import { NumberParser } from '../shared/NumberParser.js';
 import type { Point } from './Point.js';
 import { ShapeAttributeSnapshot } from './ShapeAttributeSnapshot.js';
+import type { Container } from './Container.js';
 
 export type SvgAttribute = readonly [name: string, value: string];
 
@@ -45,6 +46,10 @@ export abstract class Shape {
   }
 
   public abstract get type(): string;
+
+  public isContainer(): this is Container {
+    return false;
+  }
 
   public svgAttributes(): readonly SvgAttribute[] {
     return [['id', this.id], ...this.svgGeometryAttributes(), ...this.styleAttributes()];

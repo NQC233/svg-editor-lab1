@@ -71,6 +71,9 @@ test('[spec 7.2, 10] rejects malformed structure and unsupported XML constructs'
     ['<svg><g></svg>', 'invalid SVG: mismatched closing tag: svg'],
     ['<svg><g></g>', 'invalid SVG: unclosed element: svg'],
     ['<svg>&unknown;</svg>', 'invalid SVG: unknown entity: &unknown;'],
+    ['<?xml?><svg/>', 'invalid SVG: malformed XML declaration'],
+    ['<svg><!-- a -- b --></svg>', 'invalid SVG: malformed comment'],
+    ['<svg>\u0001</svg>', 'invalid SVG: invalid character U+1'],
     ['<!DOCTYPE svg><svg/>', 'invalid SVG: DOCTYPE is not supported'],
     [
       '<svg/><?xml-stylesheet href="x.css"?>',

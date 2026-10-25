@@ -1,17 +1,16 @@
 import { readFileSync } from 'node:fs';
 import { TextDecoder } from 'node:util';
 
-import { Container } from '../domain/Container.js';
+import type { Container } from '../domain/Container.js';
 import type { Shape } from '../domain/Shape.js';
 import { ShapeFactory } from '../domain/ShapeFactory.js';
 import { SvgDocument } from '../domain/SvgDocument.js';
-import { Text } from '../domain/Text.js';
 import { DomainError } from '../shared/DomainError.js';
 import { NumberParser } from '../shared/NumberParser.js';
 import type { XmlElement } from './XmlElement.js';
 import { XmlParser } from './XmlParser.js';
 import { SvgReadResult } from './SvgReadResult.js';
-import { XmlText } from './XmlText.js';
+import type { XmlText } from './XmlText.js';
 
 const ROOT_ERROR = 'svg root width and height must be positive numbers';
 const SVG_NAMESPACE = 'http://www.w3.org/2000/svg';
@@ -52,17 +51,7 @@ export class SvgReader {
     this.validateViewBox(root.attribute('viewBox'), width, height);
 
     const document = new SvgDocument(width, height);
-    let elementCount = 0;
-    for (const child of root.children) {
-      if (child instanceof XmlText) {
-        this.assertIgnorableText(child, 'svg');
-        continue;
-      }
-
-      elementCount += this.appendElement(child, document);
-    }
-
-    return new SvgReadResult(document, elementCount);
+    return new SvgReadResult(document, this.appendElementChildren(root, document));
   }
 
   private appendElement(element: XmlElement, document: SvgDocument, parent?: Container): number {
@@ -80,55 +69,78 @@ export class SvgReader {
     }
 
     const attributes = new Map(element.attributes);
-    const shape = this.shapeFactory.createFromSvg(element.name, id, attributes);
-    if (shape instanceof Text) {
-      this.setReadTextContent(shape, element);
+    const shape = this.shapeFactory.createFromSvg(
+      element.name,
+      id,
+      attributes,
+      this.readDirectText(element),
+    );
+    if (shape.svgTextContent() !== undefined) {
+      this.assertTextOnly(element);
     } else {
       this.validateNonTextContent(element, shape);
     }
 
     document.appendShape(shape, parent);
-    if (!(shape instanceof Container)) {
+    if (!shape.isContainer()) {
       return 1;
     }
 
-    let elementCount = 1;
-    for (const child of element.children) {
-      if (child instanceof XmlText) {
-        continue;
-      }
+    return 1 + this.appendElementChildren(element, document, shape);
+  }
 
-      elementCount += this.appendElement(child, document, shape);
+  private appendElementChildren(
+    element: XmlElement,
+    document: SvgDocument,
+    parent?: Container,
+  ): number {
+    let elementCount = 0;
+    for (const child of element.children) {
+      elementCount += child.accept({
+        visitElement: (childElement) => this.appendElement(childElement, document, parent),
+        visitText: (text) => {
+          this.assertIgnorableText(text, element.name);
+          return 0;
+        },
+      });
     }
 
     return elementCount;
   }
 
-  private setReadTextContent(shape: Text, element: XmlElement): void {
-    for (const child of element.children) {
-      if (!(child instanceof XmlText)) {
-        throw new DomainError(`unsupported element: ${child.name}`);
-      }
-    }
-
-    const content = element.children
-      .filter((child): child is XmlText => child instanceof XmlText)
-      .map((child) => child.value)
-      .join('');
-    shape.setAttribute('text', content);
-  }
-
   private validateNonTextContent(element: XmlElement, shape: Shape): void {
     for (const child of element.children) {
-      if (child instanceof XmlText) {
-        this.assertIgnorableText(child, element.name);
-        continue;
-      }
-
-      if (!(shape instanceof Container)) {
-        throw new DomainError(`unsupported element: ${child.name}`);
-      }
+      child.accept({
+        visitElement: (childElement) => {
+          if (!shape.isContainer()) {
+            throw new DomainError(`unsupported element: ${childElement.name}`);
+          }
+        },
+        visitText: (text) => this.assertIgnorableText(text, element.name),
+      });
     }
+  }
+
+  private assertTextOnly(element: XmlElement): void {
+    for (const child of element.children) {
+      child.accept({
+        visitElement: (childElement) => {
+          throw new DomainError(`unsupported element: ${childElement.name}`);
+        },
+        visitText: () => undefined,
+      });
+    }
+  }
+
+  private readDirectText(element: XmlElement): string {
+    return element.children
+      .map((child) =>
+        child.accept({
+          visitElement: () => '',
+          visitText: (text) => text.value,
+        }),
+      )
+      .join('');
   }
 
   private assertIgnorableText(text: XmlText, tag: string): void {

@@ -1,14 +1,16 @@
-import type { XmlNode } from './XmlNode.js';
+import { XmlNode } from './XmlNode.js';
+import type { XmlNodeVisitor } from './XmlNode.js';
 
 export type XmlAttribute = readonly [name: string, value: string];
 
-export class XmlElement {
+export class XmlElement extends XmlNode {
   private readonly childrenValue: XmlNode[] = [];
 
   public constructor(
     private readonly nameValue: string,
     attributes: readonly XmlAttribute[],
   ) {
+    super();
     this.attributesValue = [...attributes];
   }
 
@@ -32,5 +34,9 @@ export class XmlElement {
 
   public appendChild(child: XmlNode): void {
     this.childrenValue.push(child);
+  }
+
+  public override accept<T>(visitor: XmlNodeVisitor<T>): T {
+    return visitor.visitElement(this);
   }
 }

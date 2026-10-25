@@ -8,11 +8,15 @@ const NAME_START_PATTERN = /[A-Za-z_:]/;
 const NAME_PATTERN = /[A-Za-z0-9_.:-]/;
 
 export class XmlParser {
+  private static readonly DECLARATION_PATTERN =
+    /^\s+version\s*=\s*(?:"1\.[0-9]+"|'1\.[0-9]+')(?:\s+encoding\s*=\s*(?:"[A-Za-z][A-Za-z0-9._-]*"|'[A-Za-z][A-Za-z0-9._-]*'))?(?:\s+standalone\s*=\s*(?:"(?:yes|no)"|'(?:yes|no)'))?\s*$/;
+
   private index = 0;
   private source = '';
 
   public parse(source: string): XmlDocument {
     this.source = source.startsWith('\uFEFF') ? source.slice(1) : source;
+    this.assertValidCharacters();
     this.index = 0;
     this.skipWhitespace();
     this.skipXmlDeclaration();
@@ -239,6 +243,11 @@ export class XmlParser {
       throw this.invalid('unterminated XML declaration');
     }
 
+    const declaration = this.source.slice(this.index + '<?xml'.length, end);
+    if (!XmlParser.DECLARATION_PATTERN.test(declaration)) {
+      throw this.invalid('malformed XML declaration');
+    }
+
     this.index = end + 2;
     this.skipWhitespace();
   }
@@ -264,9 +273,15 @@ export class XmlParser {
   }
 
   private skipComment(): void {
+    const start = this.index + '<!--'.length;
     const end = this.source.indexOf('-->', this.index + '<!--'.length);
     if (end === -1) {
       throw this.invalid('unterminated comment');
+    }
+
+    const content = this.source.slice(start, end);
+    if (content.includes('--') || content.endsWith('-')) {
+      throw this.invalid('malformed comment');
     }
 
     this.index = end + '-->'.length;
@@ -299,6 +314,32 @@ export class XmlParser {
   private skipWhitespace(): void {
     while (/\s/.test(this.source.charAt(this.index))) {
       this.index += 1;
+    }
+  }
+
+  private assertValidCharacters(): void {
+    for (let index = 0; index < this.source.length; index += 1) {
+      const codePoint = this.source.codePointAt(index);
+      if (codePoint === undefined) {
+        break;
+      }
+
+      if (
+        codePoint === 0x9 ||
+        codePoint === 0xa ||
+        codePoint === 0xd ||
+        (codePoint >= 0x20 && codePoint <= 0xd7ff) ||
+        (codePoint >= 0xe000 && codePoint <= 0xfffd) ||
+        (codePoint >= 0x10000 && codePoint <= 0x10ffff)
+      ) {
+        if (codePoint > 0xffff) {
+          index += 1;
+        }
+
+        continue;
+      }
+
+      throw this.invalid(`invalid character U+${codePoint.toString(16).toUpperCase()}`);
     }
   }
 
