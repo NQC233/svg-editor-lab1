@@ -1,5 +1,6 @@
 import { DomainError } from '../shared/DomainError.js';
 import { Command } from './Command.js';
+import type { CommandArguments } from './CommandArguments.js';
 import type { CommandContext } from './CommandContext.js';
 import { CommandResult } from './CommandResult.js';
 
@@ -28,11 +29,11 @@ export class HelpCommand extends Command {
     'History:',
     '  undo',
     '  redo',
-    'Partial implementation: available commands are help, init, canvas, create rect, circle, ellipse, line, tree, show, undo, and redo.',
+    'Partial implementation: available commands are help, init, canvas, create rect, circle, ellipse, line, text, tree, show, undo, and redo.',
     'Canvas resizing is not available yet.',
   ] as const;
 
-  public execute(_context: CommandContext, args: readonly string[]): CommandResult {
+  public execute(_context: CommandContext, args: CommandArguments): CommandResult {
     if (args.length > 0) {
       throw new DomainError('usage: help');
     }

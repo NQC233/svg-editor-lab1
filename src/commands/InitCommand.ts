@@ -2,12 +2,13 @@ import { SvgDocument } from '../domain/SvgDocument.js';
 import { DomainError } from '../shared/DomainError.js';
 import { NumberFormatter } from '../shared/NumberFormatter.js';
 import { NumberParser } from '../shared/NumberParser.js';
+import type { CommandArguments } from './CommandArguments.js';
 import type { CommandContext } from './CommandContext.js';
 import { CommandResult } from './CommandResult.js';
 import { DocumentCommand } from './DocumentCommand.js';
 
 export class InitCommand extends DocumentCommand {
-  public execute(context: CommandContext, args: readonly string[]): CommandResult {
+  public execute(context: CommandContext, args: CommandArguments): CommandResult {
     if (args.length > 2) {
       throw new DomainError('usage: init [w] [h]');
     }
@@ -20,8 +21,8 @@ export class InitCommand extends DocumentCommand {
     let height = 600;
 
     if (args.length === 2) {
-      const widthToken = args[0];
-      const heightToken = args[1];
+      const widthToken = args.value(0);
+      const heightToken = args.value(1);
       if (widthToken === undefined || heightToken === undefined) {
         throw new DomainError('init requires both width and height');
       }

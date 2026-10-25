@@ -47,7 +47,7 @@ export class CliApplication {
       try {
         const tokens = this.tokenizer.tokenize(line);
         if (tokens !== null && tokens.length > 0) {
-          for (const result of this.dispatcher.dispatch(tokens)) {
+          for (const result of this.dispatcher.dispatchTokens(tokens)) {
             this.output.writeLine(result);
           }
         }

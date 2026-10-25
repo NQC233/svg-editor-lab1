@@ -6,12 +6,14 @@ import { Line } from './Line.js';
 import { Rect } from './Rect.js';
 import type { Shape } from './Shape.js';
 import { ShapeUsageError } from './ShapeUsageError.js';
+import { Text } from './Text.js';
 
 export class ShapeFactory {
   private static readonly CIRCLE_SYNTAX = 'circle <id> <cx> <cy> <r> [fill]';
   private static readonly ELLIPSE_SYNTAX = 'ellipse <id> <cx> <cy> <rx> <ry> [fill]';
   private static readonly LINE_SYNTAX = 'line <id> <x1> <y1> <x2> <y2> [stroke]';
   private static readonly RECT_SYNTAX = 'rect <id> <x> <y> <w> <h> [fill]';
+  private static readonly TEXT_SYNTAX = 'text <id> <x> <y> <content>';
 
   public create(type: string, id: string, args: readonly string[]): Shape {
     switch (type) {
@@ -23,6 +25,8 @@ export class ShapeFactory {
         return this.createLine(id, args);
       case 'rect':
         return this.createRect(id, args);
+      case 'text':
+        return this.createText(id, args);
       default:
         throw new DomainError(`unknown shape type: ${type} (is the plugin loaded?)`);
     }
@@ -131,5 +135,20 @@ export class ShapeFactory {
       NumberParser.parse(heightToken),
       args[4],
     );
+  }
+
+  private createText(id: string, args: readonly string[]): Text {
+    if (args.length !== 3) {
+      throw new ShapeUsageError(ShapeFactory.TEXT_SYNTAX);
+    }
+
+    const xToken = args[0];
+    const yToken = args[1];
+    const content = args[2];
+    if (xToken === undefined || yToken === undefined || content === undefined) {
+      throw new ShapeUsageError(ShapeFactory.TEXT_SYNTAX);
+    }
+
+    return new Text(id, NumberParser.parse(xToken), NumberParser.parse(yToken), content);
   }
 }

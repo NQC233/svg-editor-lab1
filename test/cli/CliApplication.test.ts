@@ -291,3 +291,68 @@ test('[spec 3.3, 5.1, 5.2, 5.5, 5.6, 6.1, 6.10] replays geometry shape creation,
     ].join('\n'),
   );
 });
+
+test('[spec 4.2, 5.2, 5.5, 5.6, 6.1, 6.10] replays quoted text creation, display, history, and failures', async () => {
+  const result = await runCli(
+    [
+      'create text missing-doc 0 0 "content"',
+      'init 400 200',
+      'create text title 20 40 "My Diagram"',
+      'create text title2 30 50 "开始"',
+      'create text empty 0 0 ""',
+      'create text quoted 5 6 "say \\"hi\\" \\\\path"',
+      'create text keyword 7 8 "in"',
+      'tree',
+      'show quoted',
+      'show empty',
+      'show keyword',
+      'create text bad nope 0 content',
+      'create text few 1 2',
+      'create text keyword 0 0 duplicate',
+      'undo',
+      'tree',
+      'redo',
+    ].join('\n'),
+  );
+
+  assert.equal(result.code, 0);
+  assert.equal(result.stderr, '');
+  assert.equal(
+    result.stdout,
+    [
+      "error: no document. use 'init' or 'read' first",
+      'canvas 400x200 created',
+      'text#title created',
+      'text#title2 created',
+      'text#empty created',
+      'text#quoted created',
+      'text#keyword created',
+      'svg (400x200)',
+      '├── text#title    (20,40) "My Diagram"',
+      '├── text#title2   (30,50) "开始"',
+      '├── text#empty    (0,0) ""',
+      '├── text#quoted   (5,6) "say \\"hi\\" \\\\path"',
+      '└── text#keyword  (7,8) "in"',
+      'text#quoted  parent=svg',
+      '  x=5 y=6',
+      '  text="say \\"hi\\" \\\\path"',
+      'text#empty  parent=svg',
+      '  x=0 y=0',
+      '  text=""',
+      'text#keyword  parent=svg',
+      '  x=7 y=8',
+      '  text="in"',
+      'error: invalid number: nope',
+      'error: usage: create text <id> <x> <y> <content>',
+      'error: id already exists: keyword',
+      'text#keyword removed',
+      'svg (400x200)',
+      '├── text#title   (20,40) "My Diagram"',
+      '├── text#title2  (30,50) "开始"',
+      '├── text#empty   (0,0) ""',
+      '└── text#quoted  (5,6) "say \\"hi\\" \\\\path"',
+      'text#keyword created',
+      '',
+    ].join('\n'),
+  );
+});
