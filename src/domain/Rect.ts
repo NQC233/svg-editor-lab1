@@ -128,15 +128,7 @@ export class Rect extends LeafShape {
   }
 
   public override detailLines(): readonly string[] {
-    return [
-      [
-        `x=${NumberFormatter.format(this.x)}`,
-        `y=${NumberFormatter.format(this.y)}`,
-        `width=${NumberFormatter.format(this.width)}`,
-        `height=${NumberFormatter.format(this.height)}`,
-      ].join(' '),
-      ...this.styleLines(),
-    ];
+    return [this.svgGeometryText(), ...this.styleLines()];
   }
 
   protected override svgGeometryAttributes(): readonly SvgAttribute[] {

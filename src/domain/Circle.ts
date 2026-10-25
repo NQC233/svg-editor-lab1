@@ -99,14 +99,7 @@ export class Circle extends LeafShape {
   }
 
   public override detailLines(): readonly string[] {
-    return [
-      [
-        `cx=${NumberFormatter.format(this.centerX)}`,
-        `cy=${NumberFormatter.format(this.centerY)}`,
-        `r=${NumberFormatter.format(this.radius)}`,
-      ].join(' '),
-      ...this.styleLines(),
-    ];
+    return [this.svgGeometryText(), ...this.styleLines()];
   }
 
   protected override svgGeometryAttributes(): readonly SvgAttribute[] {

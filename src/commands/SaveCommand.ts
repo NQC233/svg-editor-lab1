@@ -16,14 +16,14 @@ export class SaveCommand extends DocumentCommand {
       throw new DomainError('no file path; use save <file.svg>');
     }
 
+    let count: number;
     try {
-      context.svgWriter.write(document, path);
+      count = context.svgWriter.write(document, path);
     } catch {
       throw new DomainError(`cannot write file: ${path}`);
     }
 
     context.setCurrentPath(path);
-    const count = context.svgWriter.elementCount(document);
     return new CommandResult([`saved to ${path} (${count} elements)`]);
   }
 }

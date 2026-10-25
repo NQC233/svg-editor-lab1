@@ -75,11 +75,7 @@ export class Text extends LeafShape {
   }
 
   public override detailLines(): readonly string[] {
-    return [
-      `x=${NumberFormatter.format(this.x)} y=${NumberFormatter.format(this.y)}`,
-      `text=${this.quotedContent()}`,
-      ...this.styleLines(),
-    ];
+    return [this.svgGeometryText(), `text=${this.quotedContent()}`, ...this.styleLines()];
   }
 
   public override svgTextContent(): string {

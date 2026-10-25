@@ -5,12 +5,23 @@ import type { SvgDocument } from '../domain/SvgDocument.js';
 import { NumberFormatter } from '../shared/NumberFormatter.js';
 import { XmlEscaper } from './XmlEscaper.js';
 
+interface RenderedSvg {
+  readonly content: string;
+  readonly elementCount: number;
+}
+
 export class SvgWriter {
-  public write(document: SvgDocument, path: string): void {
-    writeFileSync(path, this.serialize(document), 'utf8');
+  public write(document: SvgDocument, path: string): number {
+    const rendered = this.render(document);
+    writeFileSync(path, rendered.content, 'utf8');
+    return rendered.elementCount;
   }
 
   public serialize(document: SvgDocument): string {
+    return this.render(document).content;
+  }
+
+  private render(document: SvgDocument): RenderedSvg {
     const width = NumberFormatter.format(document.width);
     const height = NumberFormatter.format(document.height);
     const lines = [
@@ -18,31 +29,19 @@ export class SvgWriter {
       `<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}" viewBox="0 0 ${width} ${height}">`,
     ];
 
+    let elementCount = 0;
     for (const shape of document.rootShapes) {
-      this.appendShape(document, shape, 1, lines);
+      elementCount += this.appendShape(document, shape, 1, lines);
     }
 
     lines.push('</svg>');
-    return `${lines.join('\n')}\n`;
-  }
-
-  public elementCount(document: SvgDocument): number {
-    let count = 0;
-    const visit = (shape: Shape): void => {
-      count += 1;
-      for (const child of document.childrenOf(shape)) {
-        visit(child);
-      }
+    return {
+      content: `${lines.join('\n')}\n`,
+      elementCount,
     };
-
-    for (const shape of document.rootShapes) {
-      visit(shape);
-    }
-
-    return count;
   }
 
-  private appendShape(document: SvgDocument, shape: Shape, depth: number, lines: string[]): void {
+  private appendShape(document: SvgDocument, shape: Shape, depth: number, lines: string[]): number {
     const indent = '  '.repeat(depth);
     const attributes = shape
       .svgAttributes()
@@ -54,19 +53,21 @@ export class SvgWriter {
       lines.push(
         `${indent}<${shape.type}${attributes}>${XmlEscaper.escape(content)}</${shape.type}>`,
       );
-      return;
+      return 1;
     }
 
     if (children.length === 0) {
       lines.push(`${indent}<${shape.type}${attributes}/>`);
-      return;
+      return 1;
     }
 
     lines.push(`${indent}<${shape.type}${attributes}>`);
+    let elementCount = 1;
     for (const child of children) {
-      this.appendShape(document, child, depth + 1, lines);
+      elementCount += this.appendShape(document, child, depth + 1, lines);
     }
 
     lines.push(`${indent}</${shape.type}>`);
+    return elementCount;
   }
 }

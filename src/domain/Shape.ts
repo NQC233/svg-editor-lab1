@@ -47,15 +47,7 @@ export abstract class Shape {
   public abstract get type(): string;
 
   public svgAttributes(): readonly SvgAttribute[] {
-    return [
-      ['id', this.id],
-      ...this.svgGeometryAttributes(),
-      ...(this.fill === undefined ? [] : [['fill', this.fill] as const]),
-      ...(this.stroke === undefined ? [] : [['stroke', this.stroke] as const]),
-      ...(this.strokeWidth === undefined
-        ? []
-        : [['stroke-width', NumberFormatter.format(this.strokeWidth)] as const]),
-    ];
+    return [['id', this.id], ...this.svgGeometryAttributes(), ...this.styleAttributes()];
   }
 
   public svgTextContent(): string | undefined {
@@ -93,21 +85,24 @@ export abstract class Shape {
     return [];
   }
 
+  protected svgGeometryText(): string {
+    return this.svgGeometryAttributes()
+      .map(([name, value]) => `${name}=${value}`)
+      .join(' ');
+  }
+
   protected styleLines(): readonly string[] {
-    const attributes: string[] = [];
-    if (this.fill !== undefined) {
-      attributes.push(`fill=${this.fill}`);
-    }
+    return this.styleAttributes().map(([name, value]) => `${name}=${value}`);
+  }
 
-    if (this.stroke !== undefined) {
-      attributes.push(`stroke=${this.stroke}`);
-    }
-
-    if (this.strokeWidth !== undefined) {
-      attributes.push(`stroke-width=${NumberFormatter.format(this.strokeWidth)}`);
-    }
-
-    return attributes;
+  private styleAttributes(): readonly SvgAttribute[] {
+    return [
+      ...(this.fill === undefined ? [] : [['fill', this.fill] as const]),
+      ...(this.stroke === undefined ? [] : [['stroke', this.stroke] as const]),
+      ...(this.strokeWidth === undefined
+        ? []
+        : [['stroke-width', NumberFormatter.format(this.strokeWidth)] as const]),
+    ];
   }
 
   protected treeFillLines(): readonly string[] {

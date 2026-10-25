@@ -111,15 +111,7 @@ export class Line extends LeafShape {
   }
 
   public override detailLines(): readonly string[] {
-    return [
-      [
-        `x1=${NumberFormatter.format(this.startX)}`,
-        `y1=${NumberFormatter.format(this.startY)}`,
-        `x2=${NumberFormatter.format(this.endX)}`,
-        `y2=${NumberFormatter.format(this.endY)}`,
-      ].join(' '),
-      ...this.styleLines(),
-    ];
+    return [this.svgGeometryText(), ...this.styleLines()];
   }
 
   protected override svgGeometryAttributes(): readonly SvgAttribute[] {
