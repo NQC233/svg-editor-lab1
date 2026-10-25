@@ -2,6 +2,8 @@ import { DomainError } from '../shared/DomainError.js';
 import { NumberFormatter } from '../shared/NumberFormatter.js';
 import { Container } from './Container.js';
 import type { GeometrySnapshot } from './GeometrySnapshot.js';
+import type { Group } from './Group.js';
+import { GroupSnapshot } from './GroupSnapshot.js';
 import { LeafShape } from './LeafShape.js';
 import type { Shape } from './Shape.js';
 import { ShapePlacement } from './ShapePlacement.js';
@@ -190,6 +192,135 @@ export class SvgDocument {
     this.parents.set(shape, placement.parent);
   }
 
+  public groupShapes(group: Group, targetIds: readonly string[]): GroupSnapshot {
+    if (targetIds.length === 0) {
+      throw new DomainError('group requires at least one target');
+    }
+
+    if (this.shapesById.has(group.id)) {
+      throw new DomainError(`id already exists: ${group.id}`);
+    }
+
+    const seenTargets = new Set<string>();
+    for (const id of targetIds) {
+      if (seenTargets.has(id)) {
+        throw new DomainError(`duplicate target: ${id}`);
+      }
+
+      seenTargets.add(id);
+    }
+
+    const targets = targetIds.map((id) => this.require(id));
+    for (const target of targets) {
+      if (!(target instanceof Container)) {
+        continue;
+      }
+
+      if (targets.some((other) => other !== target && this.isWithinSubtree(other, target))) {
+        throw new DomainError(`cannot group a container into its own descendant: ${target.id}`);
+      }
+    }
+
+    const locations = new Map<Shape, ShapeLocation>();
+    for (const target of targets) {
+      locations.set(target, this.locateShape(target));
+    }
+
+    const anchor = locations.get(targets[0]!);
+    if (anchor === undefined) {
+      throw new DomainError('group requires at least one target');
+    }
+
+    const targetSet = new Set(targets);
+    let insertionIndex = 0;
+    for (let index = 0; index < anchor.index; index += 1) {
+      const sibling = anchor.siblings[index];
+      if (sibling !== undefined && !targetSet.has(sibling)) {
+        insertionIndex += 1;
+      }
+    }
+
+    const ranks = this.documentOrderRanks();
+    const children = [...targets].sort(
+      (left, right) =>
+        (ranks.get(left) ?? Number.MAX_SAFE_INTEGER) -
+        (ranks.get(right) ?? Number.MAX_SAFE_INTEGER),
+    );
+    const placements = children.map((child) => {
+      const location = locations.get(child);
+      if (location === undefined) {
+        throw new DomainError(`no such shape: ${child.id}`);
+      }
+
+      return new ShapePlacement(location.parent, location.index);
+    });
+
+    this.removeLocatedShapes(locations);
+    this.insertShape(group, insertionIndex, anchor.parent);
+    this.attachChildren(group, children);
+    return new GroupSnapshot(group, anchor.parent, insertionIndex, children, placements);
+  }
+
+  public restoreGrouped(snapshot: GroupSnapshot): void {
+    const { group, parent, index } = snapshot;
+    const location = this.locateShape(group);
+    if (location.parent !== parent || location.index !== index) {
+      throw new DomainError(`cannot restore grouped container: ${group.id}`);
+    }
+
+    const children = snapshot.children;
+    const currentChildren = this.mutableChildrenOf(group);
+    if (
+      currentChildren.length !== children.length ||
+      currentChildren.some((child, offset) => child !== children[offset])
+    ) {
+      throw new DomainError(`cannot restore grouped container: ${group.id}`);
+    }
+
+    location.siblings.splice(location.index, 1);
+    this.shapesById.delete(group.id);
+    this.parents.delete(group);
+    this.childrenByShape.set(group, []);
+    this.restoreOriginalPlacements(children, snapshot.placements, group);
+  }
+
+  public reapplyGroup(snapshot: GroupSnapshot): void {
+    const { group, parent, index } = snapshot;
+    if (this.shapesById.has(group.id) || this.parents.has(group)) {
+      throw new DomainError(`id already exists: ${group.id}`);
+    }
+
+    this.assertContainer(parent);
+    const children = snapshot.children;
+    const placements = snapshot.placements;
+    const locations = new Map<Shape, ShapeLocation>();
+    children.forEach((child, offset) => {
+      const placement = placements[offset];
+      if (
+        placement === undefined ||
+        this.shapesById.get(child.id) !== child ||
+        !this.parents.has(child)
+      ) {
+        throw new DomainError(`cannot redo grouped container: ${group.id}`);
+      }
+
+      const location = this.locateShape(child);
+      if (location.parent !== placement.parent || location.index !== placement.index) {
+        throw new DomainError(`cannot redo grouped container: ${group.id}`);
+      }
+
+      locations.set(child, location);
+    });
+
+    const siblingCount = this.siblingsOf(parent).length;
+    const removedFromParent = placements.filter((placement) => placement.parent === parent).length;
+    this.assertInsertionIndex(index, siblingCount - removedFromParent);
+
+    this.removeLocatedShapes(locations);
+    this.insertShape(group, index, parent);
+    this.attachChildren(group, children);
+  }
+
   public parentLabelOf(shape: Shape): string {
     if (!this.parents.has(shape)) {
       throw new DomainError(`no such shape: ${shape.id}`);
@@ -290,6 +421,81 @@ export class SvgDocument {
     }
 
     return false;
+  }
+
+  private documentOrderRanks(): ReadonlyMap<Shape, number> {
+    const ranks = new Map<Shape, number>();
+    let nextRank = 0;
+    const visit = (shape: Shape): void => {
+      ranks.set(shape, nextRank);
+      nextRank += 1;
+      for (const child of this.childrenByShape.get(shape) ?? []) {
+        visit(child);
+      }
+    };
+
+    for (const shape of this.rootShapesValue) {
+      visit(shape);
+    }
+
+    return ranks;
+  }
+
+  private removeLocatedShapes(locations: ReadonlyMap<Shape, ShapeLocation>): void {
+    const byParent = new Map<Container | undefined, ShapeLocation[]>();
+    for (const location of locations.values()) {
+      const siblings = byParent.get(location.parent) ?? [];
+      siblings.push(location);
+      byParent.set(location.parent, siblings);
+    }
+
+    for (const parentLocations of byParent.values()) {
+      parentLocations.sort((left, right) => right.index - left.index);
+      for (const location of parentLocations) {
+        location.siblings.splice(location.index, 1);
+      }
+    }
+  }
+
+  private attachChildren(group: Group, children: readonly Shape[]): void {
+    const groupChildren = this.mutableChildrenOf(group);
+    groupChildren.push(...children);
+    for (const child of children) {
+      this.parents.set(child, group);
+    }
+  }
+
+  private restoreOriginalPlacements(
+    children: readonly Shape[],
+    placements: readonly ShapePlacement[],
+    groupedInto: Group,
+  ): void {
+    const byParent = new Map<
+      Container | undefined,
+      { readonly child: Shape; readonly placement: ShapePlacement }[]
+    >();
+
+    children.forEach((child, offset) => {
+      const placement = placements[offset];
+      if (placement === undefined || this.parents.get(child) !== groupedInto) {
+        throw new DomainError(`cannot restore grouped container: ${groupedInto.id}`);
+      }
+
+      const entries = byParent.get(placement.parent) ?? [];
+      entries.push({ child, placement });
+      byParent.set(placement.parent, entries);
+    });
+
+    for (const [parent, entries] of byParent) {
+      this.assertContainer(parent);
+      entries.sort((left, right) => left.placement.index - right.placement.index);
+      for (const { child, placement } of entries) {
+        const siblings = this.siblingsOf(parent);
+        this.assertInsertionIndex(placement.index, siblings.length);
+        siblings.splice(placement.index, 0, child);
+        this.parents.set(child, parent);
+      }
+    }
   }
 
   private collectIds(shape: Shape, ids: Set<string>): void {

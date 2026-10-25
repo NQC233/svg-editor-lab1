@@ -150,3 +150,82 @@ test('[spec 6.8, 9] moves within one parent, reports a last-child no-op, and rej
   assert.deepEqual(document.childrenOf(container), [second, last, branch, first]);
   assert.deepEqual(document.childrenOf(branch), [nested]);
 });
+
+test('[spec 6.6] groups mixed targets at the first target location in original document order', () => {
+  const document = new SvgDocument(800, 600);
+  const same = new Group('same');
+  const a = new Rect('a', 0, 0, 10, 10);
+  const b = new Rect('b', 20, 20, 10, 10);
+  const c = new Rect('c', 40, 40, 10, 10);
+  const other = new Group('other');
+  const d = new Rect('d', 60, 60, 10, 10);
+  const e = new Rect('e', 80, 80, 10, 10);
+  const combined = new Group('combined');
+
+  document.appendShape(same);
+  document.appendShape(a, same);
+  document.appendShape(b, same);
+  document.appendShape(c, same);
+  document.appendShape(other);
+  document.appendShape(d, other);
+  document.appendShape(e, other);
+
+  const snapshot = document.groupShapes(combined, ['b', 'd', 'a']);
+
+  assert.equal(snapshot.group, combined);
+  assert.equal(snapshot.parent, same);
+  assert.equal(snapshot.index, 0);
+  assert.deepEqual(snapshot.children, [a, b, d]);
+  assert.deepEqual(document.childrenOf(same), [combined, c]);
+  assert.deepEqual(document.childrenOf(combined), [a, b, d]);
+  assert.deepEqual(document.childrenOf(other), [e]);
+  assert.equal(document.parentLabelOf(a), 'g#combined');
+  assert.equal(document.parentLabelOf(d), 'g#combined');
+
+  document.restoreGrouped(snapshot);
+
+  assert.deepEqual(document.childrenOf(same), [a, b, c]);
+  assert.deepEqual(document.childrenOf(other), [d, e]);
+  assert.deepEqual(document.childrenOf(combined), []);
+  assert.equal(document.find('combined'), undefined);
+  assert.equal(document.parentLabelOf(a), 'g#same');
+  assert.equal(document.parentLabelOf(d), 'g#other');
+
+  document.reapplyGroup(snapshot);
+
+  assert.deepEqual(document.childrenOf(same), [combined, c]);
+  assert.deepEqual(document.childrenOf(combined), [a, b, d]);
+  assert.deepEqual(document.childrenOf(other), [e]);
+});
+
+test('[spec 3.3, 6.6] rejects invalid group targets without changing the tree', () => {
+  const document = new SvgDocument(800, 600);
+  const outer = new Group('outer');
+  const inner = new Group('inner');
+  const leaf = new Rect('leaf', 0, 0, 10, 10);
+  document.appendShape(outer);
+  document.appendShape(inner, outer);
+  document.appendShape(leaf, inner);
+
+  assert.throws(
+    () => document.groupShapes(new Group('combined'), ['inner', 'inner']),
+    new DomainError('duplicate target: inner'),
+  );
+  assert.throws(
+    () => document.groupShapes(new Group('combined'), ['leaf', 'missing']),
+    new DomainError('no such shape: missing'),
+  );
+  assert.throws(
+    () => document.groupShapes(new Group('outer'), ['leaf']),
+    new DomainError('id already exists: outer'),
+  );
+  assert.throws(
+    () => document.groupShapes(new Group('combined'), ['outer', 'leaf']),
+    new DomainError('cannot group a container into its own descendant: outer'),
+  );
+
+  assert.deepEqual(document.rootShapes, [outer]);
+  assert.deepEqual(document.childrenOf(outer), [inner]);
+  assert.deepEqual(document.childrenOf(inner), [leaf]);
+  assert.equal(document.find('combined'), undefined);
+});
