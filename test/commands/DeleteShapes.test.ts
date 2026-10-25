@@ -37,3 +37,50 @@ test('[spec 6.2, 9] deletes a leaf and restores its sibling position with undo a
     new DomainError('no such shape: target'),
   );
 });
+
+test('[spec 5.2, 6.2, 9] releases and restores every id in a nested container subtree', () => {
+  const dispatcher = createDispatcher();
+
+  dispatcher.dispatch(['init', '800', '600']);
+  dispatcher.dispatch(['create', 'g', 'first']);
+  dispatcher.dispatch(['create', 'rect', 'before', '0', '0', '10', '10', 'in', 'first']);
+  dispatcher.dispatch(['create', 'g', 'branch', 'in', 'first']);
+  dispatcher.dispatch(['create', 'rect', 'nested', '20', '20', '30', '30', 'in', 'branch']);
+  dispatcher.dispatch(['create', 'rect', 'last', '50', '50', '10', '10']);
+
+  assert.deepEqual(dispatcher.dispatch(['delete', 'nested']), ['rect#nested deleted']);
+  assert.deepEqual(dispatcher.dispatch(['undo']), ['rect#nested restored into g#branch']);
+  assert.deepEqual(dispatcher.dispatch(['tree', 'branch']), [
+    'g#branch',
+    '└── rect#nested  x=20 y=20 w=30 h=30',
+  ]);
+
+  assert.deepEqual(dispatcher.dispatch(['delete', 'first']), ['g#first deleted']);
+  for (const id of ['first', 'before', 'branch', 'nested']) {
+    assert.throws(() => dispatcher.dispatch(['show', id]), new DomainError(`no such shape: ${id}`));
+  }
+  assert.deepEqual(dispatcher.dispatch(['tree']), [
+    'svg (800x600)',
+    '└── rect#last  x=50 y=50 w=10 h=10',
+  ]);
+
+  assert.deepEqual(dispatcher.dispatch(['undo']), ['g#first restored into svg']);
+  assert.deepEqual(dispatcher.dispatch(['show', 'nested']), [
+    'rect#nested  parent=g#branch',
+    '  x=20 y=20 width=30 height=30',
+  ]);
+  assert.deepEqual(dispatcher.dispatch(['tree']), [
+    'svg (800x600)',
+    '├── g#first',
+    '│   ├── rect#before  x=0 y=0 w=10 h=10',
+    '│   └── g#branch',
+    '│       └── rect#nested  x=20 y=20 w=30 h=30',
+    '└── rect#last  x=50 y=50 w=10 h=10',
+  ]);
+
+  assert.deepEqual(dispatcher.dispatch(['redo']), ['g#first deleted']);
+  assert.throws(
+    () => dispatcher.dispatch(['show', 'nested']),
+    new DomainError('no such shape: nested'),
+  );
+});
