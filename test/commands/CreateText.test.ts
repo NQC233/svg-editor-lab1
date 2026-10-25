@@ -75,6 +75,24 @@ test('[spec 4.2, 5.5, 5.6] escapes quotes and backslashes as JSON strings', () =
   ]);
 });
 
+test('[spec 5.5, 5.6] escapes newlines and control characters as JSON strings', () => {
+  const dispatcher = createDispatcher();
+  const content = '第一行\n第二行\tend';
+
+  dispatcher.dispatch(['init', '400', '200']);
+  dispatcher.dispatch(['create', 'text', 'multiline', '1', '2', content]);
+
+  assert.deepEqual(dispatcher.dispatch(['tree']), [
+    'svg (400x200)',
+    '└── text#multiline  (1,2) "第一行\\n第二行\\tend"',
+  ]);
+  assert.deepEqual(dispatcher.dispatch(['show', 'multiline']), [
+    'text#multiline  parent=svg',
+    '  x=1 y=2',
+    '  text="第一行\\n第二行\\tend"',
+  ]);
+});
+
 test('[spec 3.3, 5.2, 6.1] rejects invalid text without changing the document or history', () => {
   const dispatcher = createDispatcher();
   dispatcher.dispatch(['init', '400', '200']);
