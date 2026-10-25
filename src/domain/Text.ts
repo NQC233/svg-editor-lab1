@@ -1,9 +1,10 @@
 import { NumberFormatter } from '../shared/NumberFormatter.js';
+import { GeometrySnapshot } from './GeometrySnapshot.js';
 import { LeafShape } from './LeafShape.js';
 
 export class Text extends LeafShape {
-  private readonly xValue: number;
-  private readonly yValue: number;
+  private xValue: number;
+  private yValue: number;
   private readonly contentValue: string;
 
   public constructor(id: string, x: number, y: number, content: string) {
@@ -29,6 +30,32 @@ export class Text extends LeafShape {
 
   public get content(): string {
     return this.contentValue;
+  }
+
+  public override moveOwnGeometry(dx: number, dy: number): void {
+    const x = this.xValue + dx;
+    const y = this.yValue + dy;
+    LeafShape.assertFinite(x);
+    LeafShape.assertFinite(y);
+    this.xValue = x;
+    this.yValue = y;
+  }
+
+  public override snapshotGeometry(): GeometrySnapshot {
+    const x = this.xValue;
+    const y = this.yValue;
+    return new GeometrySnapshot(() => {
+      this.xValue = x;
+      this.yValue = y;
+    });
+  }
+
+  public override movedMessage(_dx: number, _dy: number): string {
+    return `${this.label} moved to (${NumberFormatter.format(this.x)},${NumberFormatter.format(this.y)})`;
+  }
+
+  public override moveBackMessage(_dx: number, _dy: number): string {
+    return `${this.label} moved back to (${NumberFormatter.format(this.x)},${NumberFormatter.format(this.y)})`;
   }
 
   public override treeAttributes(): string {

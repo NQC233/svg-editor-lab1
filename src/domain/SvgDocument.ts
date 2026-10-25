@@ -1,5 +1,7 @@
 import { DomainError } from '../shared/DomainError.js';
+import { NumberFormatter } from '../shared/NumberFormatter.js';
 import { Container } from './Container.js';
+import type { GeometrySnapshot } from './GeometrySnapshot.js';
 import type { Shape } from './Shape.js';
 
 export class SvgDocument {
@@ -113,6 +115,40 @@ export class SvgDocument {
     return this.parents.get(shape)?.label ?? 'svg';
   }
 
+  public move(shape: Shape, dx: number, dy: number): readonly GeometrySnapshot[] {
+    if (!Number.isFinite(dx)) {
+      throw new DomainError(`invalid number: ${NumberFormatter.format(dx)}`);
+    }
+
+    if (!Number.isFinite(dy)) {
+      throw new DomainError(`invalid number: ${NumberFormatter.format(dy)}`);
+    }
+
+    const subtree = this.collectSubtree(shape);
+    const snapshots = subtree.flatMap((member) => {
+      const snapshot = member.snapshotGeometry();
+      return snapshot === undefined ? [] : [snapshot];
+    });
+
+    if ((dx === 0 && dy === 0) || snapshots.length === 0) {
+      return [];
+    }
+
+    try {
+      for (const member of subtree) {
+        member.moveOwnGeometry(dx, dy);
+      }
+    } catch (error) {
+      for (const snapshot of snapshots) {
+        snapshot.restore();
+      }
+
+      throw error;
+    }
+
+    return snapshots;
+  }
+
   private assertPositiveDimensions(width: number, height: number): void {
     if (!Number.isFinite(width) || !Number.isFinite(height) || width <= 0 || height <= 0) {
       throw new DomainError('canvas width and height must be positive');
@@ -174,6 +210,17 @@ export class SvgDocument {
 
   private siblingsOf(container: Container | undefined): readonly Shape[] {
     return container === undefined ? this.rootShapesValue : this.mutableChildrenOf(container);
+  }
+
+  private collectSubtree(shape: Shape): readonly Shape[] {
+    if (!this.parents.has(shape) || this.shapesById.get(shape.id) !== shape) {
+      throw new DomainError(`no such shape: ${shape.id}`);
+    }
+
+    return [
+      shape,
+      ...(this.childrenByShape.get(shape)?.flatMap((child) => this.collectSubtree(child)) ?? []),
+    ];
   }
 
   private mutableChildrenOf(container: Container): Shape[] {

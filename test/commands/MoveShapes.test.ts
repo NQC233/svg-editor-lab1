@@ -14,18 +14,14 @@ test('[spec 5.4, 6.3, 6.10] moves every leaf type by finite positive and negativ
   dispatcher.dispatch(['create', 'line', 'l', '5', '6', '7', '8', 'black']);
   dispatcher.dispatch(['create', 'text', 't', '20', '40', '开始']);
 
-  assert.deepEqual(dispatcher.dispatch(['move', 'r', '10.5', '-5']), [
-    'rect#r moved to (10.5,-5)',
-  ]);
+  assert.deepEqual(dispatcher.dispatch(['move', 'r', '10.5', '-5']), ['rect#r moved to (10.5,-5)']);
   assert.deepEqual(dispatcher.dispatch(['move', 'c', '-2.5', '1']), [
     'circle#c moved to (97.5,81)',
   ]);
   assert.deepEqual(dispatcher.dispatch(['move', 'e', '1.5', '-0.25']), [
     'ellipse#e moved to (0,2)',
   ]);
-  assert.deepEqual(dispatcher.dispatch(['move', 'l', '-5', '4']), [
-    'line#l moved to (0,10)',
-  ]);
+  assert.deepEqual(dispatcher.dispatch(['move', 'l', '-5', '4']), ['line#l moved to (0,10)']);
   assert.deepEqual(dispatcher.dispatch(['move', 't', '-5', '5']), ['text#t moved to (15,45)']);
 
   assert.deepEqual(dispatcher.dispatch(['show', 'r']), [
@@ -64,24 +60,25 @@ test('[spec 5.4, 6.3, 6.10] moves a nested container subtree once and restores e
   dispatcher.dispatch(['create', 'text', 'label', '15', '25', '开始', 'in', 'inner']);
   dispatcher.dispatch(['create', 'circle', 'dot', '50.5', '60.25', '5', 'in', 'outer']);
 
+  assert.deepEqual(dispatcher.dispatch(['move', 'outer', '0', '0']), ['g#outer unchanged']);
   assert.deepEqual(dispatcher.dispatch(['move', 'outer', '2.5', '-4']), [
     'g#outer moved by (2.5,-4)',
   ]);
   assert.deepEqual(dispatcher.dispatch(['tree', 'outer']), [
     'g#outer',
     '├── g#inner',
-    '│   ├── rect#r     x=12.5 y=16 w=30 h=40 fill=red',
+    '│   ├── rect#r      x=12.5 y=16 w=30 h=40 fill=red',
     '│   └── text#label  (17.5,21) "开始"',
-    '└── circle#dot     cx=53 cy=56.25 r=5',
+    '└── circle#dot  cx=53 cy=56.25 r=5',
   ]);
 
   assert.deepEqual(dispatcher.dispatch(['undo']), ['g#outer moved back by (-2.5,4)']);
   assert.deepEqual(dispatcher.dispatch(['tree', 'outer']), [
     'g#outer',
     '├── g#inner',
-    '│   ├── rect#r     x=10 y=20 w=30 h=40 fill=red',
+    '│   ├── rect#r      x=10 y=20 w=30 h=40 fill=red',
     '│   └── text#label  (15,25) "开始"',
-    '└── circle#dot     cx=50.5 cy=60.25 r=5',
+    '└── circle#dot  cx=50.5 cy=60.25 r=5',
   ]);
 
   assert.deepEqual(dispatcher.dispatch(['redo']), ['g#outer moved by (2.5,-4)']);
@@ -114,7 +111,8 @@ test('[spec 6.3, 6.10, 9] a no-op move does not unlock an existing history barri
   const dispatcher = createDispatcher();
 
   dispatcher.dispatch(['init', '800', '600']);
-  dispatcher.dispatch(['create', 'rect', 'a', '0', '0', '10', '10']);
+  dispatcher.dispatch(['create', 'rect', 'a', '1e308', '0', '10', '10']);
+  dispatcher.dispatch(['create', 'rect', 'b', '0', '0', '10', '10']);
   dispatcher.dispatch(['canvas', '640', '480']);
 
   assert.deepEqual(dispatcher.dispatch(['move', 'a', '0', '0']), ['rect#a unchanged']);
@@ -122,6 +120,41 @@ test('[spec 6.3, 6.10, 9] a no-op move does not unlock an existing history barri
     () => dispatcher.dispatch(['undo']),
     new DomainError('undo not allowed after io command'),
   );
+});
+
+test('[spec 6.3, 6.10, 9] a moving edit clears redo and remains one undo unit', () => {
+  const dispatcher = createDispatcher();
+
+  dispatcher.dispatch(['init', '800', '600']);
+  dispatcher.dispatch(['create', 'rect', 'a', '0', '0', '10', '10']);
+  dispatcher.dispatch(['create', 'rect', 'b', '20', '20', '10', '10']);
+  assert.deepEqual(dispatcher.dispatch(['undo']), ['rect#b removed']);
+
+  assert.deepEqual(dispatcher.dispatch(['move', 'a', '5', '-2']), ['rect#a moved to (5,-2)']);
+  assert.throws(() => dispatcher.dispatch(['redo']), new DomainError('nothing to redo'));
+  assert.deepEqual(dispatcher.dispatch(['undo']), ['rect#a moved back to (0,0)']);
+  assert.deepEqual(dispatcher.dispatch(['redo']), ['rect#a moved to (5,-2)']);
+});
+
+test('[spec 6.3, 6.10, 9] successful moves unlock a barrier while failed moves preserve it', () => {
+  const dispatcher = createDispatcher();
+
+  dispatcher.dispatch(['init', '800', '600']);
+  dispatcher.dispatch(['create', 'rect', 'a', '1e308', '0', '10', '10']);
+  dispatcher.dispatch(['create', 'rect', 'b', '0', '0', '10', '10']);
+  dispatcher.dispatch(['canvas', '640', '480']);
+
+  assert.throws(
+    () => dispatcher.dispatch(['move', 'a', '1e308', '0']),
+    new DomainError('invalid number: Infinity'),
+  );
+  assert.throws(
+    () => dispatcher.dispatch(['undo']),
+    new DomainError('undo not allowed after io command'),
+  );
+
+  assert.deepEqual(dispatcher.dispatch(['move', 'b', '1', '1']), ['rect#b moved to (1,1)']);
+  assert.deepEqual(dispatcher.dispatch(['undo']), ['rect#b moved back to (0,0)']);
 });
 
 test('[spec 3.3, 5.4, 6.3, 6.10] rejects invalid moves and rolls back a partial subtree move', () => {
@@ -169,7 +202,7 @@ test('[spec 3.3, 5.4, 6.3, 6.10] rejects invalid moves and rolls back a partial 
   assert.deepEqual(dispatcher.dispatch(['tree']), [
     'svg (800x600)',
     '└── g#scene',
-    '    ├── rect#safe  x=0 y=0 w=10 h=10',
+    '    ├── rect#safe      x=0 y=0 w=10 h=10',
     '    └── line#overflow  (1e+308,0) -> (1e+308,0)',
   ]);
   assert.deepEqual(dispatcher.dispatch(['redo']), ['rect#pending created']);

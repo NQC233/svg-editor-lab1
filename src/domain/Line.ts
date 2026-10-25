@@ -1,11 +1,12 @@
 import { NumberFormatter } from '../shared/NumberFormatter.js';
+import { GeometrySnapshot } from './GeometrySnapshot.js';
 import { LeafShape } from './LeafShape.js';
 
 export class Line extends LeafShape {
-  private readonly startXValue: number;
-  private readonly startYValue: number;
-  private readonly endXValue: number;
-  private readonly endYValue: number;
+  private startXValue: number;
+  private startYValue: number;
+  private endXValue: number;
+  private endYValue: number;
 
   public constructor(
     id: string,
@@ -45,6 +46,42 @@ export class Line extends LeafShape {
 
   public get endY(): number {
     return this.endYValue;
+  }
+
+  public override moveOwnGeometry(dx: number, dy: number): void {
+    const startX = this.startXValue + dx;
+    const startY = this.startYValue + dy;
+    const endX = this.endXValue + dx;
+    const endY = this.endYValue + dy;
+    LeafShape.assertFinite(startX);
+    LeafShape.assertFinite(startY);
+    LeafShape.assertFinite(endX);
+    LeafShape.assertFinite(endY);
+    this.startXValue = startX;
+    this.startYValue = startY;
+    this.endXValue = endX;
+    this.endYValue = endY;
+  }
+
+  public override snapshotGeometry(): GeometrySnapshot {
+    const startX = this.startXValue;
+    const startY = this.startYValue;
+    const endX = this.endXValue;
+    const endY = this.endYValue;
+    return new GeometrySnapshot(() => {
+      this.startXValue = startX;
+      this.startYValue = startY;
+      this.endXValue = endX;
+      this.endYValue = endY;
+    });
+  }
+
+  public override movedMessage(_dx: number, _dy: number): string {
+    return `${this.label} moved to (${NumberFormatter.format(this.startX)},${NumberFormatter.format(this.startY)})`;
+  }
+
+  public override moveBackMessage(_dx: number, _dy: number): string {
+    return `${this.label} moved back to (${NumberFormatter.format(this.startX)},${NumberFormatter.format(this.startY)})`;
   }
 
   public override treeAttributes(): string {

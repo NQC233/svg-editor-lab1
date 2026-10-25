@@ -484,3 +484,59 @@ test('[spec 5.5, 5.6, 6.1, 6.10] replays nested container creation, display, his
     ].join('\n'),
   );
 });
+
+test('[spec 5.4, 6.3, 6.10, 9] replays leaf and nested-container movement through the CLI', async () => {
+  const result = await runCli(
+    [
+      'init 400 200',
+      'create g scene',
+      'create g node in scene',
+      'create rect box 10 20 30 40 red in node',
+      'create text label 15 25 "开始" in node',
+      'move node 5 -2.5',
+      'tree scene',
+      'undo',
+      'tree node',
+      'redo',
+      'move box 0 0',
+      'move missing 1 1',
+      'move box nope 1',
+      'move box 1',
+      'move box 1 2 3',
+      'tree scene',
+    ].join('\n'),
+  );
+
+  assert.equal(result.code, 0);
+  assert.equal(result.stderr, '');
+  assert.equal(
+    result.stdout,
+    [
+      'canvas 400x200 created',
+      'g#scene created',
+      'g#node created in g#scene',
+      'rect#box created in g#node',
+      'text#label created in g#node',
+      'g#node moved by (5,-2.5)',
+      'g#scene',
+      '└── g#node',
+      '    ├── rect#box    x=15 y=17.5 w=30 h=40 fill=red',
+      '    └── text#label  (20,22.5) "开始"',
+      'g#node moved back by (-5,2.5)',
+      'g#node',
+      '├── rect#box    x=10 y=20 w=30 h=40 fill=red',
+      '└── text#label  (15,25) "开始"',
+      'g#node moved by (5,-2.5)',
+      'rect#box unchanged',
+      'error: no such shape: missing',
+      'error: invalid number: nope',
+      'error: usage: move <id> <dx> <dy>',
+      'error: usage: move <id> <dx> <dy>',
+      'g#scene',
+      '└── g#node',
+      '    ├── rect#box    x=15 y=17.5 w=30 h=40 fill=red',
+      '    └── text#label  (20,22.5) "开始"',
+      '',
+    ].join('\n'),
+  );
+});

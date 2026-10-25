@@ -1,4 +1,5 @@
 import { DomainError } from '../shared/DomainError.js';
+import type { GeometrySnapshot } from './GeometrySnapshot.js';
 
 export abstract class Shape {
   private readonly shapeId: string;
@@ -20,6 +21,18 @@ export abstract class Shape {
   }
 
   public abstract get type(): string;
+
+  public abstract moveOwnGeometry(dx: number, dy: number): void;
+
+  public abstract snapshotGeometry(): GeometrySnapshot | undefined;
+
+  public abstract movedMessage(dx: number, dy: number): string;
+
+  public abstract moveBackMessage(dx: number, dy: number): string;
+
+  public get unchangedMessage(): string {
+    return `${this.label} unchanged`;
+  }
 
   public abstract treeAttributes(): string;
 
