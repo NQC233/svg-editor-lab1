@@ -456,6 +456,7 @@ package "shared" {
 - `AddToContainerCommand` 负责 `addto <gid> <id>` 参数、容器/图形查找与 CLI 文案；无操作返回 `changed=false`，成功移动保存目标容器和原位置供 undo/redo，不新增名字分派或共享执行状态。
 - 同步更新帮助中的已实现能力、命令目录、测试装配、类图和任务状态；报告明确 group、front/back、IO 与完整 Phase 1 仍未实现。
 - 验证：`npm run check` 通过（类型、格式、93 个测试、构建）。真实 CLI 回放覆盖跨父级整树移动、同父级移到末尾、无操作、undo/redo、自身/子孙成环、非法容器/图形和参数失败；`npm run cli` 与构建后的 `npm start` 对同一脚本输出一致，stderr 均为空。
+- 双轴审查的规格轴未发现缺失或行为错误；标准轴发现根 `README.md` 仍停留在 Ticket 01–10 和 addto 未实现，违反报告需如实区分计划与已实现内容的规则。已同步根说明，并把删除、解散、重挂共用的“查找父级/兄弟数组/索引”逻辑收敛到 `SvgDocument.locateShape`；复查后完整检查仍为 93 个测试通过。
 
 ## 一致性自查
 
