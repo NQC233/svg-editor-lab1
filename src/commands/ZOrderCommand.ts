@@ -7,13 +7,13 @@ import type { CommandContext } from './CommandContext.js';
 import { CommandResult } from './CommandResult.js';
 import { EditCommand } from './EditCommand.js';
 
-interface ZOrderChange {
+interface ZOrderMove {
   readonly shape: Shape;
   readonly placement: ShapePlacement;
 }
 
 export abstract class ZOrderCommand extends EditCommand {
-  private change: ZOrderChange | undefined;
+  private lastMove: ZOrderMove | undefined;
 
   public execute(context: CommandContext, args: CommandArguments): CommandResult {
     const document = context.requireDocument();
@@ -32,26 +32,26 @@ export abstract class ZOrderCommand extends EditCommand {
       return new CommandResult([`${shape.label} is already at ${this.direction}`], false);
     }
 
-    this.change = { shape, placement };
+    this.lastMove = { shape, placement };
     return new CommandResult([`${shape.label} moved to ${this.direction}`]);
   }
 
   public undo(context: CommandContext): CommandResult {
     const document = context.requireDocument();
-    const { shape, placement } = this.requireChange();
+    const { shape, placement } = this.requireLastMove();
     document.restorePlacement(shape, placement);
     return new CommandResult([`${shape.label} moved back`]);
   }
 
   public redo(context: CommandContext): CommandResult {
     const document = context.requireDocument();
-    const { shape } = this.requireChange();
+    const { shape } = this.requireLastMove();
     const placement = this.move(document, shape);
     if (placement === undefined) {
       throw new DomainError(`${this.direction} command cannot redo`);
     }
 
-    this.change = { shape, placement };
+    this.lastMove = { shape, placement };
     return new CommandResult([`${shape.label} moved to ${this.direction}`]);
   }
 
@@ -61,11 +61,11 @@ export abstract class ZOrderCommand extends EditCommand {
 
   protected abstract move(document: SvgDocument, shape: Shape): ShapePlacement | undefined;
 
-  private requireChange(): ZOrderChange {
-    if (this.change === undefined) {
+  private requireLastMove(): ZOrderMove {
+    if (this.lastMove === undefined) {
       throw new DomainError(`${this.direction} command has not executed`);
     }
 
-    return this.change;
+    return this.lastMove;
   }
 }
