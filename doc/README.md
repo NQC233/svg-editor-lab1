@@ -1,6 +1,6 @@
 # Lab1 Phase 1：课程报告与过程记录
 
-状态：Ticket 01–03 已合入 `main`，Ticket 04 已实现并通过 [PR #25](https://github.com/NQC233/svg-editor-lab1/pull/25) 待合入；测试累计 27 个。其余 15 张票仍是计划。本报告继续把“计划”和“已实现”分开记录。
+状态：Ticket 01–04 已合入 `main`，其中 Ticket 04 通过 [PR #25](https://github.com/NQC233/svg-editor-lab1/pull/25) 合并；测试累计 27 个。其余 15 张票仍是计划。本报告继续把“计划”和“已实现”分开记录。
 
 需求依据：[课程原始要求](../phase_cli_1.md)。
 
@@ -351,11 +351,12 @@ package "shared" {
 - 新增测试覆盖三种类型的创建、tree/show、一次撤销与重做、默认样式省略、浮点及负坐标、半径约束、非法数值、非法样式、参数个数和失败不改变文档；真实 CLI 回放还验证失败创建之后 undo/redo 仍然可用。
 - 双轴审查发现四个叶子图形直接继承 `Shape`，与已确认的 `Shape → LeafShape` 架构不一致，且重复实现公共样式校验与文本片段。已新增 `LeafShape` 基类，集中封装可选 `fill`/`stroke`、非空样式校验和有限数值校验，并让四个叶子类改由它继承；创建命令、历史与显示格式化器仍无类型分支。
 - 审查还提出坐标字段成组出现。本票暂不引入 `Point`/`Segment`：当前只有构造与文本显示，尚无共享的几何变换行为；待 move/scale 票出现实际复用需求时再评估，以免为单票增加推测性抽象。
+- Ticket 04 通过 [PR #25](https://github.com/NQC233/svg-editor-lab1/pull/25) 合入 `main`，merge commit 为 `7c9a366`；Issue #4 已关闭。
 - 本票未实现 `text`、`g`、`create … in`、move/scale/set、SVG IO 或带参数 `canvas`；这些仍由后续票负责。
 
 ## 一致性自查
 
-当前状态为“Ticket 01–03 已合入 `main`；Ticket 04 已实现并通过 PR #25 待合入；其余能力仍为计划”。
+当前状态为“Ticket 01–04 已合入 `main` 并验证；其余能力仍为计划”。
 
 1. **模块划分**：已落地 `src/shared/`（错误与数值）、`src/domain/`（`Shape`、`LeafShape`、`Rect`、`Circle`、`Ellipse`、`Line`、`ShapeFactory`、`SvgDocument`）、`src/display/`（`TreeFormatter`、`ShowFormatter`、`DisplayWidth`）、`src/commands/`（命令、结果、历史、上下文、执行器、create/tree/show/undo/redo）、`src/cli/`（分词、命令表、分发、REPL、输出）与 `src/main.ts`（组合根）。`io/`、`text`、容器和其余编辑命令仍为计划，与当前票边界一致。
 2. **依赖方向**：抽查 import 后，`domain` 只依赖 `shared`；`display` 依赖 `domain` 和 `shared`；`commands` 依赖 `domain`、`display` 和 `shared`；`cli` 依赖 `commands` 和 `shared`；`main` 装配全部模块。`commands` 不 import `cli`，`cli` 不直接 import `domain`/`display`，未发现循环依赖。
