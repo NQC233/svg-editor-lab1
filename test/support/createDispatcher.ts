@@ -11,6 +11,7 @@ import { InitCommand } from '../../src/commands/InitCommand.js';
 import { MoveCommand } from '../../src/commands/MoveCommand.js';
 import { RedoCommand } from '../../src/commands/RedoCommand.js';
 import { ScaleCommand } from '../../src/commands/ScaleCommand.js';
+import { SetCommand } from '../../src/commands/SetCommand.js';
 import { ShowCommand } from '../../src/commands/ShowCommand.js';
 import { TreeCommand } from '../../src/commands/TreeCommand.js';
 import { UndoCommand } from '../../src/commands/UndoCommand.js';
@@ -35,6 +36,7 @@ export function createDispatcher(): CommandDispatcher {
     ['ungroup', () => new UngroupCommand()],
     ['move', () => new MoveCommand()],
     ['scale', () => new ScaleCommand()],
+    ['set', () => new SetCommand()],
     ['tree', () => new TreeCommand()],
     ['show', () => new ShowCommand()],
     ['help', () => new HelpCommand()],
