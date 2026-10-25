@@ -319,6 +319,7 @@ package "shared" {
 - 显示层新增 `TreeFormatter` 与 `ShowFormatter`。树形输出按同组最长标签宽度加两个空格对齐；`show` 输出父级 `svg`、完整几何属性和已设置的 `fill`。
 - 失败路径均在状态写入前完成参数、id、几何和工厂校验；重复 id 由 `SvgDocument` 的索引再次拒绝。本票没有加入 undo/redo、`create … in`、容器、其他五种图形或 IO，这些行为留给各自票据。
 - 双轴审查发现初版由命令自行装配工厂/格式化器，且树对齐使用 UTF-16 长度而误解宽字符。依赖装配已集中回 `main.ts` 并注入 `CommandContext`；新增 `DisplayWidth` 按终端显示宽度对齐，真实 CLI 回放也补齐了非法数值、尺寸、id、填色和未知类型。
+- PR 集成复审进一步把 `create` 命令名从领域 usage 文案移回命令层，由 `ShapeUsageError` 只携带图形参数语法；同时统一在数值解析入口去除首尾空白，并补充矩形坐标空白回放。
 - Ticket 01 通过 PR #20（merge commit `311409e`）进入 `main` 后，Ticket 02 已 rebase 到最新主线；与 Ticket 01 的组合根和 11 个既有测试合并后，当前测试基线为 16 个。
 - 验证：`npm run check` 通过（类型、格式、16 个测试、构建）；`npm run cli` 和构建后的 `npm start` 回放见下方质量证据。
 

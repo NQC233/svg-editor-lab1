@@ -52,6 +52,12 @@ test('[spec 5.5, 5.6, 6.1, 6.15, 6.16] creates a rectangle and displays its prop
   assert.deepEqual(dispatcher.dispatch(['tree', 'r1']), [
     'rect#r1  x=10 y=20 w=100 h=50 fill=#eee',
   ]);
+
+  dispatcher.dispatch(['create', 'rect', 'spaced', ' 1 ', '2 ', ' 3', '4 ']);
+  assert.deepEqual(dispatcher.dispatch(['show', 'spaced']), [
+    'rect#spaced  parent=svg',
+    '  x=1 y=2 width=3 height=4',
+  ]);
 });
 
 test('[spec 3.1, 3.2, 5.5, 5.6] keeps insertion order, optional fill, and case-sensitive ids', () => {

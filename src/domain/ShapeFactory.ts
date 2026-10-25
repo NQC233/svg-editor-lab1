@@ -2,9 +2,10 @@ import { DomainError } from '../shared/DomainError.js';
 import { NumberParser } from '../shared/NumberParser.js';
 import { Rect } from './Rect.js';
 import type { Shape } from './Shape.js';
+import { ShapeUsageError } from './ShapeUsageError.js';
 
 export class ShapeFactory {
-  private static readonly RECT_USAGE = 'usage: create rect <id> <x> <y> <w> <h> [fill]';
+  private static readonly RECT_SYNTAX = 'rect <id> <x> <y> <w> <h> [fill]';
 
   public create(type: string, id: string, args: readonly string[]): Shape {
     switch (type) {
@@ -17,7 +18,7 @@ export class ShapeFactory {
 
   private createRect(id: string, args: readonly string[]): Rect {
     if (args.length < 4 || args.length > 5) {
-      throw new DomainError(ShapeFactory.RECT_USAGE);
+      throw new ShapeUsageError(ShapeFactory.RECT_SYNTAX);
     }
 
     const xToken = args[0];
@@ -30,7 +31,7 @@ export class ShapeFactory {
       widthToken === undefined ||
       heightToken === undefined
     ) {
-      throw new DomainError(ShapeFactory.RECT_USAGE);
+      throw new ShapeUsageError(ShapeFactory.RECT_SYNTAX);
     }
 
     return new Rect(
