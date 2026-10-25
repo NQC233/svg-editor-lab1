@@ -1,6 +1,6 @@
 # Lab1 Phase 1：课程报告与过程记录
 
-状态：Ticket 01–07 已实现并通过本地验收，其中 Ticket 06 通过 [PR #29](https://github.com/NQC233/svg-editor-lab1/pull/29) 交付 `main`；Ticket 15 已于 2026-10-25 完成实现与验收；测试累计 53 个。其余 11 张票仍是计划。本报告继续把“计划”和“已实现”分开记录。
+状态：Ticket 01–07 已实现并通过本地验收，其中 Ticket 06 通过 [PR #29](https://github.com/NQC233/svg-editor-lab1/pull/29) 交付 `main`；Ticket 15 已于 2026-10-25 完成实现与验收；测试累计 54 个。其余 11 张票仍是计划。本报告继续把“计划”和“已实现”分开记录。
 
 需求依据：[课程原始要求](../phase_cli_1.md)。
 
@@ -33,7 +33,7 @@ src/
 ├── main.ts
 ├── shared/          # DomainError、错误码、数值工具
 ├── domain/          # Shape/LeafShape/Container/Group/五种叶子
-│                    # GeometrySnapshot、SvgDocument、ShapeFactory
+│                    # GeometrySnapshot、Point、SvgDocument、ShapeFactory
 ├── io/              # XmlParser、XmlElement、SvgReader、SvgWriter
 ├── display/         # TreeFormatter、ShowFormatter
 ├── commands/        # Command、EditCommand、DocumentCommand、CommandResult
@@ -393,18 +393,19 @@ package "shared" {
 
 - 开始前确认本地与远端 `main` 同为 `9406c84`，Ticket #6 已通过 PR #29 关闭；Ticket #7 的 C1 无操作历史已在 ADR-0003 和 Ticket #3 中收口，更新 Issue 内容与 `ready-for-agent` 标签后，从最新 `main` 新建 `feat/ticket-07-move-shapes`。
 - 先写命令级失败测试：五个叶子锚点、容器摘要、嵌套子树、空容器、零增量、redo 保留、屏障解锁和溢出回滚；首次运行新增 6 个测试均为 `unknown command: move` 红灯，再补最小实现。
-- `Shape` 增加多态的 `moveOwnGeometry`、`snapshotGeometry` 与移动摘要方法；五种叶子分别计算并先校验全部新坐标再赋值。`Container` 没有独立几何，`SvgDocument` 统一收集目标及其全部子孙，按树顺序执行叶子移动，因此不会漏移或重复移动。
+- `LeafShape` 增加多态的 `moveOwnGeometry`、`snapshotGeometry` 与锚点读取；五种叶子分别计算并先校验全部新坐标再赋值。命令摘要由 `MoveCommand` 使用 `Point` 锚点和 `NumberFormatter` 生成，领域对象不承担 CLI 文案。`Container` 没有几何操作，`SvgDocument` 统一收集目标及其全部子孙，按树顺序执行叶子移动，因此不会漏移或重复移动。
 - `GeometrySnapshot` 以 Memento 封装每个叶子的完整建模几何；`SvgDocument.move` 在任何叶子计算失败时按快照回滚整棵子树，并保持失败原子性。`MoveCommand` 只保存成功事务的快照供 undo 使用，redo 重新执行同一增量；命令仍由执行器记录为一个撤销单元。
 - 零增量和没有可移动叶子的空容器返回 `<label> unchanged`、`changed=false`，不进入历史、不清空 redo、不解除屏障；有叶子的成功移动会解锁屏障并清空 redo。测试同时覆盖非法参数、缺失图形、容器内后一个叶子溢出时前一个叶子被精确回滚。
 - 真实 CLI 回放 `init → 多层 g/rect/text → move node → tree → undo/redo → 零增量 → 三类失败 → tree`，断言成功输出、错误前缀及最终树；`npm run cli` 与构建后的 `npm start` 输出完全一致，stderr 为空。
-- 验证：`npm run check` 通过（类型、格式、53 个测试、构建）。
+- 双轴审查发现初版把移动摘要放进领域图形，以及浮点加法可能产生“计算成功但几何未变”的伪编辑。修正后摘要移到 `MoveCommand`，`GeometrySnapshot.matchesCurrent()` 在实际移动后判断几何是否真的改变；新增 `1e20 + 1` 精度回归，并在真实 CLI 失败链后追加 undo/redo 以证明历史未被破坏。
+- 验证：`npm run check` 通过（类型、格式、54 个测试、构建）。
 - 本票未实现 scale/set/delete/group/ungroup/addto/front/back、SVG IO 或完整 Phase 1 验收。
 
 ## 一致性自查
 
 当前状态为“Ticket 01–07 已实现并通过本地验收，Ticket 15 已实现并验证；其余能力仍为计划”。
 
-1. **模块划分**：已落地 `src/shared/`（错误与数值）、`src/domain/`（`Shape`、`LeafShape`、`Container`、`Group`、`Rect`、`Circle`、`Ellipse`、`Line`、`Text`、`GeometrySnapshot`、`ShapeFactory`、`SvgDocument`）、`src/display/`（`TreeFormatter`、`ShowFormatter`、`DisplayWidth`）、`src/commands/`（命令、token/参数封装、结果、历史、上下文、执行器、create/move/canvas/tree/show/undo/redo）、`src/cli/`（分词、命令表、分发、REPL、输出）与 `src/main.ts`（组合根）。`io/` 和其余编辑命令仍为计划，与当前票边界一致。
+1. **模块划分**：已落地 `src/shared/`（错误与数值）、`src/domain/`（`Shape`、`LeafShape`、`Container`、`Group`、`Rect`、`Circle`、`Ellipse`、`Line`、`Text`、`GeometrySnapshot`、`Point`、`ShapeFactory`、`SvgDocument`）、`src/display/`（`TreeFormatter`、`ShowFormatter`、`DisplayWidth`）、`src/commands/`（命令、token/参数封装、结果、历史、上下文、执行器、create/move/canvas/tree/show/undo/redo）、`src/cli/`（分词、命令表、分发、REPL、输出）与 `src/main.ts`（组合根）。`io/` 和其余编辑命令仍为计划，与当前票边界一致。
 2. **依赖方向**：抽查 import 后，`domain` 只依赖 `shared`；`display` 依赖 `domain` 和 `shared`；`commands` 依赖 `domain`、`display` 和 `shared`；`cli` 依赖 `commands` 和 `shared`；`main` 装配全部模块。`commands` 不 import `cli`，`cli` 不直接 import `domain`/`display`，未发现循环依赖。
 3. **名字分派**：当前只有两处名字分派，符合课程约束：`CommandCatalog` 做命令名到命令工厂的分派，`ShapeFactory` 做图形类型名到类实例的分派。命令和格式化器中没有第二套类型 `switch`。
 4. **规格一致**：Ticket 01 按规格 3.1、3.3、4.1–4.3、6.11、6.14、6.17 实现；Ticket 02 按规格 3.1–3.3、5.1–5.2、5.5–5.6、6.1、6.15–6.16 实现；Ticket 03 按规格 3.3、6.10–6.11、9 实现；Ticket 04 按规格 3.1、3.3、5.1–5.2、5.5–5.6、6.1、6.10 实现；Ticket 05 按规格 3.1、4.2、5.2、5.5–5.6、6.1、6.10、9 实现；Ticket 06 按规格 3.2–3.3、4.2、5.2、5.5–5.6、6.1、6.10、9 实现；Ticket 07 按规格 3.1、5.4、6.3、6.10、9 实现；Ticket 15 按规格 3.3–3.4、6.10、6.14 实现。测试名称引用对应章节；当前 undo/redo 覆盖六种内置类型创建和叶子/容器移动，其他编辑命令仍需各自交付历史。
@@ -441,7 +442,7 @@ package "shared" {
 - Ticket 06 的 `npm run check` 通过：类型检查、格式检查、44 个测试和构建全部成功。真实 CLI 回放从 `init 800 600` 构建 `flowchart → node1 → rect/text`，验证完整树、局部树、show、undo/redo 和失败错误。
 - Ticket 06 的开发入口与构建入口使用同一脚本回放：`init 800 600`、创建嵌套容器与 rect/text、`tree`、`show`、`undo`/`redo`、非容器后缀和重复 id 失败、再次 `tree`；`npm run cli` 与 `npm start` 输出一致，stderr 均为空。
 - Ticket 07 的命令测试覆盖五类叶子的正负/浮点增量与锚点输出、嵌套容器整树移动、局部树、精确 undo/redo、空容器、零增量、redo 清空、屏障解锁、失败参数、缺失目标，以及子树后部溢出时整条命令回滚。
-- Ticket 07 的 `npm run check` 通过：类型检查、格式检查、53 个测试和构建全部成功。真实 CLI 回放从 `init 400 200` 构建 `scene → node → rect/text`，验证容器移动、tree、undo/redo、无操作和失败输出。
+- Ticket 07 的 `npm run check` 通过：类型检查、格式检查、54 个测试和构建全部成功。真实 CLI 回放从 `init 400 200` 构建 `scene → node → rect/text`，验证容器移动、tree、undo/redo、无操作、失败输出及失败后的历史保留。
 - Ticket 07 的开发入口与构建入口使用同一脚本回放：`init 400 200`、嵌套容器与 rect/text、`move node 5 -2.5`、完整/局部 tree、undo/redo、空增量、缺失图形、非法数值和参数错误；`npm run cli` 与 `npm start` 输出一致，stderr 均为空。
 - 脚本回放测试通过 spawn 运行 `src/main.ts`，断言空白/注释、成功输出、错误前缀、颜色参数、失败前后树一致、无横幅/提示符和 EOF 正常退出；TTY 模式通过注入终端流验证横幅、`svg> ` 提示符、stdout 错误和结果。
 - 当前完成 Ticket 01–07 和 Ticket 15 的功能实现。历史基础设施已接入六种内置类型创建、叶子/整棵子树移动及带参数 `canvas` 的屏障；IO 和其余编辑命令仍未实现。这些限制不能由这些票的测试通过覆盖。

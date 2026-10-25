@@ -5,11 +5,7 @@ abstract class Shape {
   +get id(): string
   +get label(): string
   +get type(): string
-  +moveOwnGeometry(dx, dy): void
-  +snapshotGeometry(): GeometrySnapshot | undefined
-  +movedMessage(dx, dy): string
-  +moveBackMessage(dx, dy): string
-  +get unchangedMessage(): string
+  +movementAnchor(): Point | undefined
   +treeAttributes(): string
   +detailLines(): readonly string[]
 }
@@ -17,6 +13,9 @@ abstract class Shape {
 abstract class LeafShape {
   +get fill(): string | undefined
   +get stroke(): string | undefined
+  +movementAnchor(): Point
+  +moveOwnGeometry(dx, dy): void
+  +snapshotGeometry(): GeometrySnapshot
 }
 
 abstract class Container
@@ -29,6 +28,12 @@ class Line
 class Text
 class GeometrySnapshot {
   +restore(): void
+  +matchesCurrent(): boolean
+}
+
+class Point {
+  +get x(): number
+  +get y(): number
 }
 
 class SvgDocument {
@@ -62,6 +67,7 @@ SvgDocument o-- Shape : roots, children, id/parent index
 SvgDocument --> Container : validated structure changes
 SvgDocument --> GeometrySnapshot : creates transaction snapshots
 LeafShape ..> GeometrySnapshot : captures exact geometry
+LeafShape ..> Point : exposes movement anchor
 ShapeFactory ..> Shape : creates
 @enduml
 
