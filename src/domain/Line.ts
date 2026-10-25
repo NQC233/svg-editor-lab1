@@ -1,13 +1,11 @@
-import { DomainError } from '../shared/DomainError.js';
 import { NumberFormatter } from '../shared/NumberFormatter.js';
-import { Shape } from './Shape.js';
+import { LeafShape } from './LeafShape.js';
 
-export class Line extends Shape {
+export class Line extends LeafShape {
   private readonly startXValue: number;
   private readonly startYValue: number;
   private readonly endXValue: number;
   private readonly endYValue: number;
-  private readonly strokeValue: string | undefined;
 
   public constructor(
     id: string,
@@ -17,21 +15,16 @@ export class Line extends Shape {
     endY: number,
     stroke?: string,
   ) {
-    super(id);
-    Line.assertFinite(startX);
-    Line.assertFinite(startY);
-    Line.assertFinite(endX);
-    Line.assertFinite(endY);
-
-    if (stroke !== undefined && stroke.length === 0) {
-      throw new DomainError('stroke must not be empty');
-    }
+    super(id, undefined, stroke);
+    LeafShape.assertFinite(startX);
+    LeafShape.assertFinite(startY);
+    LeafShape.assertFinite(endX);
+    LeafShape.assertFinite(endY);
 
     this.startXValue = startX;
     this.startYValue = startY;
     this.endXValue = endX;
     this.endYValue = endY;
-    this.strokeValue = stroke;
   }
 
   public override get type(): string {
@@ -54,34 +47,19 @@ export class Line extends Shape {
     return this.endYValue;
   }
 
-  public get stroke(): string | undefined {
-    return this.strokeValue;
-  }
-
   public override treeAttributes(): string {
     return `(${NumberFormatter.format(this.startX)},${NumberFormatter.format(this.startY)}) -> (${NumberFormatter.format(this.endX)},${NumberFormatter.format(this.endY)})`;
   }
 
   public override detailLines(): readonly string[] {
-    const lines = [
+    return [
       [
         `x1=${NumberFormatter.format(this.startX)}`,
         `y1=${NumberFormatter.format(this.startY)}`,
         `x2=${NumberFormatter.format(this.endX)}`,
         `y2=${NumberFormatter.format(this.endY)}`,
       ].join(' '),
+      ...this.styleLines(),
     ];
-
-    if (this.stroke !== undefined) {
-      lines.push(`stroke=${this.stroke}`);
-    }
-
-    return lines;
-  }
-
-  private static assertFinite(value: number): void {
-    if (!Number.isFinite(value)) {
-      throw new DomainError(`invalid number: ${NumberFormatter.format(value)}`);
-    }
   }
 }

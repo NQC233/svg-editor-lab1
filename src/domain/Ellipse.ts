@@ -1,13 +1,12 @@
 import { DomainError } from '../shared/DomainError.js';
 import { NumberFormatter } from '../shared/NumberFormatter.js';
-import { Shape } from './Shape.js';
+import { LeafShape } from './LeafShape.js';
 
-export class Ellipse extends Shape {
+export class Ellipse extends LeafShape {
   private readonly centerXValue: number;
   private readonly centerYValue: number;
   private readonly radiusXValue: number;
   private readonly radiusYValue: number;
-  private readonly fillValue: string | undefined;
 
   public constructor(
     id: string,
@@ -17,11 +16,11 @@ export class Ellipse extends Shape {
     radiusY: number,
     fill?: string,
   ) {
-    super(id);
-    Ellipse.assertFinite(centerX);
-    Ellipse.assertFinite(centerY);
-    Ellipse.assertFinite(radiusX);
-    Ellipse.assertFinite(radiusY);
+    super(id, fill);
+    LeafShape.assertFinite(centerX);
+    LeafShape.assertFinite(centerY);
+    LeafShape.assertFinite(radiusX);
+    LeafShape.assertFinite(radiusY);
 
     if (radiusX <= 0) {
       throw new DomainError('ellipse rx must be positive');
@@ -31,15 +30,10 @@ export class Ellipse extends Shape {
       throw new DomainError('ellipse ry must be positive');
     }
 
-    if (fill !== undefined && fill.length === 0) {
-      throw new DomainError('fill must not be empty');
-    }
-
     this.centerXValue = centerX;
     this.centerYValue = centerY;
     this.radiusXValue = radiusX;
     this.radiusYValue = radiusY;
-    this.fillValue = fill;
   }
 
   public override get type(): string {
@@ -62,45 +56,25 @@ export class Ellipse extends Shape {
     return this.radiusYValue;
   }
 
-  public get fill(): string | undefined {
-    return this.fillValue;
-  }
-
   public override treeAttributes(): string {
-    const attributes = [
+    return [
       `cx=${NumberFormatter.format(this.centerX)}`,
       `cy=${NumberFormatter.format(this.centerY)}`,
       `rx=${NumberFormatter.format(this.radiusX)}`,
       `ry=${NumberFormatter.format(this.radiusY)}`,
-    ];
-
-    if (this.fill !== undefined) {
-      attributes.push(`fill=${this.fill}`);
-    }
-
-    return attributes.join(' ');
+      ...this.styleLines(),
+    ].join(' ');
   }
 
   public override detailLines(): readonly string[] {
-    const lines = [
+    return [
       [
         `cx=${NumberFormatter.format(this.centerX)}`,
         `cy=${NumberFormatter.format(this.centerY)}`,
         `rx=${NumberFormatter.format(this.radiusX)}`,
         `ry=${NumberFormatter.format(this.radiusY)}`,
       ].join(' '),
+      ...this.styleLines(),
     ];
-
-    if (this.fill !== undefined) {
-      lines.push(`fill=${this.fill}`);
-    }
-
-    return lines;
-  }
-
-  private static assertFinite(value: number): void {
-    if (!Number.isFinite(value)) {
-      throw new DomainError(`invalid number: ${NumberFormatter.format(value)}`);
-    }
   }
 }

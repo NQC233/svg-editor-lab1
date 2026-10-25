@@ -61,7 +61,7 @@ npm run cli
 │   ├── main.ts             # 组合根与启动入口
 │   ├── cli/                # 分词、命令表、分发、REPL、输出
 │   ├── commands/           # Command、历史、上下文、执行器和当前命令
-│   ├── domain/             # Shape、Rect、Circle、Ellipse、Line、ShapeFactory、SvgDocument
+│   ├── domain/             # Shape、LeafShape、Rect、Circle、Ellipse、Line、ShapeFactory、SvgDocument
 │   ├── display/            # tree/show 格式化与显示宽度
 │   └── shared/             # 领域错误、数值解析与格式化
 ├── test/
@@ -74,7 +74,7 @@ npm run cli
 └── tsconfig.build.json     # 仅构建 src/ 的配置
 ```
 
-当前已落地 `shared/`、`domain/`、`display/`、`commands/` 和 `cli/`。图形层次已实现 `Shape` → `Rect`、`Circle`、`Ellipse`、`Line`；命令历史已支持这四个叶子图形创建的撤销、重做、redo 分支清空和 `init` 屏障。文本、容器、`io/` 和其余编辑命令仍按 [doc/README.md](doc/README.md) 的模块划分在后续票中实现。
+当前已落地 `shared/`、`domain/`、`display/`、`commands/` 和 `cli/`。图形层次已实现 `Shape` → `LeafShape` → `Rect`、`Circle`、`Ellipse`、`Line`；命令历史已支持这四个叶子图形创建的撤销、重做、redo 分支清空和 `init` 屏障。文本、容器、`io/` 和其余编辑命令仍按 [doc/README.md](doc/README.md) 的模块划分在后续票中实现。
 
 生产运行依赖为空；开发工具包括 TypeScript、tsx、Node.js 类型声明和 Prettier。
 

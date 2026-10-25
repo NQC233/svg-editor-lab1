@@ -1,13 +1,12 @@
 import { DomainError } from '../shared/DomainError.js';
 import { NumberFormatter } from '../shared/NumberFormatter.js';
-import { Shape } from './Shape.js';
+import { LeafShape } from './LeafShape.js';
 
-export class Rect extends Shape {
+export class Rect extends LeafShape {
   private readonly xValue: number;
   private readonly yValue: number;
   private readonly widthValue: number;
   private readonly heightValue: number;
-  private readonly fillValue: string | undefined;
 
   public constructor(
     id: string,
@@ -17,11 +16,11 @@ export class Rect extends Shape {
     height: number,
     fill?: string,
   ) {
-    super(id);
-    Rect.assertFinite(x);
-    Rect.assertFinite(y);
-    Rect.assertFinite(width);
-    Rect.assertFinite(height);
+    super(id, fill);
+    LeafShape.assertFinite(x);
+    LeafShape.assertFinite(y);
+    LeafShape.assertFinite(width);
+    LeafShape.assertFinite(height);
 
     if (width <= 0) {
       throw new DomainError('rect width must be positive');
@@ -31,15 +30,10 @@ export class Rect extends Shape {
       throw new DomainError('rect height must be positive');
     }
 
-    if (fill !== undefined && fill.length === 0) {
-      throw new DomainError('fill must not be empty');
-    }
-
     this.xValue = x;
     this.yValue = y;
     this.widthValue = width;
     this.heightValue = height;
-    this.fillValue = fill;
   }
 
   public override get type(): string {
@@ -62,45 +56,25 @@ export class Rect extends Shape {
     return this.heightValue;
   }
 
-  public get fill(): string | undefined {
-    return this.fillValue;
-  }
-
   public override treeAttributes(): string {
-    const attributes = [
+    return [
       `x=${NumberFormatter.format(this.x)}`,
       `y=${NumberFormatter.format(this.y)}`,
       `w=${NumberFormatter.format(this.width)}`,
       `h=${NumberFormatter.format(this.height)}`,
-    ];
-
-    if (this.fill !== undefined) {
-      attributes.push(`fill=${this.fill}`);
-    }
-
-    return attributes.join(' ');
+      ...this.styleLines(),
+    ].join(' ');
   }
 
   public override detailLines(): readonly string[] {
-    const lines = [
+    return [
       [
         `x=${NumberFormatter.format(this.x)}`,
         `y=${NumberFormatter.format(this.y)}`,
         `width=${NumberFormatter.format(this.width)}`,
         `height=${NumberFormatter.format(this.height)}`,
       ].join(' '),
+      ...this.styleLines(),
     ];
-
-    if (this.fill !== undefined) {
-      lines.push(`fill=${this.fill}`);
-    }
-
-    return lines;
-  }
-
-  private static assertFinite(value: number): void {
-    if (!Number.isFinite(value)) {
-      throw new DomainError(`invalid number: ${NumberFormatter.format(value)}`);
-    }
   }
 }
