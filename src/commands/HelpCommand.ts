@@ -28,7 +28,7 @@ export class HelpCommand extends Command {
     'History:',
     '  undo',
     '  redo',
-    'Partial implementation: available commands are help, init, canvas, create rect, tree, show, undo, and redo.',
+    'Partial implementation: available commands are help, init, canvas, create rect, circle, ellipse, line, tree, show, undo, and redo.',
     'Canvas resizing is not available yet.',
   ] as const;
 
