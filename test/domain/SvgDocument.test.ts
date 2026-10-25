@@ -77,3 +77,76 @@ test('[spec 6.7] rejects ungrouping a top-level container without changing the t
   assert.equal(document.find('child'), child);
   assert.equal(document.parentLabelOf(child), 'g#top');
 });
+
+test('[spec 6.8] moves a subtree to another container end and restores its origin', () => {
+  const document = new SvgDocument(800, 600);
+  const source = new Group('source');
+  const before = new Rect('before', 0, 0, 10, 10);
+  const moving = new Group('moving');
+  const child = new Rect('child', 20, 20, 10, 10);
+  const after = new Rect('after', 40, 40, 10, 10);
+  const target = new Group('target');
+  const existing = new Rect('existing', 60, 60, 10, 10);
+
+  document.appendShape(source);
+  document.appendShape(before, source);
+  document.appendShape(moving, source);
+  document.appendShape(child, moving);
+  document.appendShape(after, source);
+  document.appendShape(target);
+  document.appendShape(existing, target);
+
+  const placement = document.moveToEnd(moving, target);
+
+  assert.equal(placement?.parent, source);
+  assert.equal(placement?.index, 1);
+  assert.deepEqual(document.childrenOf(source), [before, after]);
+  assert.deepEqual(document.childrenOf(target), [existing, moving]);
+  assert.deepEqual(document.childrenOf(moving), [child]);
+  assert.equal(document.parentLabelOf(moving), 'g#target');
+  assert.equal(document.find('child'), child);
+  assert.equal(document.parentLabelOf(child), 'g#moving');
+
+  document.restorePlacement(moving, placement!);
+
+  assert.deepEqual(document.childrenOf(source), [before, moving, after]);
+  assert.deepEqual(document.childrenOf(target), [existing]);
+  assert.deepEqual(document.childrenOf(moving), [child]);
+  assert.equal(document.parentLabelOf(moving), 'g#source');
+  assert.equal(document.parentLabelOf(child), 'g#moving');
+});
+
+test('[spec 6.8, 9] moves within one parent, reports a last-child no-op, and rejects cycles atomically', () => {
+  const document = new SvgDocument(800, 600);
+  const container = new Group('container');
+  const first = new Rect('first', 0, 0, 10, 10);
+  const second = new Rect('second', 20, 20, 10, 10);
+  const last = new Rect('last', 40, 40, 10, 10);
+  const branch = new Group('branch');
+  const nested = new Rect('nested', 60, 60, 10, 10);
+
+  document.appendShape(container);
+  document.appendShape(first, container);
+  document.appendShape(second, container);
+  document.appendShape(last, container);
+  document.appendShape(branch, container);
+  document.appendShape(nested, branch);
+
+  const placement = document.moveToEnd(first, container);
+  assert.equal(placement?.parent, container);
+  assert.equal(placement?.index, 0);
+  assert.deepEqual(document.childrenOf(container), [second, last, branch, first]);
+  assert.equal(document.moveToEnd(first, container), undefined);
+  assert.deepEqual(document.childrenOf(container), [second, last, branch, first]);
+
+  assert.throws(
+    () => document.moveToEnd(container, branch),
+    new DomainError('cannot move a container into its own descendant: container'),
+  );
+  assert.throws(
+    () => document.moveToEnd(container, container),
+    new DomainError('cannot move a container into its own descendant: container'),
+  );
+  assert.deepEqual(document.childrenOf(container), [second, last, branch, first]);
+  assert.deepEqual(document.childrenOf(branch), [nested]);
+});

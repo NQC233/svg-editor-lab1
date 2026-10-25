@@ -174,6 +174,51 @@ export class SvgDocument {
     return shape;
   }
 
+  public moveToEnd(shape: Shape, container: Container): ShapePlacement | undefined {
+    this.assertRegisteredShape(shape);
+    this.assertContainer(container);
+    if (this.isWithinSubtree(container, shape)) {
+      throw new DomainError(`cannot move a container into its own descendant: ${shape.id}`);
+    }
+
+    const originalParent = this.parents.get(shape);
+    const originalSiblings = this.siblingsOf(originalParent);
+    const originalIndex = originalSiblings.indexOf(shape);
+    if (originalIndex < 0) {
+      throw new DomainError(`no such shape: ${shape.id}`);
+    }
+
+    if (originalParent === container && originalIndex === originalSiblings.length - 1) {
+      return undefined;
+    }
+
+    originalSiblings.splice(originalIndex, 1);
+    this.mutableChildrenOf(container).push(shape);
+    this.parents.set(shape, container);
+    return new ShapePlacement(originalParent, originalIndex);
+  }
+
+  public restorePlacement(shape: Shape, placement: ShapePlacement): void {
+    this.assertRegisteredShape(shape);
+    this.assertContainer(placement.parent);
+
+    const currentParent = this.parents.get(shape);
+    const currentSiblings = this.siblingsOf(currentParent);
+    const currentIndex = currentSiblings.indexOf(shape);
+    if (currentIndex < 0) {
+      throw new DomainError(`no such shape: ${shape.id}`);
+    }
+
+    const destinationSiblings = this.siblingsOf(placement.parent);
+    const lengthAfterRemoval =
+      destinationSiblings.length - (currentParent === placement.parent ? 1 : 0);
+    this.assertInsertionIndex(placement.index, lengthAfterRemoval);
+
+    currentSiblings.splice(currentIndex, 1);
+    destinationSiblings.splice(placement.index, 0, shape);
+    this.parents.set(shape, placement.parent);
+  }
+
   public parentLabelOf(shape: Shape): string {
     if (!this.parents.has(shape)) {
       throw new DomainError(`no such shape: ${shape.id}`);
@@ -222,6 +267,12 @@ export class SvgDocument {
     }
   }
 
+  private assertRegisteredShape(shape: Shape): void {
+    if (!this.parents.has(shape) || this.shapesById.get(shape.id) !== shape) {
+      throw new DomainError(`no such shape: ${shape.id}`);
+    }
+  }
+
   private assertInsertionIndex(insertionIndex: number, siblingCount: number): void {
     if (!Number.isInteger(insertionIndex) || insertionIndex < 0 || insertionIndex > siblingCount) {
       throw new DomainError(`invalid insertion index: ${insertionIndex}`);
@@ -246,6 +297,19 @@ export class SvgDocument {
 
       childIds.add(child.id);
     }
+  }
+
+  private isWithinSubtree(candidate: Shape, root: Shape): boolean {
+    let current: Shape | undefined = candidate;
+    while (current !== undefined) {
+      if (current === root) {
+        return true;
+      }
+
+      current = this.parents.get(current);
+    }
+
+    return false;
   }
 
   private collectIds(shape: Shape, ids: Set<string>): void {
@@ -284,7 +348,7 @@ export class SvgDocument {
     this.shapesById.delete(shape.id);
   }
 
-  private siblingsOf(container: Container | undefined): readonly Shape[] {
+  private siblingsOf(container: Container | undefined): Shape[] {
     return container === undefined ? this.rootShapesValue : this.mutableChildrenOf(container);
   }
 
