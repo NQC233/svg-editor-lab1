@@ -3,6 +3,7 @@ import { NumberFormatter } from '../shared/NumberFormatter.js';
 import { GeometrySnapshot } from './GeometrySnapshot.js';
 import { LeafShape } from './LeafShape.js';
 import { Point } from './Point.js';
+import type { SvgAttribute } from './Shape.js';
 import type { ShapeAttributeSnapshot } from './ShapeAttributeSnapshot.js';
 
 export class Circle extends LeafShape {
@@ -105,6 +106,14 @@ export class Circle extends LeafShape {
         `r=${NumberFormatter.format(this.radius)}`,
       ].join(' '),
       ...this.styleLines(),
+    ];
+  }
+
+  protected override svgGeometryAttributes(): readonly SvgAttribute[] {
+    return [
+      ['cx', NumberFormatter.format(this.centerX)],
+      ['cy', NumberFormatter.format(this.centerY)],
+      ['r', NumberFormatter.format(this.radius)],
     ];
   }
 

@@ -3,6 +3,7 @@ import { NumberFormatter } from '../shared/NumberFormatter.js';
 import { GeometrySnapshot } from './GeometrySnapshot.js';
 import { LeafShape } from './LeafShape.js';
 import { Point } from './Point.js';
+import type { SvgAttribute } from './Shape.js';
 import type { ShapeAttributeSnapshot } from './ShapeAttributeSnapshot.js';
 
 export class Line extends LeafShape {
@@ -118,6 +119,15 @@ export class Line extends LeafShape {
         `y2=${NumberFormatter.format(this.endY)}`,
       ].join(' '),
       ...this.styleLines(),
+    ];
+  }
+
+  protected override svgGeometryAttributes(): readonly SvgAttribute[] {
+    return [
+      ['x1', NumberFormatter.format(this.startX)],
+      ['y1', NumberFormatter.format(this.startY)],
+      ['x2', NumberFormatter.format(this.endX)],
+      ['y2', NumberFormatter.format(this.endY)],
     ];
   }
 

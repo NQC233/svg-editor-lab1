@@ -3,6 +3,7 @@ import { NumberFormatter } from '../shared/NumberFormatter.js';
 import { GeometrySnapshot } from './GeometrySnapshot.js';
 import { LeafShape } from './LeafShape.js';
 import { Point } from './Point.js';
+import type { SvgAttribute } from './Shape.js';
 import type { ShapeAttributeSnapshot } from './ShapeAttributeSnapshot.js';
 
 export class Ellipse extends LeafShape {
@@ -135,6 +136,15 @@ export class Ellipse extends LeafShape {
         `ry=${NumberFormatter.format(this.radiusY)}`,
       ].join(' '),
       ...this.styleLines(),
+    ];
+  }
+
+  protected override svgGeometryAttributes(): readonly SvgAttribute[] {
+    return [
+      ['cx', NumberFormatter.format(this.centerX)],
+      ['cy', NumberFormatter.format(this.centerY)],
+      ['rx', NumberFormatter.format(this.radiusX)],
+      ['ry', NumberFormatter.format(this.radiusY)],
     ];
   }
 

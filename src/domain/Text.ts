@@ -3,6 +3,7 @@ import { NumberFormatter } from '../shared/NumberFormatter.js';
 import { GeometrySnapshot } from './GeometrySnapshot.js';
 import { LeafShape } from './LeafShape.js';
 import { Point } from './Point.js';
+import type { SvgAttribute } from './Shape.js';
 import { ShapeAttributeSnapshot } from './ShapeAttributeSnapshot.js';
 
 export class Text extends LeafShape {
@@ -78,6 +79,17 @@ export class Text extends LeafShape {
       `x=${NumberFormatter.format(this.x)} y=${NumberFormatter.format(this.y)}`,
       `text=${this.quotedContent()}`,
       ...this.styleLines(),
+    ];
+  }
+
+  public override svgTextContent(): string {
+    return this.content;
+  }
+
+  protected override svgGeometryAttributes(): readonly SvgAttribute[] {
+    return [
+      ['x', NumberFormatter.format(this.x)],
+      ['y', NumberFormatter.format(this.y)],
     ];
   }
 
