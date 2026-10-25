@@ -1,6 +1,6 @@
 # Lab1 Phase 1：课程报告与过程记录
 
-状态：Ticket 01–18 已实现并通过本地验收，其中 Ticket 06 通过 [PR #29](https://github.com/NQC233/svg-editor-lab1/pull/29)、Ticket 07 通过 [PR #30](https://github.com/NQC233/svg-editor-lab1/pull/30)、Ticket 08 通过 [PR #31](https://github.com/NQC233/svg-editor-lab1/pull/31)、Ticket 14 通过 [PR #37](https://github.com/NQC233/svg-editor-lab1/pull/37)、Ticket 16 通过 [PR #38](https://github.com/NQC233/svg-editor-lab1/pull/38)、Ticket 17 通过 [PR #40](https://github.com/NQC233/svg-editor-lab1/pull/40) 交付；Ticket 09–18 已于 2026-10-25 完成实现与验收；测试累计 129 个。Ticket 18 的远端交付等待 PR；Ticket 19 仍是计划。本报告继续把“计划”和“已实现”分开记录。
+状态：Ticket 01–18 已实现并通过本地验收，其中 Ticket 06 通过 [PR #29](https://github.com/NQC233/svg-editor-lab1/pull/29)、Ticket 07 通过 [PR #30](https://github.com/NQC233/svg-editor-lab1/pull/30)、Ticket 08 通过 [PR #31](https://github.com/NQC233/svg-editor-lab1/pull/31)、Ticket 14 通过 [PR #37](https://github.com/NQC233/svg-editor-lab1/pull/37)、Ticket 16 通过 [PR #38](https://github.com/NQC233/svg-editor-lab1/pull/38)、Ticket 17 通过 [PR #40](https://github.com/NQC233/svg-editor-lab1/pull/40)、Ticket 18 通过 [PR #41](https://github.com/NQC233/svg-editor-lab1/pull/41) 提交；Ticket 09–18 已于 2026-10-25 完成实现与验收；测试累计 129 个。Ticket 19 仍是计划。本报告继续把“计划”和“已实现”分开记录。
 
 需求依据：[课程原始要求](../phase_cli_1.md)。
 
@@ -537,6 +537,7 @@ package "shared" {
 - 双轴审查发现初版 `SvgReader` 自行构造 `SvgIdAllocator`、元数据判定分散在三处调用点，且 CLI 失败回放未实际使用保留的当前路径。已改为组合根注入分配器、把元数据识别收口到 `ShapeFactory`、收敛图形工厂重复的“收集属性→构造→应用样式”流程，并在真实 CLI 回放末尾用无参数 `save` 证明失败 `read` 后路径仍可复用。
 - 小步提交保留为 `7a03417`（ADR 与任务计划）、`dec4c27`（补 id、元数据、未建模属性与测试）和 `c82f603`（双轴审查修复）。
 - 验证：`npm run check` 通过（类型检查、格式检查、129 个测试、构建）。真实 CLI 与构建后的 `npm start` 对同一补 id/元数据/未建模属性/失败读取脚本，去掉 npm 横幅后 stdout 逐字节一致，stderr 均为空；写出文件保留 `data-extra` 且可再次读取。
+- Ticket 18 通过 [PR #41](https://github.com/NQC233/svg-editor-lab1/pull/41) 提交，等待合并与远端检查。
 
 ## 一致性自查
 
