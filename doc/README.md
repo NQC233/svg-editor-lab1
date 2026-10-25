@@ -10,7 +10,7 @@
 - [纵向任务计划](./ticket-plan.md)：已批准的 19 张任务、验收与阻塞关系。
 - [原 T1–T8](./tasks.md)：保留为历史技术工作清单，不再作为执行顺序。
 - [模块依赖图](./architecture.puml) 与 [类模型图](./class-model.puml)：PlantUML 源文件。
-- [领域词汇表](../CONTEXT.md) 与 [ADR](../docs/adr/)：已确认的术语和关键决策；Ticket 01 的 CLI 默认见 [ADR-0005](../docs/adr/0005-ticket-01-cli-defaults.md)，Ticket 16 的路径与 `save` 提交语义见 [ADR-0008](../docs/adr/0008-ticket-16-save-path-defaults.md)。
+- [领域词汇表](../CONTEXT.md) 与 [ADR](../docs/adr/)：已确认的术语和关键决策；Ticket 01 的 CLI 默认见 [ADR-0005](../docs/adr/0005-ticket-01-cli-defaults.md)，Ticket 16 的路径与 `save` 提交语义见 [ADR-0008](../docs/adr/0008-ticket-16-save-path-defaults.md)，Ticket 17 的读取边界与 CDATA 规则见 [ADR-0009](../docs/adr/0009-ticket-17-read-boundaries.md)。
 
 ## 架构方案
 
