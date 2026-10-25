@@ -80,7 +80,7 @@ test('[spec 4.1-4.3, 6.11, 6.14, 6.17] runs a scripted empty-canvas session thro
   assert.match(result.stdout, /\nerror: usage: init \[w\] \[h\]\ncanvas 640x480\n/);
   assert.match(
     result.stdout,
-    /\nerror: canvas requires both width and height\nerror: canvas resizing is not available yet\ncanvas 640x480\n/,
+    /\nerror: canvas requires both width and height\ncanvas resized to 100x200\ncanvas 100x200\n/,
   );
   assert.match(
     result.stdout,

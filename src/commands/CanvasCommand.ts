@@ -1,11 +1,12 @@
 import { DomainError } from '../shared/DomainError.js';
 import { NumberFormatter } from '../shared/NumberFormatter.js';
-import { Command } from './Command.js';
+import { NumberParser } from '../shared/NumberParser.js';
 import type { CommandArguments } from './CommandArguments.js';
 import type { CommandContext } from './CommandContext.js';
 import { CommandResult } from './CommandResult.js';
+import { DocumentCommand } from './DocumentCommand.js';
 
-export class CanvasCommand extends Command {
+export class CanvasCommand extends DocumentCommand {
   public execute(context: CommandContext, args: CommandArguments): CommandResult {
     const document = context.requireDocument();
 
@@ -26,6 +27,26 @@ export class CanvasCommand extends Command {
       throw new DomainError('usage: canvas [w] [h]');
     }
 
-    throw new DomainError('canvas resizing is not available yet');
+    const widthToken = args.value(0);
+    const heightToken = args.value(1);
+    if (widthToken === undefined || heightToken === undefined) {
+      throw new DomainError('canvas requires both width and height');
+    }
+
+    const width = NumberParser.parse(widthToken);
+    const height = NumberParser.parse(heightToken);
+    try {
+      document.resize(width, height);
+    } catch (error) {
+      if (error instanceof DomainError) {
+        throw new DomainError('canvas width and height must be positive');
+      }
+
+      throw error;
+    }
+
+    return new CommandResult([
+      `canvas resized to ${NumberFormatter.format(width)}x${NumberFormatter.format(height)}`,
+    ]);
   }
 }
