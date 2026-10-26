@@ -1,6 +1,8 @@
-@startuml
+@startuml architecture
 skinparam componentStyle rectangle
-title SVG 编辑器 Phase 1 模块依赖（当前已实现部分，截至 Ticket 19）
+skinparam defaultFontName "PingFang SC"
+skinparam backgroundColor white
+title SVG 编辑器 Phase 1 模块依赖（已实现）
 
 package "cli" {
   [CliApplication]

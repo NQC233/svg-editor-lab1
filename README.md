@@ -1,23 +1,20 @@
 # SVG Editor · Lab1 Phase 1
 
-高级软件开发技术课程作业：使用 TypeScript 和面向对象方式开发 SVG 命令行编辑器。
+使用 TypeScript 和面向对象方式实现的 SVG 命令行编辑器，作为高级软件开发技术课程作业。通过命令创建图形、组织嵌套分组、编辑属性，并保存为可在浏览器中打开的 SVG 文件。
 
-**当前状态：Ticket 01–19 的实现与本地验收已完成。** CLI 已支持 REPL、注释、引号参数、`help`、`init`、读取支持子集并自动补 id 的 `read`、查询和修改画布尺寸的 `canvas`、`create rect/circle/ellipse/line/text/g`、`create … in <containerId>`、删除叶子或整棵子树的 `delete`、按原文档顺序跨父级收编已有图形的 `group`、解散嵌套容器的 `ungroup`、把已有图形或子树移到容器末尾的 `addto`、按同级绘制顺序把叶子或容器移到 `front`/`back`、对叶子或整棵容器的 `move`/`scale`、`set` 修改公共样式、几何属性或文本内容、嵌套 `tree`、`show`、`undo`、`redo`，以及把全部支持图形写出为 SVG 并复用当前路径的 `save`。外部 SVG 的缺 id 自动分配、元数据忽略、未建模属性有序保留和 `read`/`save`/`read` 往返已完成；课程基础会话、两节点流程图、跨票组合、失败原子性和 IO 屏障均已纳入自动回放。`final` 标签待课程截止时间与最终提交时点确认后处理。实现顺序和验收标准见[纵向任务计划](doc/ticket-plan.md)。
+## 功能
 
-## 项目资料
+- 支持矩形、圆、椭圆、直线、文本和分组容器，以唯一且大小写敏感的 id 定位图形。
+- 支持创建、删除、平移、等比缩放、属性修改、分组与解散、容器归属调整和同级绘制顺序调整；容器可整体操作。
+- 编辑命令支持逐步撤销与重做，失败时保持文档和历史不变。
+- 支持 SVG 读写、缺失 id 自动补全和未建模属性保留，以及结构树和属性明细查看。
+- 支持交互式终端与标准输入脚本，接受注释和带空格的引号参数。
 
-- [课程原始要求](phase_cli_1.md)：保留原文，作为需求依据。
-- [课程报告与过程记录](doc/README.md)：架构方案、设计模式、依赖规则、变化点、访谈记录和自查。
-- [需求规格](doc/spec.md)：命令语义、错误目录、SVG 支持子集和输出格式。
-- [纵向任务计划](doc/ticket-plan.md)：已批准的 19 张任务、验收标准和 GitHub 阻塞关系。
-- [原 T1–T8](doc/tasks.md)：历史技术工作清单。
-- [领域词汇表](CONTEXT.md)：项目统一术语。
-- [架构决策记录](docs/adr/)：零依赖、SVG 支持子集、IO 历史屏障、group 锚点与相对顺序、front/back 绘制顺序、Ticket 01 CLI 默认、Ticket 16 文件路径与 `save` 提交语义、Ticket 17 读取边界与 CDATA 规则，以及 Ticket 18 补 id、元数据与未建模属性边界。
-- [智能体协作规则](AGENTS.md)：统一维护项目约束；[CLAUDE.md](CLAUDE.md) 为 Claude 入口。
+本阶段只处理[需求规格](doc/spec.md#7-svg-读取子集)定义的 SVG 子集；`transform`、`style`、未知视觉元素和不匹配的 `viewBox` 会被拒绝。`box` 复合图形和插件机制属于后续阶段。
 
-## 环境与启动
+## 快速启动
 
-使用 Node.js 24.x 和 npm。仓库中的 `.nvmrc` 可供 nvm 使用：
+环境要求：Node.js 24.x、npm。使用 nvm 时可通过仓库内的 `.nvmrc` 切换版本：
 
 ```bash
 nvm use
@@ -25,66 +22,98 @@ npm ci
 npm run cli
 ```
 
-没有使用 nvm 时，直接安装 Node.js 24.x 即可。首次初始化已安装依赖；后续克隆或恢复环境时使用 `npm ci`，按 `package-lock.json` 安装固定版本。
+未使用 nvm 时，安装 Node.js 24.x 后执行后两条命令即可。进入交互终端后，输入 `help` 查看全部命令，按 `Ctrl+D` 结束会话。
 
-## 开发命令
+也可以构建后运行：
 
-| 命令                   | 用途                                         |
-| ---------------------- | -------------------------------------------- |
-| `npm run cli`          | 使用 tsx 运行 TypeScript 入口                |
-| `npm run typecheck`    | 严格检查源代码和测试代码的类型               |
-| `npm run build`        | 编译源代码到 `dist/`                         |
-| `npm start`            | 运行已编译的入口；需先构建                   |
-| `npm test`             | 使用 Node.js 测试运行器执行测试，当前 134 个 |
-| `npm run format`       | 格式化工程文件，排除课程原始要求             |
-| `npm run format:check` | 检查文件格式                                 |
-| `npm run check`        | 依次执行类型检查、格式检查、测试和构建       |
+```bash
+npm run build
+npm start
+```
 
-## 当前目录
+## 使用示例
+
+在编辑器中依次输入以下命令，创建一个包含矩形和文字的分组，移动整组并撤销、重做，最后保存：
+
+```text
+init 400 200
+create g node
+create rect box 40 60 140 60 #4a90d9 in node
+create text label 65 95 "Hello SVG" in node
+move node 20 0
+undo
+redo
+tree
+save demo.svg
+```
+
+`demo.svg` 保存在进程当前工作目录，可以直接用浏览器打开。运行 `read demo.svg` 可继续编辑；读取后，`save` 不带参数会保存到当前文件路径。
+
+脚本模式可将命令逐行保存后通过标准输入回放：
+
+```bash
+npm run cli < commands.txt
+```
+
+`#` 开头的行是注释，文本参数可以用双引号包含空格。编辑命令一次对应一个撤销单元；成功执行 `init`、`read`、`save` 或修改尺寸的 `canvas` 会建立历史屏障，直到下一次实际改变状态的编辑命令执行后才能再次撤销、重做。
+
+## 命令概览
+
+| 分类       | 命令                                         |
+| ---------- | -------------------------------------------- |
+| 文档与画布 | `init`、`read`、`save`、`canvas`             |
+| 图形编辑   | `create`、`delete`、`move`、`scale`、`set`   |
+| 结构与顺序 | `group`、`ungroup`、`addto`、`front`、`back` |
+| 查看与帮助 | `tree`、`show`、`help`                       |
+| 编辑历史   | `undo`、`redo`                               |
+
+具体参数、容器规则和错误信息见[完整命令规格](doc/spec.md#6-命令规格)。
+
+## 架构与文档
+
+项目采用 Command 模式组织编辑与撤销，使用统一的图形层次表达 Composite 语义；领域模型、SVG 读写、显示和终端交互分层实现。生产运行依赖为空。
+
+- [课程报告](doc/README.md)：模块职责、依赖图、类模型图、设计模式、过程记录和质量保证。
+- [需求规格](doc/spec.md)：命令语义、SVG 支持范围及验收示例。
+- [架构决策](doc/adr/)与[领域词汇表](CONTEXT.md)：设计取舍和统一术语。
+- [课程原始要求](phase_cli_1.md)：保留原文的课程说明。
+- [测试说明](test/README.md)：测试布局与验收重点。
+- [协作规则](AGENTS.md)：项目维护约定。
+
+## 开发与验证
+
+| 命令                   | 用途                                    |
+| ---------------------- | --------------------------------------- |
+| `npm run cli`          | 使用 tsx 运行开发入口                   |
+| `npm run typecheck`    | 严格检查源码和测试类型                  |
+| `npm test`             | 执行单元、命令、SVG 往返和 CLI 回放测试 |
+| `npm run build`        | 编译源码到 `dist/`                      |
+| `npm start`            | 运行构建后的入口                        |
+| `npm run format`       | 格式化工程文件，排除课程原始要求        |
+| `npm run format:check` | 检查文件格式                            |
+| `npm run check`        | 依次执行类型检查、格式检查、测试和构建  |
+
+## 项目结构
 
 ```text
 .
-├── phase_cli_1.md          # 课程原始要求
-├── README.md               # 环境与开发说明
-├── CONTEXT.md              # 领域词汇表
-├── doc/
-│   ├── README.md           # 课程报告与过程记录
-│   ├── spec.md             # 需求规格
-│   ├── ticket-plan.md      # 已批准的纵向任务与 GitHub 索引
-│   ├── tasks.md            # 原分层任务（历史）
-│   ├── architecture.puml   # 模块依赖图
-│   └── class-model.puml    # 类模型图
-├── docs/
-│   ├── adr/                # 架构决策记录
-│   └── agents/             # 智能体协作约定
+├── README.md             # 项目介绍与使用说明
+├── phase_cli_1.md        # 课程原始要求
+├── CONTEXT.md            # 领域词汇表
+├── doc/                  # 课程报告、规格、设计与过程记录
+│   ├── README.md         # 课程报告入口
+│   ├── adr/              # 架构决策记录
+│   ├── agents/           # 智能体协作说明
+│   ├── images/           # 图表图片与再生成说明
+│   ├── architecture.puml # 模块依赖图源文件
+│   └── class-model.puml  # 类模型图源文件
 ├── src/
-│   ├── main.ts             # 组合根与启动入口
-│   ├── cli/                # 分词、命令表、分发、REPL、输出
-│   ├── commands/           # Command、历史、上下文、执行器和当前命令
-│   ├── domain/             # Shape 层次、几何/属性快照、未建模属性、图形/元数据识别、SvgDocument
-│   ├── display/            # tree/show 格式化与显示宽度
-│   ├── io/                 # XML 解析、id 分配、SvgReader、SvgWriter、XmlEscaper
-│   └── shared/             # 领域错误、数值解析与格式化
-├── test/
-│   ├── cli/                # 分词与 CLI 回放
-│   ├── commands/           # 命令分发、图形创建/删除/分组/归属移动/前后顺序/移动/缩放/属性更新、read/save、画布缩放、undo/redo、tree/show 和失败原子性
-│   ├── io/                 # XML 词法/结构读取与测试
-│   └── support/            # 共享的命令分发装配
-├── package.json
-├── package-lock.json       # 依赖版本锁定
-├── tsconfig.json           # 源代码与测试的类型检查配置
-└── tsconfig.build.json     # 仅构建 src/ 的配置
+│   ├── main.ts           # 依赖装配与启动入口
+│   ├── cli/              # 分词、命令分发、REPL 与终端输出
+│   ├── commands/         # 命令对象、执行器、上下文与撤销历史
+│   ├── domain/           # 图形层次、文档结构、工厂与快照
+│   ├── display/          # 结构树与属性格式化
+│   ├── io/               # XML 解析与 SVG 读写
+│   └── shared/           # 错误与数值工具
+└── test/                 # 领域、命令、读写与 CLI 测试
 ```
-
-当前已落地 `shared/`、`domain/`、`display/`、`io/`、`commands/` 和 `cli/`。图形层次已实现 `Shape` → `LeafShape`/`Container`，包含五个叶子图形与 `Group`；`Shape` 统一封装公共样式、多态属性更新以及按 `id`、几何、样式、未建模属性顺序提供的 SVG 属性，文本图形额外提供 SVG 正文。`UnmodeledAttributes` 以不可变有序条目封装未知属性，使它们参与读写往返但不参与 `move`、`scale`、`set` 或显示。`ShapeAttributeSnapshot` 保存旧值或未设置状态。`move` 和 `scale` 通过多态几何操作和精确 `GeometrySnapshot` 支持叶子及整棵子树，并由 `SvgDocument` 对一次变换统一执行、失败时回滚。`delete` 由 `SvgDocument` 保存原父级和索引、释放整棵子树的 id 索引，再通过同一位置恢复。`group` 由 `SvgDocument` 一次批量摘出目标、按分组前文档先序顺序建立新容器，并用 `GroupSnapshot` 精确恢复各目标原父级和索引；`addto` 只用 `ShapePlacement` 调整现有子树的归属和同级顺序，不复制图形或几何。`front`/`back` 只在原父级内移到末尾/开头，容器内部顺序不变，并由 `ZOrderCommand` 的模板流程统一处理无操作、撤销和重做。`XmlParser` 用多态 XML 节点构建声明、实体、文本、CDATA 与嵌套结构；`SvgIdAllocator` 先收集显式 id 再按文档顺序补号；`ShapeFactory` 同时集中识别可忽略的 SVG 元数据元素；`SvgReader` 通过 `ShapeFactory` 构建临时文档，`ReadCommand` 只在全部校验成功后提交会话并输出警告；`SvgWriter` 通过图形多态递归写出嵌套容器和有序未建模属性。命令历史支持创建、删除、分组、归属移动、前后顺序、移动、缩放和属性更新的撤销/重做、redo 分支清空以及 `init`、`read`、带参数 `canvas` 和成功 `save` 建立的屏障。
-
-生产运行依赖为空；开发工具包括 TypeScript、tsx、Node.js 类型声明和 Prettier。
-
-## 开发与提交
-
-使用 Git 分步记录需求、设计、实现和验证过程。功能实现的分支规则见 [AGENTS.md](AGENTS.md)。远程 `origin` 已配置为 [NQC233/svg-editor-lab1](https://github.com/NQC233/svg-editor-lab1)；配置存在不代表工作区内容已提交或推送。最终验收完成后，按课程要求在截止时间前创建并推送 `final` 标签。
-
-## 工具文档
-
-- [TypeScript：为 Node.js 选择编译选项](https://www.typescriptlang.org/docs/handbook/modules/guides/choosing-compiler-options.html)
-- [Node.js 24：测试运行器](https://nodejs.org/docs/latest-v24.x/api/test.html)

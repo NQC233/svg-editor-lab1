@@ -1,5 +1,7 @@
-@startuml
-title 图形模型（当前已实现部分，截至 Ticket 19）
+@startuml class-model
+skinparam defaultFontName "PingFang SC"
+skinparam backgroundColor white
+title 图形模型（已实现）
 
 abstract class Shape {
   +get id(): string
@@ -189,8 +191,10 @@ SvgIdAllocator --> SvgIdAllocation : returns ids and warnings
 SvgIdAllocator --> ShapeFactory : recognizes supported elements
 @enduml
 
-@startuml
-title 命令与历史（当前已实现部分，截至 Ticket 19）
+@startuml command-history
+skinparam defaultFontName "PingFang SC"
+skinparam backgroundColor white
+title 命令与历史（已实现）
 
 abstract class Command {
   +execute(context, args): CommandResult
@@ -244,26 +248,26 @@ class XmlEscaper
 
 Command <|-- EditCommand
 Command <|-- DocumentCommand
-EditCommand <|.. CreateCommand
-EditCommand <|.. DeleteCommand
-EditCommand <|.. GroupCommand
-EditCommand <|.. UngroupCommand
-EditCommand <|.. AddToContainerCommand
+EditCommand <|-- CreateCommand
+EditCommand <|-- DeleteCommand
+EditCommand <|-- GroupCommand
+EditCommand <|-- UngroupCommand
+EditCommand <|-- AddToContainerCommand
 EditCommand <|-- ZOrderCommand
 ZOrderCommand <|-- FrontCommand
 ZOrderCommand <|-- BackCommand
-EditCommand <|.. MoveCommand
-EditCommand <|.. ScaleCommand
-EditCommand <|.. SetCommand
-DocumentCommand <|.. CanvasCommand
-DocumentCommand <|.. InitCommand
-DocumentCommand <|.. ReadCommand
-DocumentCommand <|.. SaveCommand
-Command <|.. TreeCommand
-Command <|.. ShowCommand
-Command <|.. HelpCommand
-Command <|.. UndoCommand
-Command <|.. RedoCommand
+EditCommand <|-- MoveCommand
+EditCommand <|-- ScaleCommand
+EditCommand <|-- SetCommand
+DocumentCommand <|-- CanvasCommand
+DocumentCommand <|-- InitCommand
+DocumentCommand <|-- ReadCommand
+DocumentCommand <|-- SaveCommand
+Command <|-- TreeCommand
+Command <|-- ShowCommand
+Command <|-- HelpCommand
+Command <|-- UndoCommand
+Command <|-- RedoCommand
 SvgWriter --> SvgDocument : writes
 SvgWriter --> Shape : reads polymorphic SVG attributes
 SvgWriter --> XmlEscaper : escapes XML values

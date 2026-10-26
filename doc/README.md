@@ -9,8 +9,8 @@
 - [需求规格](./spec.md)：命令语义、错误目录、SVG 支持子集、输出格式。
 - [纵向任务计划](./ticket-plan.md)：已批准的 19 张任务、验收与阻塞关系。
 - [原 T1–T8](./tasks.md)：保留为历史技术工作清单，不再作为执行顺序。
-- [模块依赖图](./architecture.puml) 与 [类模型图](./class-model.puml)：PlantUML 源文件。
-- [领域词汇表](../CONTEXT.md) 与 [ADR](../docs/adr/)：已确认的术语和关键决策；Ticket 01 的 CLI 默认见 [ADR-0005](../docs/adr/0005-ticket-01-cli-defaults.md)，Ticket 16 的路径与 `save` 提交语义见 [ADR-0008](../docs/adr/0008-ticket-16-save-path-defaults.md)，Ticket 17 的读取边界与 CDATA 规则见 [ADR-0009](../docs/adr/0009-ticket-17-read-boundaries.md)，Ticket 18 的补 id、元数据与未建模属性边界见 [ADR-0010](../docs/adr/0010-ticket-18-roundtrip-boundaries.md)。
+- [模块依赖图与类模型预览](#模块划分)：报告内嵌图片；[模块图源码](./architecture.puml)与[类图源码](./class-model.puml)保留用于维护。
+- [领域词汇表](../CONTEXT.md) 与 [ADR](./adr/)：已确认的术语和关键决策；Ticket 01 的 CLI 默认见 [ADR-0005](./adr/0005-ticket-01-cli-defaults.md)，Ticket 16 的路径与 `save` 提交语义见 [ADR-0008](./adr/0008-ticket-16-save-path-defaults.md)，Ticket 17 的读取边界与 CDATA 规则见 [ADR-0009](./adr/0009-ticket-17-read-boundaries.md)，Ticket 18 的补 id、元数据与未建模属性边界见 [ADR-0010](./adr/0010-ticket-18-roundtrip-boundaries.md)。
 
 ## 架构方案
 
@@ -51,104 +51,9 @@ src/
                      # CliApplication、ConsoleOutput
 ```
 
-模块图（PlantUML 组件图，源文件见 [`architecture.puml`](./architecture.puml)）：
+模块依赖图（点击图片可查看原尺寸；可编辑源文件见 [`architecture.puml`](./architecture.puml)）：
 
-```plantuml
-@startuml
-skinparam componentStyle rectangle
-title SVG 编辑器 Phase 1 模块依赖（当前已实现部分，截至 Ticket 19）
-
-package "cli" {
-  [CliApplication]
-  [CommandDispatcher]
-  [CommandCatalog]
-  [LineTokenizer]
-}
-
-package "commands" {
-  [CommandInvoker]
-  [CommandHistory]
-  [CommandContext]
-  [编辑命令]
-  [文档命令]
-  [显示命令]
-  [历史命令]
-}
-
-package "domain" {
-  [SvgDocument]
-  [Shape 层次]
-  [ShapeFactory]
-  [UnmodeledAttributes]
-}
-
-package "io" {
-  [Xml 节点层次]
-  [SvgIdAllocator]
-  [SvgIdAllocation]
-  [SvgReader]
-  [SvgWriter]
-  [XmlParser]
-  [XmlEscaper]
-}
-
-package "display" {
-  [TreeFormatter]
-  [ShowFormatter]
-}
-
-package "shared" {
-  [DomainError]
-  [数值工具]
-}
-
-[CliApplication] --> [LineTokenizer]
-[CliApplication] --> [CommandDispatcher]
-[CliApplication] --> [CommandInvoker]
-[CommandDispatcher] --> [CommandCatalog]
-[CommandCatalog] --> [编辑命令]
-[CommandCatalog] --> [文档命令]
-[CommandCatalog] --> [显示命令]
-[CommandCatalog] --> [历史命令]
-[CommandInvoker] --> [CommandHistory]
-[CommandInvoker] --> [CommandContext]
-[编辑命令] --> [CommandContext]
-[文档命令] --> [CommandContext]
-[显示命令] --> [CommandContext]
-[历史命令] --> [CommandHistory]
-[CommandContext] --> [SvgDocument]
-[CommandContext] --> [SvgReader]
-[CommandContext] --> [SvgWriter]
-[CommandContext] --> [TreeFormatter]
-[CommandContext] --> [ShowFormatter]
-[CommandContext] --> [ShapeFactory]
-[编辑命令] --> [SvgDocument]
-[编辑命令] --> [ShapeFactory]
-[文档命令] --> [SvgReader]
-[文档命令] --> [SvgWriter]
-[显示命令] --> [TreeFormatter]
-[显示命令] --> [ShowFormatter]
-[SvgReader] --> [XmlParser]
-[XmlParser] --> [Xml 节点层次]
-[SvgReader] --> [SvgIdAllocator]
-[SvgIdAllocator] --> [SvgIdAllocation]
-[SvgIdAllocator] --> [ShapeFactory]
-[SvgReader] --> [SvgDocument]
-[SvgReader] --> [ShapeFactory]
-[SvgWriter] --> [SvgDocument]
-[SvgWriter] --> [Shape 层次]
-[SvgWriter] --> [XmlEscaper]
-[TreeFormatter] --> [Shape 层次]
-[ShowFormatter] --> [Shape 层次]
-[ShapeFactory] --> [Shape 层次]
-[SvgDocument] --> [Shape 层次]
-[Shape 层次] --> [UnmodeledAttributes]
-[Shape 层次] --> [DomainError]
-[SvgReader] --> [DomainError]
-[SvgWriter] --> [DomainError]
-[CommandHistory] --> [DomainError]
-@enduml
-```
+![SVG 编辑器模块依赖图](./images/architecture.png)
 
 关键职责：
 
@@ -158,6 +63,18 @@ package "shared" {
 - **应用层**接收命令对象并执行；执行器只在成功后提交历史影响，命令自己实现正向、撤销和重做。
 - **交付层**只做分词、命令名查找、REPL 和输出，不直接操作领域对象。分词器生成带引号来源的 `CommandToken`，由命令层 `CommandArguments` 读取，避免应用层反向依赖 CLI。
 - **组合根**在 `main.ts` 创建并注入所有依赖，便于测试时替换 I/O 和输出。
+
+### 类模型
+
+图形与 SVG 读取模型包含图形继承层次、文档聚合根、几何及结构快照，以及 XML 读取协作关系：
+
+![图形与 SVG 读取类模型](./images/class-model.png)
+
+命令与历史模型展示 Command 继承层次、执行器、撤销历史和各类快照之间的关系：
+
+![命令与历史类模型](./images/command-history.png)
+
+两张类图的源文件均为 [`class-model.puml`](./class-model.puml)。图片随仓库提交，GitHub 可直接显示；图表更新方式见[图表维护说明](./images/README.md)。
 
 ### 设计模式的选择
 
@@ -219,25 +136,25 @@ package "shared" {
 
 ### 关键设计决策
 
-| #   | 决策                                                                           | 理由                                     | 记录                                                                                                    |
-| --- | ------------------------------------------------------------------------------ | ---------------------------------------- | ------------------------------------------------------------------------------------------------------- |
-| 1   | 方案先行，需求澄清后再实现                                                     | 课程报告要求方案与自查；避免边写边改语义 | 本报告                                                                                                  |
-| 2   | 零运行时依赖，自写 XML 解析器和分词器                                          | 控制支持子集、错误和往返；课程重点在 OOP | [ADR-0001](../docs/adr/0001-zero-runtime-dependencies.md)                                               |
-| 3   | `Shape` 继承体系 + `LeafShape`/`Container`；画布不是图形                       | 多态、Composite、一类一文件；画布无 id   | 本报告                                                                                                  |
-| 4   | 校验先行 + 领域异常；失败不改变文档/历史                                       | 原子性最容易审计                         | 本报告                                                                                                  |
-| 5   | 命令自带反向操作；几何用 Memento                                               | 体现 Command；精确撤销；比快照省内存     | 本报告                                                                                                  |
-| 6   | 本阶段不做插件框架；`ShapeFactory` 是扩展缝                                    | 只有一种实现，空接口是猜测               | 本报告                                                                                                  |
-| 7   | 读取只接受支持子集，拒绝 `transform`/`style`/未知视觉元素/不匹配 `viewBox`     | 不静默改变画面；领域模型无变换           | [ADR-0002](../docs/adr/0002-supported-svg-subset.md)                                                    |
-| 8   | `group` 以第一个命令行目标为父级和位置锚点，子节点保持分组前文档顺序           | 满足课程“保持相对顺序”；跨父级语义唯一   | [ADR-0004](../docs/adr/0004-group-anchor-rule.md)、[ADR-0006](../docs/adr/0006-group-relative-order.md) |
-| 9   | 文档命令清空历史并锁定；下一次改变状态的编辑解锁                               | 不跨 IO 撤销；避免悬空命令引用           | [ADR-0003](../docs/adr/0003-io-history-barrier.md)                                                      |
-| 10  | 无操作命令成功但不进历史、不解锁                                               | 无状态变化不产生撤销单元                 | [spec.md](./spec.md) 2、9                                                                               |
-| 11  | 尺寸类 > 0，坐标可为负，`scale` 因子 > 0                                       | SVG 几何边界；避免不可见零尺寸图形       | [spec.md](./spec.md) 3、5                                                                               |
-| 12  | 根必须有宽高；`viewBox` 缺失或恰为 `0 0 w h`                                   | 不引入未建模的坐标缩放                   | [spec.md](./spec.md) 7                                                                                  |
-| 13  | Ticket 01 采用 TTY 提示、stdout 输出和 `init` 直接替换默认                     | 先收口本票所需契约，不推定其余 C1 条目   | [ADR-0005](../docs/adr/0005-ticket-01-cli-defaults.md)                                                  |
-| 14  | `front` 对应同级末尾和最后绘制，`back` 对应索引 0 和最先绘制                   | 与 SVG 文档顺序和可见覆盖关系一致        | [ADR-0007](../docs/adr/0007-z-order-semantics.md)                                                       |
-| 15  | 文件按 UTF-8 写出，相对路径按进程工作目录解析；`save` 成功后才更新路径和屏障   | 失败不改变会话；路径保留用户输入形式     | [ADR-0008](../docs/adr/0008-ticket-16-save-path-defaults.md)                                            |
-| 16  | Ticket 17 只读显式 id；缺 id/元数据/未建模属性明确报错；text 的 CDATA 计入正文 | 保持中间版本边界，不静默丢失输入         | [ADR-0009](../docs/adr/0009-ticket-17-read-boundaries.md)                                               |
-| 17  | Ticket 18 两阶段补 id、延迟警告、忽略元数据并有序保留未建模属性                | 完成支持子集往返，同时隔离不可编辑内容   | [ADR-0010](../docs/adr/0010-ticket-18-roundtrip-boundaries.md)                                          |
+| #   | 决策                                                                           | 理由                                     | 记录                                                                                        |
+| --- | ------------------------------------------------------------------------------ | ---------------------------------------- | ------------------------------------------------------------------------------------------- |
+| 1   | 方案先行，需求澄清后再实现                                                     | 课程报告要求方案与自查；避免边写边改语义 | 本报告                                                                                      |
+| 2   | 零运行时依赖，自写 XML 解析器和分词器                                          | 控制支持子集、错误和往返；课程重点在 OOP | [ADR-0001](./adr/0001-zero-runtime-dependencies.md)                                         |
+| 3   | `Shape` 继承体系 + `LeafShape`/`Container`；画布不是图形                       | 多态、Composite、一类一文件；画布无 id   | 本报告                                                                                      |
+| 4   | 校验先行 + 领域异常；失败不改变文档/历史                                       | 原子性最容易审计                         | 本报告                                                                                      |
+| 5   | 命令自带反向操作；几何用 Memento                                               | 体现 Command；精确撤销；比快照省内存     | 本报告                                                                                      |
+| 6   | 本阶段不做插件框架；`ShapeFactory` 是扩展缝                                    | 只有一种实现，空接口是猜测               | 本报告                                                                                      |
+| 7   | 读取只接受支持子集，拒绝 `transform`/`style`/未知视觉元素/不匹配 `viewBox`     | 不静默改变画面；领域模型无变换           | [ADR-0002](./adr/0002-supported-svg-subset.md)                                              |
+| 8   | `group` 以第一个命令行目标为父级和位置锚点，子节点保持分组前文档顺序           | 满足课程“保持相对顺序”；跨父级语义唯一   | [ADR-0004](./adr/0004-group-anchor-rule.md)、[ADR-0006](./adr/0006-group-relative-order.md) |
+| 9   | 文档命令清空历史并锁定；下一次改变状态的编辑解锁                               | 不跨 IO 撤销；避免悬空命令引用           | [ADR-0003](./adr/0003-io-history-barrier.md)                                                |
+| 10  | 无操作命令成功但不进历史、不解锁                                               | 无状态变化不产生撤销单元                 | [spec.md](./spec.md) 2、9                                                                   |
+| 11  | 尺寸类 > 0，坐标可为负，`scale` 因子 > 0                                       | SVG 几何边界；避免不可见零尺寸图形       | [spec.md](./spec.md) 3、5                                                                   |
+| 12  | 根必须有宽高；`viewBox` 缺失或恰为 `0 0 w h`                                   | 不引入未建模的坐标缩放                   | [spec.md](./spec.md) 7                                                                      |
+| 13  | Ticket 01 采用 TTY 提示、stdout 输出和 `init` 直接替换默认                     | 先收口本票所需契约，不推定其余 C1 条目   | [ADR-0005](./adr/0005-ticket-01-cli-defaults.md)                                            |
+| 14  | `front` 对应同级末尾和最后绘制，`back` 对应索引 0 和最先绘制                   | 与 SVG 文档顺序和可见覆盖关系一致        | [ADR-0007](./adr/0007-z-order-semantics.md)                                                 |
+| 15  | 文件按 UTF-8 写出，相对路径按进程工作目录解析；`save` 成功后才更新路径和屏障   | 失败不改变会话；路径保留用户输入形式     | [ADR-0008](./adr/0008-ticket-16-save-path-defaults.md)                                      |
+| 16  | Ticket 17 只读显式 id；缺 id/元数据/未建模属性明确报错；text 的 CDATA 计入正文 | 保持中间版本边界，不静默丢失输入         | [ADR-0009](./adr/0009-ticket-17-read-boundaries.md)                                         |
+| 17  | Ticket 18 两阶段补 id、延迟警告、忽略元数据并有序保留未建模属性                | 完成支持子集往返，同时隔离不可编辑内容   | [ADR-0010](./adr/0010-ticket-18-roundtrip-boundaries.md)                                    |
 
 ## 需求摘要
 
@@ -352,7 +269,7 @@ package "shared" {
 
 - Ticket 01 经 [PR #20](https://github.com/NQC233/svg-editor-lab1/pull/20) 合入 `main`（`311409e`）；Ticket 02 经 rebase 后由 [PR #21](https://github.com/NQC233/svg-editor-lab1/pull/21) 合入（`e5c71b5`）。两条主线的分步提交历史均保留。
 - 集成复审补齐了 Ticket 01 的唯一组合根、引号/转义/注释与数值边界测试；Ticket 02 复审补齐了数值首尾空白处理，并把 `create` 命令名从领域 usage 文案移回命令层。
-- Ticket 03 C1 收口：无操作编辑成功返回，但不记录历史、不清空 redo、不解除历史屏障，采用已接受的 [ADR-0003](../docs/adr/0003-io-history-barrier.md)。
+- Ticket 03 C1 收口：无操作编辑成功返回，但不记录历史、不清空 redo、不解除历史屏障，采用已接受的 [ADR-0003](./adr/0003-io-history-barrier.md)。
 - Ticket 03 C2 收口：`create` 的撤销摘要统一为 `<type>#<id> removed`；`deleted` 只用于 `delete` 命令。规格 11.5 示例已同步，Issue #3 已标记为 `ready-for-agent`。
 - 本轮只收口契约和集成状态，未实现 undo/redo；Ticket 03 的业务代码应在下一步从最新 `main` 新建 `feat/` 分支。
 
@@ -481,7 +398,7 @@ package "shared" {
 ### 2026-10-25：收口 group 相对顺序
 
 - 用户确认：原同级顺序为 `a,b` 时执行 `group g b a`，最终子节点顺序仍为 `a,b`。
-- 新增 [ADR-0006](../docs/adr/0006-group-relative-order.md)，取代 ADR-0004 中“按命令行顺序”的部分；首目标父级与位置锚点规则保持不变。
+- 新增 [ADR-0006](./adr/0006-group-relative-order.md)，取代 ADR-0004 中“按命令行顺序”的部分；首目标父级与位置锚点规则保持不变。
 - 规格同步为“同一父级沿用原兄弟顺序，跨父级按分组前整棵文档树的先序遍历顺序排列”；Ticket 12 的内容门禁 C3 解除。
 
 ### 2026-10-25：Ticket 12 将已有图形编入新容器
@@ -496,7 +413,7 @@ package "shared" {
 
 ### 2026-10-25：Ticket 14 调整同级绘制顺序
 
-- 开始前 fetch 远端并确认工作区干净，本地 `main` 与 `origin/main` 同为 `e9db4dc`，Ticket #14 的直接前置 #6 已关闭。C4 尚未确认，因此未直接实现；用户确认 `front` 对应同级末尾且最后绘制、`back` 对应索引 `0` 且最先绘制后，先提交 [ADR-0007](../docs/adr/0007-z-order-semantics.md) 并同步规格与任务计划。
+- 开始前 fetch 远端并确认工作区干净，本地 `main` 与 `origin/main` 同为 `e9db4dc`，Ticket #14 的直接前置 #6 已关闭。C4 尚未确认，因此未直接实现；用户确认 `front` 对应同级末尾且最后绘制、`back` 对应索引 `0` 且最先绘制后，先提交 [ADR-0007](./adr/0007-z-order-semantics.md) 并同步规格与任务计划。
 - 按 TDD 先写 5 个命令测试和 1 个真实 CLI 回放，红灯为 `unknown command: front` / `back`；随后补最小实现转绿。测试覆盖叶子与容器的索引映射、容器内部顺序保持、原位置 undo/redo、边界无操作保留 redo 与 IO 屏障、参数/缺失目标失败原子性，以及成功编辑清空 redo 和解锁屏障。
 - `SvgDocument.moveToFront` / `moveToBack` 在定位原父级后只移动目标对象，不改变父级或容器子树；方法返回 `ShapePlacement` 作为精确原位 Memento，边界返回 `undefined`。`ZOrderCommand` 用 Template Method 统一参数、输出、无操作和历史协议，`FrontCommand` / `BackCommand` 只多态选择领域操作与文案，没有新增按图形类型分支。
 - 帮助、组合根、测试装配、类模型、任务索引、README 和本报告同步加入 `front`/`back`；历史仍由执行器在成功且 `changed=true` 后记录，失败或无操作不会改动文档、redo 栈或屏障。
@@ -507,7 +424,7 @@ package "shared" {
 ### 2026-10-25：Ticket 16 保存 SVG 与当前路径
 
 - 开始前 fetch 远端并确认工作区干净，本地 `main` 与 `origin/main` 同为 `05f125a`，Ticket #16 的直接前置 #4、#5、#6 已关闭且原生未关闭阻塞数为 0。Issue 仍标记 `needs-info`，因此没有绕过内容门禁直接实现；用户确认 UTF-8 与相对路径按进程工作目录解析后，先在 Issue 记录决定、移除门禁并领取任务，再新建 `feat/ticket-16-save-svg`。
-- 将该决定写入 [ADR-0008](../docs/adr/0008-ticket-16-save-path-defaults.md)：相对路径不主动转为绝对路径，`save` 只在文件成功写出后更新当前路径，随后由文档命令协议建立历史屏障；失败不改变文档、路径或历史。
+- 将该决定写入 [ADR-0008](./adr/0008-ticket-16-save-path-defaults.md)：相对路径不主动转为绝对路径，`save` 只在文件成功写出后更新当前路径，随后由文档命令协议建立历史屏障；失败不改变文档、路径或历史。
 - 按 TDD 先写真实文件接缝的矩形写出用例，红灯为 `unknown command: save`；再补全类型和嵌套容器用例，红灯显示圆/椭圆/直线/文本缺少几何属性与正文。随后以图形多态补齐有序 SVG 属性，而不是在 `SvgWriter` 中添加类型名 `switch`。
 - `SvgWriter` 负责 XML 声明、根尺寸/viewBox、两空格缩进、容器递归、空容器自闭合、文本正文、转义、尾换行和元素计数；`XmlEscaper` 只处理 `&`、`<`、`>`、`"`。`Shape.svgAttributes` 固定 `id`、几何、`fill`、`stroke`、`stroke-width` 的顺序，`Text` 多态提供正文，因此未来未建模属性可在样式之后接入而不改变写出器分派。
 - `CommandContext` 保存当前路径；`InitCommand` 通过 `setDocument` 清空路径；`SaveCommand` 选择显式或已保存路径，写入成功后才调用 `setCurrentPath`，由执行器看到的 `changed=true` 结果清空并锁定历史。参数错误、无路径和写失败都在提交前抛出。
@@ -519,7 +436,7 @@ package "shared" {
 
 ### 2026-10-25：Ticket 17 读取显式 id 的 SVG
 
-- 开始前 fetch 远端并确认工作区干净，本地 `main` 与 `origin/main` 同为 `8fa7bd5`，Ticket #17 的直接前置 #4、#5、#6 均已关闭。Issue 仍标记 `needs-info`；按规格将缺 id、元数据、未建模属性和 CDATA 的中间版本边界写入 [ADR-0009](../docs/adr/0009-ticket-17-read-boundaries.md)，同步 Issue 后移除门禁并领取任务，再新建 `feat/ticket-17-read-svg`。
+- 开始前 fetch 远端并确认工作区干净，本地 `main` 与 `origin/main` 同为 `8fa7bd5`，Ticket #17 的直接前置 #4、#5、#6 均已关闭。Issue 仍标记 `needs-info`；按规格将缺 id、元数据、未建模属性和 CDATA 的中间版本边界写入 [ADR-0009](./adr/0009-ticket-17-read-boundaries.md)，同步 Issue 后移除门禁并领取任务，再新建 `feat/ticket-17-read-svg`。
 - ADR 明确：Ticket 17 只接受显式非空 id；缺 id、元数据与未建模属性留 Ticket 18，本票明确拒绝；`text` 的直接文本和 CDATA 都计入正文，非文本 CDATA 忽略；UTF-8 和相对路径沿用 ADR-0008。
 - 按 TDD 先写 3 个 XML 解析器测试和 5 个 `read` 命令测试，红灯为模块缺失与 `unknown command: read`；再实现最小解析、文档构建和命令链。测试覆盖声明、预定义/数字实体、直接文本、嵌套、按元素区分的 CDATA、重复属性、不匹配标签、DOCTYPE、处理指令、根尺寸/viewBox、六种图形、显式 id 与失败原子性。
 - `XmlNode` 是多态基类，`XmlElement`/`XmlText` 通过 `accept` 实现节点访问；`XmlParser` 严格校验 XML 声明、注释、字符、属性和标签。`SvgReader` 校验根、通过 `ShapeFactory.createFromSvg` 创建六种图形，并让 `Shape.isContainer()` 表达容器能力，不在读取器里按图形类型名分派。
@@ -530,7 +447,7 @@ package "shared" {
 
 ### 2026-10-25：Ticket 18 外部 SVG 补 id 与完整往返
 
-- 开始前 fetch 远端并确认工作区干净，本地 `main` 与 `origin/main` 同为 `2332687`，Ticket #16、#17 已关闭，#18 的直接前置完成。Issue 仍标记 `needs-info`；先写入 [ADR-0010](../docs/adr/0010-ticket-18-roundtrip-boundaries.md) 收口两阶段补 id、延迟警告、元数据忽略、文本/CDATA 与未建模属性边界，再移除门禁并新建 `feat/ticket-18-svg-roundtrip`。
+- 开始前 fetch 远端并确认工作区干净，本地 `main` 与 `origin/main` 同为 `2332687`，Ticket #16、#17 已关闭，#18 的直接前置完成。Issue 仍标记 `needs-info`；先写入 [ADR-0010](./adr/0010-ticket-18-roundtrip-boundaries.md) 收口两阶段补 id、延迟警告、元数据忽略、文本/CDATA 与未建模属性边界，再移除门禁并新建 `feat/ticket-18-svg-roundtrip`。
 - 按 TDD 先新增命令和真实 CLI 用例，红灯分别落在元数据被当作未知元素、缺失 id 被拒绝和未知属性被拒绝；随后按读取、领域和写出接缝分步实现。新增用例覆盖显式 id 后置避让、空 id、完整元数据子树、元素计数、实体/文本/CDATA 往返、未建模属性顺序、命令不参与和失败无警告泄露。
 - `SvgIdAllocator` 先完整收集显式 id，再按文档顺序分配首个未被占用的 `<tag><n>`；`SvgIdAllocation` 同时封装元素到 id 的映射和待输出警告。`SvgReadResult` 只在读者完整成功后携带警告，`ReadCommand` 提交文档后才输出，因此后续图形校验失败不会泄露部分补号结果。
 - `ShapeFactory` 集中识别六种图形与可忽略的 `title`/`desc`/`metadata`，`SvgReader` 和 `SvgIdAllocator` 只询问工厂而不另写标签判断。`UnmodeledAttributes` 在领域层封装未知属性的有序条目，`Shape.svgAttributes` 在样式之后追加，命令、显示和缩放路径不读取它们。
@@ -550,6 +467,14 @@ package "shared" {
 - 人工预览：用 macOS Quick Look 将实际 CLI 在临时目录写出的 640×360 SVG 渲染为 PNG 并检查。蓝色矩形、橙色圆、绿色椭圆、两条连线与中文“检查/完成”均正常显示；蓝色矩形覆盖其“开始”标签，和 `front start` 后最后绘制的语义一致。临时文件未提交。
 - 小步提交保留为 `07bda1b`（最终验收测试与帮助文案）、`82122d4`（报告与证据）、`d57616c`（架构状态审查修正）；Ticket 19 通过 [PR #42](https://github.com/NQC233/svg-editor-lab1/pull/42) 提交。
 - 未验证/未执行边界：尚未创建或推送 `final` 标签，因为本会话没有课程截止时间，且“最终提交时点”仍需用户确认；这不影响已完成的本地实现与验收。
+
+### 2026-10-26：文档目录与项目入口整理
+
+- 课程原文指定报告位于 `doc/README.md`，因此文档统一使用 `doc/`；原 `docs/adr/` 与 `docs/agents/` 迁入 `doc/adr/`、`doc/agents/`，并同步报告、规格、任务计划和协作入口中的引用。历史文件和决策内容保留。
+- 模块依赖图、图形与 SVG 读取类图、命令与历史类图从保留的 PlantUML 源文件导出为三张 PNG，报告直接嵌入图片；删除重复维护的内联 PlantUML 模块图，并补充本地再生成说明。
+- 类图中的具体命令通过实线继承箭头连接抽象父类，与 TypeScript 的 `extends` 一致。
+- 根 README 按项目介绍、功能、快速启动、示例、命令分类、开发检查和目录组织重写；开发任务历史留在报告与任务计划中。
+- 验证：`npm run check` 通过（类型检查、格式检查、134 个测试、构建）；82 处本地 Markdown 链接和图片引用的目标存在，三张图片的中文与边缘完整。README 示例分别通过 `npm run cli` 和构建后的 `npm start` 回放，输出一致，并校验保存后的矩形位置与文本内容。课程原始要求与业务代码保持原样。
 
 ## 一致性自查
 
