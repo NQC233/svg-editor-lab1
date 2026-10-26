@@ -6,7 +6,7 @@
 
 - 根目录的 **`CONTEXT.md`**；或者
 - 如果根目录存在 **`CONTEXT-MAP.md`**：它指向每个 context 各自的 `CONTEXT.md`，读取与当前主题相关的那些。
-- **`docs/adr/`**：读取涉及即将改动区域的 ADR。多 context 仓库还要检查 `src/<context>/docs/adr/` 中的 context 级决策。
+- **`doc/adr/`**：读取涉及即将改动区域的 ADR。多 context 仓库还要检查 `src/<context>/doc/adr/` 中的 context 级决策。
 
 如果这些文件不存在，**静默继续**。不要提示缺失，也不要建议提前创建。`/domain-modeling` skill（经由 `/grill-with-docs` 和 `/improve-codebase-architecture` 触达）会在术语或决策真正确定时按需创建它们。
 
@@ -17,7 +17,7 @@ Single-context 仓库（大多数仓库）：
 ```text
 /
 ├── CONTEXT.md
-├── docs/adr/
+├── doc/adr/
 │   ├── 0001-event-sourced-orders.md
 │   └── 0002-postgres-for-write-model.md
 └── src/
@@ -28,14 +28,14 @@ Single-context 仓库（大多数仓库）：
 ```text
 /
 ├── CONTEXT-MAP.md
-├── docs/adr/                          ← 系统级决策
+├── doc/adr/                          ← 系统级决策
 └── src/
     ├── ordering/
     │   ├── CONTEXT.md
-    │   └── docs/adr/                  ← context 级决策
+    │   └── doc/adr/                  ← context 级决策
     └── billing/
         ├── CONTEXT.md
-        └── docs/adr/
+        └── doc/adr/
 ```
 
 ## 使用词汇表中的术语

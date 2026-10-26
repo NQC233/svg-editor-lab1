@@ -38,12 +38,12 @@
 
 ### Issue tracker
 
-Issues 记录在 GitHub Issues，使用 `gh` CLI 操作。见 `docs/agents/issue-tracker.md`。
+Issues 记录在 GitHub Issues，使用 `gh` CLI 操作。见 `doc/agents/issue-tracker.md`。
 
 ### Triage labels
 
-五个规范 triage 角色使用默认标签字符串。见 `docs/agents/triage-labels.md`。
+五个规范 triage 角色使用默认标签字符串。见 `doc/agents/triage-labels.md`。
 
 ### Domain docs
 
-Single-context：根目录 `CONTEXT.md` 加 `docs/adr/`。见 `docs/agents/domain.md`。
+Single-context：根目录 `CONTEXT.md` 加 `doc/adr/`。见 `doc/agents/domain.md`。

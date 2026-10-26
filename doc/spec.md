@@ -29,10 +29,10 @@
 - `read` 遇到重复 id：拒绝整份文件，报 `id already exists: <id>`。
 - `read` 中缺失的位置属性取 SVG 默认值 `0`；缺失的尺寸属性（rect 的宽高、circle 的 r、ellipse 的 rx/ry）报错。
 - `text` 的 `font-size` 等属性属于未建模属性：读写往返保留，不参与 `scale`，不能用 `set` 修改，也不在 `tree`/`show` 中显示。
-- 无操作规则适用于所有编辑命令：`move 0 0`、`scale 1`、`set` 写入相同值、`addto` 已在末尾、边界上的 `front`/`back` 都成功返回、不进入历史、不清空 redo、不解除历史屏障。（已由 [ADR-0003](../docs/adr/0003-io-history-barrier.md) 采纳）
-- CLI 的提示符和启动横幅只在标准输入是 TTY 时输出；结果和错误都写标准输出，保持 transcript 顺序。（已由 [ADR-0005](../docs/adr/0005-ticket-01-cli-defaults.md) 采纳）
-- 文件按 UTF-8 读取和写出；相对路径相对于进程当前工作目录。（已由 [ADR-0008](../docs/adr/0008-ticket-16-save-path-defaults.md) 采纳）
-- `init` 直接丢弃当前文档，不询问确认。（已由 [ADR-0005](../docs/adr/0005-ticket-01-cli-defaults.md) 采纳）
+- 无操作规则适用于所有编辑命令：`move 0 0`、`scale 1`、`set` 写入相同值、`addto` 已在末尾、边界上的 `front`/`back` 都成功返回、不进入历史、不清空 redo、不解除历史屏障。（已由 [ADR-0003](./adr/0003-io-history-barrier.md) 采纳）
+- CLI 的提示符和启动横幅只在标准输入是 TTY 时输出；结果和错误都写标准输出，保持 transcript 顺序。（已由 [ADR-0005](./adr/0005-ticket-01-cli-defaults.md) 采纳）
+- 文件按 UTF-8 读取和写出；相对路径相对于进程当前工作目录。（已由 [ADR-0008](./adr/0008-ticket-16-save-path-defaults.md) 采纳）
+- `init` 直接丢弃当前文档，不询问确认。（已由 [ADR-0005](./adr/0005-ticket-01-cli-defaults.md) 采纳）
 
 ## 3. 通用约定
 
